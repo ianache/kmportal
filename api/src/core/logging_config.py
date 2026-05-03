@@ -110,7 +110,7 @@ def bind_request_context(
     user_id: str | None = None,
     client_ip: str | None = None,
     **kwargs: Any
-) -> structlog.contextvars.BoundContextvars:
+) -> Any:
     """
     Bind context variables that will be included in all subsequent log entries.
     
