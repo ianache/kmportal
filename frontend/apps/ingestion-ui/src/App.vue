@@ -8,6 +8,24 @@
         <span class="flow-meta">Modified 5 min ago · Draft</span>
       </div>
       <div class="toolbar-right">
+        <!-- WebSocket connection status -->
+        <span class="ws-status" :class="`ws-status--${connectionStatus}`">
+          <span class="ws-dot"></span>
+          {{ connectionStatus === 'connected' ? 'Live' : 'Offline' }}
+        </span>
+        
+        <!-- Active jobs indicator -->
+        <button 
+          v-if="hasActiveJobs" 
+          class="btn-ghost-sm btn-jobs"
+          @click="showJobsPanel = !showJobsPanel"
+        >
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M10 2v16M2 10h16"/>
+          </svg>
+          {{ activeJobs.length }} Active
+        </button>
+        
         <button class="btn-ghost-sm">
           <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M3 10h14M10 3v14"/>
@@ -50,6 +68,7 @@
             :key="node.id"
             class="palette-node"
             :style="{ '--node-color': node.color }"
+            @mousedown.prevent="onPaletteMousedown($event, node)"
           >
             <div class="node-icon-sm" :style="{ background: node.color + '18', color: node.color }">
               <component :is="'svg'" width="14" height="14" viewBox="0 0 20 20" fill="none"
@@ -61,18 +80,29 @@
       </aside>
 
       <!-- Canvas -->
-      <div class="canvas">
+      <div class="canvas" ref="canvasEl"
+        :class="{ 'canvas--dragging': !!nodeDrag || !!paletteDrag }"
+        @mousemove="onCanvasMousemove"
+        @mouseup="onCanvasMouseup"
+        @mouseleave="onCanvasMouseup"
+      >
         <div class="canvas-bg"/>
+
+        <!-- Drop hint -->
+        <div v-if="paletteDrag" class="drop-hint">Drop here to add node</div>
 
         <!-- Flow nodes -->
         <div class="flow">
           <div
-            v-for="(node, i) in flowNodes"
+            v-for="node in flowNodes"
             :key="node.id"
             class="flow-node"
-            :class="{ 'flow-node--selected': selectedNode === node.id }"
+            :class="{
+              'flow-node--selected': selectedNode === node.id,
+              'flow-node--dragging': nodeDrag?.id === node.id,
+            }"
             :style="{ top: node.y + 'px', left: node.x + 'px', '--nc': node.color }"
-            @click="selectedNode = node.id"
+            @mousedown.prevent.stop="onNodeMousedown($event, node)"
           >
             <div class="fn-header" :style="{ background: node.color + '20', borderBottom: '1px solid ' + node.color + '30' }">
               <span class="fn-type" :style="{ color: node.color }">{{ node.category }}</span>
@@ -111,6 +141,31 @@
           <button class="ct-btn" title="Fit">⤢</button>
           <button class="ct-btn" title="Grid">⊞</button>
         </div>
+        
+        <!-- Active jobs panel -->
+        <div v-if="showJobsPanel && hasActiveJobs" class="jobs-panel">
+          <div class="jobs-header">
+            <span class="jobs-title">Active Ingestions</span>
+            <button class="jobs-close" @click="showJobsPanel = false">✕</button>
+          </div>
+          <div class="jobs-list">
+            <div v-for="job in activeJobs" :key="job.id" class="job-item">
+              <div class="job-info">
+                <span class="job-filename">{{ job.filename }}</span>
+                <span class="job-message">{{ job.message }}</span>
+              </div>
+              <div class="job-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: job.progress + '%' }"></div>
+                </div>
+                <span class="progress-text">{{ job.progress }}%</span>
+              </div>
+              <span class="job-status" :class="`job-status--${job.status}`">
+                {{ job.status }}
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Inspector -->
@@ -141,36 +196,141 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted, onMounted, watch } from 'vue'
+import { ingestionWsService, type IngestionJob } from './services/websocket'
 
 const running = ref(false)
+const activeJobs = ref<IngestionJob[]>([])
+const showJobsPanel = ref(false)
+
+// Connect to WebSocket on mount
+onMounted(() => {
+  const BFF_URL = import.meta.env.VITE_BFF_URL || 'http://localhost:3000'
+  ingestionWsService.connect(BFF_URL)
+  
+  // Subscribe to job updates
+  ingestionWsService.subscribe('job:pending', updateJobs)
+  ingestionWsService.subscribe('job:processing', updateJobs)
+  ingestionWsService.subscribe('job:done', updateJobs)
+  ingestionWsService.subscribe('job:failed', updateJobs)
+})
+
+onUnmounted(() => {
+  ingestionWsService.disconnect()
+})
+
+function updateJobs() {
+  activeJobs.value = ingestionWsService.getActiveJobs()
+}
+
+const hasActiveJobs = computed(() => activeJobs.value.length > 0)
+const connectionStatus = computed(() => ingestionWsService.isConnected.value ? 'connected' : 'disconnected')
 const selectedNode = ref<string | null>(null)
 const flowName = ref('User Data Ingestion Flow')
+const canvasEl = ref<HTMLElement | null>(null)
+
+// ── Node drag (reposition on canvas) ─────────────────────────────
+interface NodeDrag { id: string; ox: number; oy: number }
+const nodeDrag = ref<NodeDrag | null>(null)
+
+function onNodeMousedown(e: MouseEvent, node: typeof flowNodes.value[0]) {
+  e.preventDefault()
+  selectedNode.value = node.id
+  const rect = canvasEl.value!.getBoundingClientRect()
+  nodeDrag.value = { id: node.id, ox: e.clientX - rect.left - node.x, oy: e.clientY - rect.top - node.y }
+  window.addEventListener('mousemove', onWindowNodeMove)
+  window.addEventListener('mouseup', onWindowNodeUp)
+}
+
+function onWindowNodeMove(e: MouseEvent) {
+  if (!nodeDrag.value || !canvasEl.value) return
+  const rect = canvasEl.value.getBoundingClientRect()
+  const n = flowNodes.value.find(n => n.id === nodeDrag.value!.id)
+  if (n) {
+    n.x = Math.max(0, Math.round(e.clientX - rect.left - nodeDrag.value.ox))
+    n.y = Math.max(0, Math.round(e.clientY - rect.top - nodeDrag.value.oy))
+  }
+}
+
+function onWindowNodeUp() {
+  nodeDrag.value = null
+  window.removeEventListener('mousemove', onWindowNodeMove)
+  window.removeEventListener('mouseup', onWindowNodeUp)
+}
+
+// ── Palette drag (add new node to canvas) ────────────────────────
+interface PaletteDef { id: string; name: string; color: string; iconPath: string; category: string }
+const paletteDrag = ref<{ node: PaletteDef; x: number; y: number } | null>(null)
+
+function onPaletteMousedown(e: MouseEvent, node: PaletteDef) {
+  e.preventDefault()
+  paletteDrag.value = { node, x: e.clientX, y: e.clientY }
+  window.addEventListener('mousemove', onWindowPaletteMove)
+  window.addEventListener('mouseup', onWindowPaletteUp)
+}
+
+function onWindowPaletteMove(e: MouseEvent) {
+  if (paletteDrag.value) { paletteDrag.value.x = e.clientX; paletteDrag.value.y = e.clientY }
+}
+
+function onWindowPaletteUp(e: MouseEvent) {
+  if (paletteDrag.value && canvasEl.value) {
+    const rect = canvasEl.value.getBoundingClientRect()
+    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      const n = paletteDrag.value.node
+      flowNodes.value.push({
+        id: `n${Date.now()}`,
+        name: n.name,
+        subtitle: 'configure…',
+        category: n.category,
+        status: 'active',
+        x: Math.round(e.clientX - rect.left - 90),
+        y: Math.round(e.clientY - rect.top - 35),
+        color: n.color,
+        iconPath: n.iconPath,
+      })
+    }
+  }
+  paletteDrag.value = null
+  window.removeEventListener('mousemove', onWindowPaletteMove)
+  window.removeEventListener('mouseup', onWindowPaletteUp)
+}
+
+// ── Canvas events (fallback for fast mouse) ───────────────────────
+function onCanvasMousemove(e: MouseEvent) { onWindowNodeMove(e) }
+function onCanvasMouseup() { onWindowNodeUp() }
+
+onUnmounted(() => {
+  window.removeEventListener('mousemove', onWindowNodeMove)
+  window.removeEventListener('mouseup', onWindowNodeUp)
+  window.removeEventListener('mousemove', onWindowPaletteMove)
+  window.removeEventListener('mouseup', onWindowPaletteUp)
+})
 
 const nodeCategories = [
   {
     label: 'Sources',
     nodes: [
-      { id: 's1', name: 'Folder', color: '#007AFF', iconPath: '<path d="M2 6h16v10H2z"/><path d="M2 6l3-3h6l3 3"/>' },
-      { id: 's2', name: 'S3 Bucket', color: '#FF9500', iconPath: '<path d="M10 2a8 8 0 100 16A8 8 0 0010 2z"/><path d="M2 10h16"/>' },
-      { id: 's3', name: 'Kafka', color: '#34C759', iconPath: '<path d="M10 3v14M3 10h14"/><circle cx="10" cy="10" r="2"/>' },
-      { id: 's4', name: 'RabbitMQ', color: '#AF52DE', iconPath: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 10h6"/>' },
+      { id: 's1', name: 'Folder',   category: 'SOURCE', color: '#007AFF', iconPath: '<path d="M2 6h16v10H2z"/><path d="M2 6l3-3h6l3 3"/>' },
+      { id: 's2', name: 'S3 Bucket',category: 'SOURCE', color: '#FF9500', iconPath: '<path d="M10 2a8 8 0 100 16A8 8 0 0010 2z"/><path d="M2 10h16"/>' },
+      { id: 's3', name: 'Kafka',    category: 'SOURCE', color: '#34C759', iconPath: '<path d="M10 3v14M3 10h14"/><circle cx="10" cy="10" r="2"/>' },
+      { id: 's4', name: 'RabbitMQ', category: 'SOURCE', color: '#AF52DE', iconPath: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="M7 10h6"/>' },
     ],
   },
   {
     label: 'Transformation',
     nodes: [
-      { id: 't1', name: 'Script JS', color: '#FF9500', iconPath: '<path d="M4 4h12v12H4z"/><path d="M8 12l2-4 2 4"/>' },
-      { id: 't2', name: 'Embeddings', color: '#AF52DE', iconPath: '<circle cx="10" cy="10" r="4"/><path d="M10 2v3M10 15v3M2 10h3M15 10h3"/>' },
-      { id: 't3', name: 'Data Filter', color: '#007AFF', iconPath: '<path d="M3 5h14M6 10h8M9 15h2"/>' },
+      { id: 't1', name: 'Script JS',   category: 'PROCESS', color: '#FF9500', iconPath: '<path d="M4 4h12v12H4z"/><path d="M8 12l2-4 2 4"/>' },
+      { id: 't2', name: 'Embeddings',  category: 'PROCESS', color: '#AF52DE', iconPath: '<circle cx="10" cy="10" r="4"/><path d="M10 2v3M10 15v3M2 10h3M15 10h3"/>' },
+      { id: 't3', name: 'Data Filter', category: 'PROCESS', color: '#007AFF', iconPath: '<path d="M3 5h14M6 10h8M9 15h2"/>' },
     ],
   },
   {
     label: 'Target',
     nodes: [
-      { id: 'd1', name: 'QDrant', color: '#FF3B30', iconPath: '<circle cx="10" cy="10" r="7"/><path d="M7 10h6M10 7v6"/>' },
-      { id: 'd2', name: 'Neo4j', color: '#34C759', iconPath: '<circle cx="10" cy="5" r="2"/><circle cx="5" cy="15" r="2"/><circle cx="15" cy="15" r="2"/><path d="M10 7l-5 6M10 7l5 6"/>' },
-      { id: 'd3', name: 'Chroma', color: '#5AC8FA', iconPath: '<path d="M4 16l6-12 6 12z"/>' },
+      { id: 'd1', name: 'QDrant', category: 'SINK', color: '#FF3B30', iconPath: '<circle cx="10" cy="10" r="7"/><path d="M7 10h6M10 7v6"/>' },
+      { id: 'd2', name: 'Neo4j',  category: 'SINK', color: '#34C759', iconPath: '<circle cx="10" cy="5" r="2"/><circle cx="5" cy="15" r="2"/><circle cx="15" cy="15" r="2"/><path d="M10 7l-5 6M10 7l5 6"/>' },
+      { id: 'd3', name: 'Chroma', category: 'SINK', color: '#5AC8FA', iconPath: '<path d="M4 16l6-12 6 12z"/>' },
     ],
   },
 ]
@@ -349,6 +509,26 @@ const selectedNodeData = computed(() =>
   position: relative;
   overflow: hidden;
   background: var(--bg, #F5F5F7);
+  user-select: none;
+}
+
+.canvas--dragging { cursor: grabbing !important; }
+.canvas--dragging .flow-node { cursor: grabbing !important; }
+
+.drop-hint {
+  position: absolute;
+  inset: 0;
+  border: 2px dashed var(--primary, #007AFF);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary, #007AFF);
+  background: rgba(0,122,255,0.04);
+  pointer-events: none;
+  z-index: 5;
 }
 
 .canvas-bg {
@@ -373,12 +553,14 @@ const selectedNodeData = computed(() =>
   border: 1.5px solid var(--border, #E5E5E7);
   border-radius: var(--radius, 12px);
   box-shadow: var(--shadow-card, 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06));
-  cursor: pointer;
+  cursor: grab;
   transition: box-shadow 0.15s, border-color 0.15s;
   overflow: hidden;
+  user-select: none;
 }
 .flow-node:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.10); }
 .flow-node--selected { border-color: var(--nc, #007AFF) !important; box-shadow: 0 0 0 3px color-mix(in srgb, var(--nc, #007AFF) 20%, transparent); }
+.flow-node--dragging { cursor: grabbing; box-shadow: var(--shadow-float, 0 8px 32px rgba(0,0,0,0.16)) !important; opacity: 0.92; z-index: 100; }
 
 .fn-header {
   display: flex;
@@ -544,4 +726,152 @@ const selectedNodeData = computed(() =>
 }
 .badge-sm--active { background: rgba(52,199,89,0.12); color: #1a7f37; }
 .badge-sm--persisted { background: rgba(0,122,255,0.12); color: #007AFF; }
+
+/* ── WebSocket status ───────────────────── */
+.ws-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2, #86868B);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.04);
+}
+
+.ws-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FF3B30;
+}
+
+.ws-status--connected .ws-dot { background: #34C759; }
+
+.btn-jobs {
+  color: #007AFF;
+  background: rgba(0,122,255,0.08);
+  border-color: rgba(0,122,255,0.2);
+}
+.btn-jobs:hover { background: rgba(0,122,255,0.12); }
+
+/* ── Jobs panel ──────────────────────────── */
+.jobs-panel {
+  position: absolute;
+  bottom: 80px;
+  right: 20px;
+  width: 320px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #E5E5E7);
+  border-radius: 12px;
+  box-shadow: var(--shadow-float, 0 8px 32px rgba(0,0,0,0.16));
+  overflow: hidden;
+  z-index: 100;
+}
+
+.jobs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border, #E5E5E7);
+  background: rgba(0,0,0,0.02);
+}
+
+.jobs-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #1D1D1F);
+}
+
+.jobs-close {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.06);
+  border: none;
+  font-size: 10px;
+  color: var(--text-2, #86868B);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jobs-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.job-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border, #E5E5E7);
+}
+.job-item:last-child { border-bottom: none; }
+
+.job-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.job-filename {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #1D1D1F);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-message {
+  font-size: 11px;
+  color: var(--text-2, #86868B);
+}
+
+.job-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #007AFF;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-2, #86868B);
+  min-width: 28px;
+  text-align: right;
+}
+
+.job-status {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+.job-status--pending { background: rgba(255,149,0,0.12); color: #FF9500; }
+.job-status--processing { background: rgba(0,122,255,0.12); color: #007AFF; }
+.job-status--done { background: rgba(52,199,89,0.12); color: #1a7f37; }
+.job-status--failed { background: rgba(255,59,48,0.12); color: #FF3B30; }
 </style>

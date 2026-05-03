@@ -76,11 +76,12 @@
             <span class="search-placeholder">Search everything…</span>
             <kbd>⌘K</kbd>
           </div>
-          <button class="icon-btn" aria-label="Notifications">
+          <button class="icon-btn notification-btn" :class="{ 'has-unread': unreadCount > 0 }" aria-label="Notifications" @click="showNotifications">
             <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M10 2a6 6 0 0 0-6 6v3l-1.5 2.5h15L16 11V8a6 6 0 0 0-6-6z"/>
               <path d="M8.5 17.5a1.5 1.5 0 0 0 3 0"/>
             </svg>
+            <span v-if="unreadCount > 0" class="notification-badge">{{ unreadCount }}</span>
           </button>
           <div class="topbar-avatar">{{ userInitials }}</div>
         </div>
@@ -91,17 +92,62 @@
         <RouterView />
       </main>
     </div>
+
+    <!-- Notification drawer -->
+    <div v-if="showNotificationDrawer" class="notification-drawer" @click.self="showNotificationDrawer = false">
+      <div class="notification-panel">
+        <div class="notification-header">
+          <span class="notification-title">Notifications</span>
+          <div class="notification-actions">
+            <button class="action-btn" @click="markAllRead">Mark all read</button>
+            <button class="close-btn" @click="showNotificationDrawer = false">✕</button>
+          </div>
+        </div>
+        <div class="notification-list">
+          <div v-if="notifications.length === 0" class="notification-empty">
+            No notifications yet
+          </div>
+          <div
+            v-for="notif in notifications"
+            :key="notif.id"
+            class="notification-item"
+            :class="{ unread: !notif.read }"
+            @click="markAsRead(notif.id)"
+          >
+            <div class="notification-icon" :class="`icon--${notif.type}`">
+              <svg v-if="notif.type === 'success'" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 10l4 4 8-8"/>
+              </svg>
+              <svg v-else-if="notif.type === 'error'" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 6l8 8M14 6l-8 8"/>
+              </svg>
+              <svg v-else width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="10" cy="10" r="7"/>
+                <path d="M10 6v4l3 3"/>
+              </svg>
+            </div>
+            <div class="notification-content">
+              <span class="notification-item-title">{{ notif.title }}</span>
+              <span class="notification-message">{{ notif.message }}</span>
+              <span class="notification-time">{{ formatTime(notif.timestamp) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { WebSocketKey, type WebSocketService } from '../../services/websocket'
 
 const route  = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const wsService = inject<WebSocketService>(WebSocketKey)
 
 const bypassAuth = import.meta.env.VITE_BYPASS_AUTH === 'true'
 
@@ -128,9 +174,41 @@ const primaryRole = computed(() => {
   return 'Knowledge Curator'
 })
 
+const unreadCount = computed(() => wsService?.unreadCount.value ?? 0)
+const isConnected = computed(() => wsService?.isConnected.value ?? false)
+const notifications = computed(() => wsService?.notifications ?? [])
+
+const showNotificationDrawer = ref(false)
+
 async function handleLogout() {
   await authStore.logout()
   router.push('/login')
+}
+
+function showNotifications() {
+  showNotificationDrawer.value = true
+  wsService?.markAllAsRead()
+}
+
+function markAllRead() {
+  wsService?.markAllAsRead()
+}
+
+function markAsRead(id: string) {
+  wsService?.markAsRead(id)
+}
+
+function formatTime(date: Date): string {
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes}m ago`
+  if (hours < 24) return `${hours}h ago`
+  return `${days}d ago`
 }
 </script>
 
@@ -343,4 +421,174 @@ kbd {
 
 /* ── Main ────────────────────────────────── */
 .main { flex: 1; overflow: auto; }
+
+/* ── Notification button ────────────────── */
+.notification-btn {
+  position: relative;
+}
+
+.notification-btn.has-unread {
+  color: var(--primary);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: #FF3B30;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Notification drawer ────────────────── */
+.notification-drawer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.notification-panel {
+  width: 380px;
+  max-width: 100%;
+  height: 100%;
+  background: var(--surface);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.notification-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.action-btn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+.action-btn:hover { background: var(--primary-soft); }
+
+.close-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.06);
+  border: none;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+.close-btn:hover { background: rgba(0,0,0,0.1); }
+
+.notification-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.notification-empty {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 14px;
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+  margin-bottom: 4px;
+}
+.notification-item:hover { background: rgba(0,0,0,0.03); }
+.notification-item.unread { background: var(--primary-soft); }
+.notification-item.unread:hover { background: rgba(0,122,255,0.12); }
+
+.notification-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.notification-icon.icon--success { background: rgba(52,199,89,0.12); color: #1a7f37; }
+.notification-icon.icon--error { background: rgba(255,59,48,0.12); color: #FF3B30; }
+.notification-icon.icon--info { background: rgba(0,122,255,0.12); color: #007AFF; }
+.notification-icon.icon--warning { background: rgba(255,149,0,0.12); color: #FF9500; }
+
+.notification-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notification-item-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notification-message {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: var(--text-2);
+  opacity: 0.7;
+  margin-top: 4px;
+}
 </style>
