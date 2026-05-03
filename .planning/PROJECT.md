@@ -46,6 +46,7 @@ Cualquier usuario autenticado puede encontrar conocimiento relevante dentro de l
 - Proyecto nuevo (greenfield), sin código existente.
 - Keycloak disponible en `https://oauth2.qa.comsatel.com.pe` v26+, realm `Apps`, client_id `kmplatform`.
 - El frontend usará arquitectura **micro-frontend**: un shell central (host app) integra múltiples micro UIs independientes (Module Federation o similar).
+- El sistema de diseño está definido en `DESIGN.md` bajo el nombre **"Luminous Knowledge"**: estética Minimalismo + Glassmorfismo, inspiración Apple. Paleta: primary `#007AFF` / `#0058BC`, surface `#F5F5F7`, tipografía Inter 17px. Glassmorphism: `backdrop-filter: blur(20-30px)`, sombras difusas. Bordes redondeados (10px botones, 12-16px cards). Todas las micro UIs deben adherir a este design system.
 - Stack de embeddings arranca con ChromaDB y Gemini; el diseño debe permitir swap a Qdrant sin reescritura de servicios.
 - FastMCP (Model Context Protocol) permite a agentes AI externos (Claude, GPT, etc.) consultar la base de conocimiento como tool.
 - No hay escala definida aún — diseñar para escalar horizontalmente sin optimizaciones prematuras.
@@ -59,6 +60,7 @@ Cualquier usuario autenticado puede encontrar conocimiento relevante dentro de l
 - **Infra**: Docker Compose (MVP) → Kubernetes (producción)
 - **LLM**: Gemini como default; diseño debe soportar múltiples proveedores sin refactor mayor
 - **Micro-frontend**: Shell central + micro UIs independientes; cada micro UI es deployable por separado
+- **Design System**: `DESIGN.md` es la fuente de verdad para todos los componentes visuales; no se desvía sin modificar DESIGN.md primero
 
 ## Key Decisions
 
@@ -68,6 +70,7 @@ Cualquier usuario autenticado puede encontrar conocimiento relevante dentro de l
 | FAISS descartado en favor de ChromaDB | ChromaDB ofrece persistencia real y API más completa | — Pending |
 | FastMCP para integración AI | Estándar MCP emergente, compatible con Claude/GPT agents | — Pending |
 | Micro-frontend (shell + micro UIs) | Permite evolución y deploy independiente de cada sección UI | — Pending |
+| Design system "Luminous Knowledge" (DESIGN.md) | Minimalismo + Glassmorfismo define identidad visual unificada entre micro UIs | — Pending |
 | API Keys en PostgreSQL | Consistencia con almacenamiento relacional ya presente | — Pending |
 | BFF en NodeJS separado del Core API | Desacopla lógica de presentación de lógica de negocio; BFF maneja WebSocket | — Pending |
 | uv como gestor de paquetes Python | Velocidad y reproducibilidad superior a pip/poetry | — Pending |
