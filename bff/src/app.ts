@@ -5,8 +5,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { config } from './config';
 import { sessionMiddleware, validateSession, redisClient } from './middleware/session';
 import { initializeKeycloakClient, exchangeCodeForTokens } from './auth/keycloak';
+import { logger, requestLogger } from './utils/logger';
+import apiRouter from './routes/api';
 
 const app = express();
+
+// Request tracing middleware - must be first
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  (req as any).trace_id = uuidv4();
+  next();
+});
 
 // Security middleware
 app.use(helmet({
@@ -18,7 +26,8 @@ app.use(cors({
   origin: config.corsOrigins.length > 0 ? config.corsOrigins : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Trace-Id'],
+  exposedHeaders: ['X-Trace-Id'],
 }));
 
 // Body parsing
@@ -27,6 +36,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // Session middleware (Redis-backed)
 app.use(sessionMiddleware);
+
+// Request logging middleware
+app.use(requestLogger);
 
 // Health check endpoint
 app.get('/health', async (_req: Request, res: Response) => {
@@ -54,21 +66,24 @@ app.get('/auth/login', async (req: Request, res: Response) => {
       state,
     });
     
-    console.log(`Redirecting to Keycloak: ${authorizationUrl}`);
+    logger.info('Redirecting to Keycloak', { trace_id: (req as any).trace_id, state });
     res.redirect(authorizationUrl);
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error', { trace_id: (req as any).trace_id, error: (error as Error).message });
     res.status(500).json({ error: 'Authentication initialization failed' });
   }
 });
 
 app.get('/auth/callback', async (req: Request, res: Response) => {
+  const trace_id = (req as any).trace_id || 'unknown';
+  
   try {
     const { code, state } = req.query;
     const savedState = (req.session as any).oauthState;
     
     // Verify state to prevent CSRF
     if (!state || state !== savedState) {
+      logger.warn('Invalid OAuth state', { trace_id, state, savedState });
       res.status(400).json({ error: 'Invalid state parameter' });
       return;
     }
@@ -93,26 +108,30 @@ app.get('/auth/callback', async (req: Request, res: Response) => {
       refreshToken: tokens.refreshToken,
     };
     
-    console.log('User authenticated successfully');
+    logger.info('User authenticated successfully', { trace_id });
     
     // Redirect to frontend
     const redirectUrl = config.corsOrigins[0] || 'http://localhost:5173';
     res.redirect(`${redirectUrl}/auth/callback?success=true`);
   } catch (error) {
-    console.error('Callback error:', error);
+    logger.error('Callback error', { trace_id, error: (error as Error).message });
     const redirectUrl = config.corsOrigins[0] || 'http://localhost:5173';
     res.redirect(`${redirectUrl}/auth/callback?error=authentication_failed`);
   }
 });
 
 app.get('/auth/logout', async (req: Request, res: Response) => {
+  const trace_id = (req as any).trace_id || 'unknown';
+  
   try {
     // Destroy session
     req.session.destroy((err) => {
       if (err) {
-        console.error('Session destruction error:', err);
+        logger.error('Session destruction error', { trace_id, error: err.message });
       }
     });
+    
+    logger.info('User logged out', { trace_id });
     
     // Redirect to Keycloak logout
     const keycloakLogoutUrl = `${config.keycloak.url}/realms/${config.keycloak.realm}/protocol/openid-connect/logout`;
@@ -120,7 +139,7 @@ app.get('/auth/logout', async (req: Request, res: Response) => {
     
     res.redirect(`${keycloakLogoutUrl}?redirect_uri=${encodeURIComponent(redirectUrl)}`);
   } catch (error) {
-    console.error('Logout error:', error);
+    logger.error('Logout error', { trace_id, error: (error as Error).message });
     res.status(500).json({ error: 'Logout failed' });
   }
 });
@@ -144,14 +163,18 @@ app.get('/auth/session', validateSession, (req: Request, res: Response) => {
   });
 });
 
-// Protected API routes (will be implemented in Plan 05-02)
-app.use('/api', validateSession, (_req: Request, res: Response) => {
-  res.json({ message: 'API proxy routes will be implemented in Plan 05-02' });
-});
+// API routes - proxy to Core API with JWT injection
+app.use('/api', apiRouter);
 
 // Global error handler
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  console.error('Unhandled error:', err);
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
+  const trace_id = (req as any).trace_id || 'unknown';
+  
+  logger.error('Unhandled error', {
+    trace_id,
+    error: err.message,
+    stack: err.stack,
+  });
   
   // Don't leak error details in production
   const message = config.nodeEnv === 'production' 
@@ -160,6 +183,7 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   
   res.status(500).json({ 
     error: message,
+    trace_id,
     ...(config.nodeEnv !== 'production' && { stack: err.stack }),
   });
 });
@@ -173,15 +197,15 @@ app.use((_req: Request, res: Response) => {
 const PORT = config.port;
 
 app.listen(PORT, async () => {
-  console.log(`BFF server running on port ${PORT}`);
-  console.log(`Environment: ${config.nodeEnv}`);
+  logger.info(`BFF server running on port ${PORT}`);
+  logger.info(`Environment: ${config.nodeEnv}`);
   
   try {
     // Initialize Keycloak client on startup
     await initializeKeycloakClient();
-    console.log('Keycloak client ready');
+    logger.info('Keycloak client ready');
   } catch (error) {
-    console.error('Failed to initialize Keycloak client on startup:', error);
+    logger.error('Failed to initialize Keycloak client on startup', { error: (error as Error).message });
     // Don't exit - server can still serve health checks
   }
 });
