@@ -20,6 +20,7 @@ from pydantic import BaseModel
 
 from db.database import init_db, close_db
 from api import domains_router, api_keys_router, ingestion_router, search_router
+from mcp import get_mcp_app, MCPAuthMiddleware
 
 
 # Models
@@ -35,7 +36,7 @@ class Config:
     """Application configuration from environment."""
     ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
     VERSION = os.getenv("VERSION", "0.2.0")
-    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173").split(",")
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5100").split(",")
 
 
 # Lifecycle management
@@ -107,6 +108,11 @@ app.include_router(domains_router, prefix="/v1")
 app.include_router(api_keys_router, prefix="/v1")
 app.include_router(ingestion_router, prefix="/v1")
 app.include_router(search_router)
+
+# Mount MCP server as ASGI sub-app
+mcp_app = get_mcp_app()
+mcp_app.add_middleware(MCPAuthMiddleware)
+app.mount("/mcp", mcp_app)
 
 
 @app.get(
