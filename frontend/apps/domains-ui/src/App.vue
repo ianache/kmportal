@@ -35,8 +35,25 @@
         </div>
       </div>
 
+      <!-- Loading state -->
+      <div v-if="isLoading" class="domain-grid">
+        <div v-for="n in 4" :key="n" class="domain-card skeleton">
+          <div class="card-top">
+            <div class="domain-icon" style="background: #f0f0f0;"></div>
+            <div class="badge" style="background: #f0f0f0; color: transparent;">Status</div>
+          </div>
+          <div class="card-body">
+            <div style="height: 18px; background: #f0f0f0; border-radius: 4px; margin-bottom: 8px;"></div>
+            <div style="height: 36px; background: #f0f0f0; border-radius: 4px;"></div>
+          </div>
+          <div class="card-footer">
+            <div style="height: 16px; width: 80px; background: #f0f0f0; border-radius: 4px;"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Domain grid -->
-      <div class="domain-grid">
+      <div v-else class="domain-grid">
         <div
           v-for="d in filteredDomains"
           :key="d.id"
@@ -44,13 +61,13 @@
           @click="openDomain(d)"
         >
           <div class="card-top">
-            <div class="domain-icon" :style="{ background: d.color + '18', color: d.color }">
+            <div class="domain-icon" :style="{ background: '#007AFF18', color: '#007AFF' }">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
                 <path d="M10 2C5.6 2 2 5.6 2 10s3.6 8 8 8 8-3.6 8-8-3.6-8-8-8z"/>
                 <path d="M2 10h16M10 2a12 12 0 0 1 0 16M10 2a12 12 0 0 0 0 16"/>
               </svg>
             </div>
-            <span class="badge" :class="d.status === 'Active' ? 'badge--active' : 'badge--archived'">
+            <span class="badge" :class="d.status === 'active' ? 'badge--active' : 'badge--archived'">
               {{ d.status }}
             </span>
           </div>
@@ -63,9 +80,9 @@
               <svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6">
                 <path d="M4 4h12v2H4zM4 9h12v2H4zM4 14h8v2H4z"/>
               </svg>
-              {{ d.resources }} resources
+              {{ d.documentCount || 0 }} resources
             </span>
-            <span class="domain-updated">{{ d.updated }}</span>
+            <span class="domain-updated">{{ new Date(d.updatedAt).toLocaleDateString() }}</span>
           </div>
         </div>
 
@@ -185,7 +202,7 @@
             <h1 class="page-title">{{ activeDomain.name }}</h1>
             <p class="page-desc">{{ activeDomain.description }}</p>
           </div>
-          <span class="badge" :class="activeDomain.status === 'Active' ? 'badge--active' : 'badge--archived'">
+          <span class="badge" :class="activeDomain.status === 'active' ? 'badge--active' : 'badge--archived'">
             {{ activeDomain.status }}
           </span>
         </div>
@@ -193,20 +210,43 @@
 
       <div class="detail-stats">
         <div class="stat-card">
-          <span class="stat-value">{{ activeDomain.resources }}</span>
-          <span class="stat-label">Resources</span>
+          <span class="stat-value">{{ activeDomain.documentCount || 0 }}</span>
+          <span class="stat-label">Documents</span>
         </div>
         <div class="stat-card">
-          <span class="stat-value">24</span>
+          <span class="stat-value">{{ activeDomain.metadata?.nodes || 0 }}</span>
           <span class="stat-label">Nodes</span>
         </div>
         <div class="stat-card">
-          <span class="stat-value">8</span>
-          <span class="stat-label">Contributors</span>
+          <span class="stat-value">{{ activeDomain.ownerId || '—' }}</span>
+          <span class="stat-label">Owner</span>
         </div>
         <div class="stat-card">
-          <span class="stat-value">{{ activeDomain.updated }}</span>
+          <span class="stat-value">{{ new Date(activeDomain.updatedAt).toLocaleDateString() }}</span>
           <span class="stat-label">Last updated</span>
+        </div>
+      </div>
+
+      <!-- Document list -->
+      <div class="documents-section">
+        <h2 class="section-title">Documents</h2>
+        <div v-if="store.isLoadingDocuments" class="documents-loading">
+          <div v-for="n in 3" :key="n" class="doc-row skeleton">
+            <div style="height: 16px; width: 40%; background: #f0f0f0; border-radius: 4px;"></div>
+            <div style="height: 14px; width: 20%; background: #f0f0f0; border-radius: 4px;"></div>
+          </div>
+        </div>
+        <div v-else-if="store.documents.length === 0" class="documents-empty">
+          No documents in this domain yet.
+        </div>
+        <div v-else class="documents-list">
+          <div v-for="doc in store.documents" :key="doc.id" class="doc-row">
+            <div class="doc-info">
+              <span class="doc-title">{{ doc.title || doc.filename }}</span>
+              <span class="doc-meta">{{ doc.type }} • {{ doc.status }}</span>
+            </div>
+            <span class="doc-date">{{ new Date(doc.createdAt).toLocaleDateString() }}</span>
+          </div>
         </div>
       </div>
     </template>
@@ -215,24 +255,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useDomainsStore } from './stores/domains'
+import type { Domain } from './types'
 
 type View = 'explorer' | 'create' | 'detail'
 
-interface Domain {
-  id: number
-  name: string
-  description: string
-  status: 'Active' | 'Archived'
-  resources: number
-  updated: string
-  color: string
-}
-
+const store = useDomainsStore()
 const view = ref<View>('explorer')
 const activeFilter = ref('all')
 const searchQ = ref('')
-const activeDomain = ref<Domain | null>(null)
 
 const form = ref({
   name: '',
@@ -244,85 +276,46 @@ const form = ref({
 
 const filters = [
   { label: 'All', value: 'all' },
-  { label: 'Active', value: 'Active' },
-  { label: 'Archived', value: 'Archived' },
+  { label: 'Active', value: 'active' },
+  { label: 'Archived', value: 'archived' },
 ]
 
-const domains = ref<Domain[]>([
-  {
-    id: 1,
-    name: 'Artificial Intelligence',
-    description: 'Neural networks, machine learning models, and cognitive architectures.',
-    status: 'Active',
-    resources: 342,
-    updated: '2 h ago',
-    color: '#007AFF',
-  },
-  {
-    id: 2,
-    name: 'Architecture',
-    description: 'Modernist principles, sustainable materials, and urban planning theories.',
-    status: 'Archived',
-    resources: 128,
-    updated: '3 d ago',
-    color: '#86868B',
-  },
-  {
-    id: 3,
-    name: 'History',
-    description: 'Antiquity to Renaissance, focusing on socio-political transformations.',
-    status: 'Active',
-    resources: 894,
-    updated: '5 h ago',
-    color: '#FF9500',
-  },
-  {
-    id: 4,
-    name: 'Quantum Computing',
-    description: 'Quantum circuits, superposition, entanglement, and error correction.',
-    status: 'Active',
-    resources: 67,
-    updated: '1 d ago',
-    color: '#AF52DE',
-  },
-  {
-    id: 5,
-    name: 'Cognitive Models',
-    description: 'Theories of mind, decision-making frameworks, and behavioral patterns.',
-    status: 'Active',
-    resources: 213,
-    updated: '12 h ago',
-    color: '#34C759',
-  },
-])
-
 const filteredDomains = computed(() => {
-  return domains.value.filter((d) => {
+  return store.domains.filter((d) => {
     const matchFilter = activeFilter.value === 'all' || d.status === activeFilter.value
     const matchSearch = !searchQ.value || d.name.toLowerCase().includes(searchQ.value.toLowerCase())
     return matchFilter && matchSearch
   })
 })
 
+const activeDomain = computed(() => store.selectedDomain)
+const isLoading = computed(() => store.isLoading)
+
 function openDomain(d: Domain) {
-  activeDomain.value = d
+  store.selectDomain(d)
   view.value = 'detail'
 }
 
-function handleCreate() {
+async function handleCreate() {
   if (!form.value.name.trim()) return
-  domains.value.push({
-    id: Date.now(),
+  
+  const newDomain = await store.createDomain({
     name: form.value.name,
     description: form.value.description,
-    status: 'Active',
-    resources: 0,
-    updated: 'just now',
-    color: '#007AFF',
+    tags: form.value.tags.split(',').map(t => t.trim()).filter(Boolean),
+    status: form.value.status as 'active' | 'draft' | 'archived',
+    visibility: form.value.visibility as 'public' | 'private',
   })
-  form.value = { name: '', description: '', tags: '', status: 'draft', visibility: 'private' }
-  view.value = 'explorer'
+  
+  if (newDomain) {
+    form.value = { name: '', description: '', tags: '', status: 'draft', visibility: 'private' }
+    view.value = 'explorer'
+  }
 }
+
+onMounted(() => {
+  store.loadDomains()
+})
 </script>
 
 <style scoped>
@@ -680,5 +673,90 @@ function handleCreate() {
   font-weight: 500;
   color: var(--text-2, #86868B);
   letter-spacing: 0.02em;
+}
+
+/* ── Documents section ──────────────────── */
+.documents-section {
+  margin-top: 32px;
+}
+
+.documents-section .section-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2, #86868B);
+  margin-bottom: 16px;
+}
+
+.documents-list {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #E5E5E7);
+  border-radius: var(--radius, 12px);
+  overflow: hidden;
+}
+
+.doc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border, #E5E5E7);
+}
+.doc-row:last-child { border-bottom: none; }
+.doc-row:hover { background: rgba(0,0,0,0.02); }
+
+.doc-row.skeleton {
+  background: #f5f5f5;
+  pointer-events: none;
+}
+
+.doc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text, #1D1D1F);
+}
+
+.doc-meta {
+  font-size: 12px;
+  color: var(--text-2, #86868B);
+}
+
+.doc-date {
+  font-size: 12px;
+  color: var(--text-2, #86868B);
+}
+
+.documents-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-2, #86868B);
+  font-size: 14px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #E5E5E7);
+  border-radius: var(--radius, 12px);
+}
+
+.documents-loading {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #E5E5E7);
+  border-radius: var(--radius, 12px);
+  overflow: hidden;
+}
+
+/* ── Skeleton states ────────────────────── */
+.skeleton {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 </style>
