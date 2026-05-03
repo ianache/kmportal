@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-05-02)
 ## Current Position
 
 Phase: 5 of 10 (BFF layer)
-Plan: 2 of 3 completed (Plan 05-02)
-Status: In Progress
-Last activity: 2026-05-03 — Plan 05-02 completed: Core API proxy with JWT forwarding, structured logging
+Plan: 3 of 3 completed (Plan 05-03)
+Status: Complete
+Last activity: 2026-05-03 — Plan 05-03 completed: WebSocket events, Redis caching, pub/sub integration
 
 ### Phase 5 Progress
 
@@ -20,9 +20,9 @@ Last activity: 2026-05-03 — Plan 05-02 completed: Core API proxy with JWT forw
 |------|--------|-------|
 | Plan 05-01: BFF Foundation + OAuth2 Proxy | ✅ Complete | Express, TypeScript, Keycloak OAuth2, Redis sessions |
 | Plan 05-02: Core API Proxy + REST Exposure | ✅ Complete | http-proxy-middleware, JWT Bearer injection, Winston logging |
-| Plan 05-03: WebSocket Events + Redis Caching | ⏳ Next | Socket.IO, ingestion events, cache layer |
+| Plan 05-03: WebSocket Events + Redis Caching | ✅ Complete | Socket.IO, Redis pub/sub, caching, invalidation |
 
-Progress: [██████░░░░] 66%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -71,8 +71,8 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-05-03
-Stopped at: Plan 05-02 completed - Core API proxy with JWT forwarding, Winston structured logging
-Resume file: .planning/phases/05-bff-layer/05-02-SUMMARY.md
+Stopped at: Phase 5 COMPLETE - BFF layer with WebSocket, caching, pub/sub
+Resume file: .planning/phases/05-bff-layer/05-03-SUMMARY.md
 
 ### Phase 5 Plans
 
@@ -80,4 +80,4 @@ Resume file: .planning/phases/05-bff-layer/05-02-SUMMARY.md
 |------|-------------|--------|
 | 05-01 | BFF Foundation + OAuth2 Proxy | ✅ COMPLETE |
 | 05-02 | Core API Proxy + REST Exposure | ✅ COMPLETE |
-| 05-03 | WebSocket Events + Redis Caching | ⏳ Next |
+| 05-03 | WebSocket Events + Redis Caching | ✅ COMPLETE |

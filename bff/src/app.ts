@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,6 +8,10 @@ import { sessionMiddleware, validateSession, redisClient } from './middleware/se
 import { initializeKeycloakClient, exchangeCodeForTokens } from './auth/keycloak';
 import { logger, requestLogger } from './utils/logger';
 import apiRouter from './routes/api';
+import { initializeWebSocket, getWebSocketHealth, shutdownWebSocket } from './websocket/server';
+import { initializePubSub, getPubSubHealth, shutdownPubSub } from './events/pubsub';
+import { initializeIngestionHandlers } from './websocket/handlers/ingestion';
+import { getCacheMetrics } from './cache/redis-cache';
 
 const app = express();
 
@@ -43,12 +48,22 @@ app.use(requestLogger);
 // Health check endpoint
 app.get('/health', async (_req: Request, res: Response) => {
   const redisHealthy = redisClient.status === 'ready' || redisClient.status === 'connecting';
+  const pubsubHealth = getPubSubHealth();
+  const wsHealth = getWebSocketHealth();
+  const cacheMetrics = getCacheMetrics();
   
   res.json({
     service: 'bff',
     status: 'healthy',
     timestamp: new Date().toISOString(),
     redis: redisHealthy ? 'connected' : 'disconnected',
+    pubsub: pubsubHealth,
+    websocket: wsHealth,
+    cache: {
+      hitRate: `${cacheMetrics.hitRate}%`,
+      hits: cacheMetrics.hits,
+      misses: cacheMetrics.misses,
+    },
   });
 });
 
@@ -193,21 +208,72 @@ app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Not found' });
 });
 
+// Create HTTP server
+const httpServer = createServer(app);
+
 // Start server
 const PORT = config.port;
 
-app.listen(PORT, async () => {
+httpServer.listen(PORT, async () => {
   logger.info(`BFF server running on port ${PORT}`);
   logger.info(`Environment: ${config.nodeEnv}`);
   
   try {
-    // Initialize Keycloak client on startup
+    // Initialize Keycloak client
     await initializeKeycloakClient();
     logger.info('Keycloak client ready');
+    
+    // Initialize Redis pub/sub
+    await initializePubSub();
+    logger.info('Redis pub/sub initialized');
+    
+    // Initialize WebSocket server
+    initializeWebSocket(httpServer);
+    logger.info('WebSocket server initialized');
+    
+    // Initialize ingestion event handlers
+    await initializeIngestionHandlers();
+    logger.info('Ingestion event handlers initialized');
+    
+    logger.info('All services initialized successfully');
   } catch (error) {
-    logger.error('Failed to initialize Keycloak client on startup', { error: (error as Error).message });
+    logger.error('Failed to initialize services on startup', { error: (error as Error).message });
     // Don't exit - server can still serve health checks
   }
 });
 
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM received, shutting down gracefully...');
+  
+  // Close HTTP server
+  httpServer.close(() => {
+    logger.info('HTTP server closed');
+  });
+  
+  // Shutdown WebSocket
+  await shutdownWebSocket();
+  
+  // Shutdown pub/sub
+  await shutdownPubSub();
+  
+  logger.info('Shutdown complete');
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  logger.info('SIGINT received, shutting down gracefully...');
+  
+  httpServer.close(() => {
+    logger.info('HTTP server closed');
+  });
+  
+  await shutdownWebSocket();
+  await shutdownPubSub();
+  
+  logger.info('Shutdown complete');
+  process.exit(0);
+});
+
 export default app;
+export { httpServer };

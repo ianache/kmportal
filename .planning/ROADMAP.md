@@ -160,7 +160,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Core API foundation | ✅ | Complete | 2026-05-03 |
 | 3. Document ingestion pipeline | ✅ | Complete (70%) | 2026-05-03 |
 | 4. Search engine | ✅ | Complete | 2026-05-03 |
-| 5. BFF layer | 0/TBD | Not started | - |
+| 5. BFF layer | ✅ | Complete | 2026-05-03 |
 | 6. Frontend shell | 0/TBD | Not started | - |
 | 7. Core micro UIs | 0/TBD | Not started | - |
 | 8. Admin and API keys | 0/TBD | Not started | - |
