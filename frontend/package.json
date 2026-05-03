@@ -1,0 +1,12 @@
+{
+  "name": "knowledge-management-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter shell dev",
+    "dev:all": "concurrently \"pnpm --filter shell dev\" \"pnpm --filter domains-ui dev\" \"pnpm --filter search-ui dev\" \"pnpm --filter ingestion-ui dev\" \"pnpm --filter admin-ui dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
