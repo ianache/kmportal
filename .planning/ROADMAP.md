@@ -117,7 +117,13 @@ Plans:
   3. Admin views the Ingestion Status micro UI and sees active jobs updating in real time via WebSocket — no manual refresh required
   4. A toast or notification indicator in the shell updates when an ingestion job completes or fails, driven by WebSocket events
   5. Each micro UI loads as an independent Module Federation remote and renders correctly within the shell's layout
-**Plans**: TBD
+**Plans**: 4 plans (2 waves)
+
+Plans:
+- [ ] 07-01-PLAN.md — Search Micro UI (REST API integration, highlighted results, relevance scores, filters)
+- [ ] 07-02-PLAN.md — Domain Explorer Micro UI (domain list with counts, document browsing, metadata)
+- [ ] 07-03-PLAN.md — Ingestion Status Micro UI (WebSocket real-time updates, job progress, file upload)
+- [ ] 07-04-PLAN.md — Shell Notifications (WebSocket integration, toast notifications, notification bell)
 **UI hint**: yes
 
 ### Phase 8: Admin and API keys
