@@ -83,7 +83,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. A running ingestion job emits WebSocket events (`pending`, `processing`, `done`, `failed`) to connected browser clients without polling
   3. BFF forwards `Authorization: Bearer` to every Core API call; requests without a valid session return 401 from the BFF before reaching the Core API
   4. A repeated search request within the cache TTL returns the cached response from Redis; cache is invalidated when relevant data changes
-**Plans**: TBD
+**Plans**: 3 plans (2 waves)
+
+Plans:
+- [ ] 05-01-PLAN.md — BFF Foundation + OAuth2 Proxy (Express/TypeScript, Keycloak OAuth2, HttpOnly session cookies, Redis sessions)
+- [ ] 05-02-PLAN.md — Core API Proxy + REST Exposure (Proxy to FastAPI, JWT forwarding, structured logging)
+- [ ] 05-03-PLAN.md — WebSocket Events + Redis Caching (Real-time ingestion events, Redis pub/sub, response caching)
 
 ### Phase 6: Frontend shell
 **Goal**: The Module Federation host app loads in the browser, handles auth state, renders the global layout adhering to the Luminous Knowledge design system, and is ready to mount micro UIs
