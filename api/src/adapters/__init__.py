@@ -1,1 +1,81 @@
-"""Adapters package - Concrete implementations of ports."""
+"""Adapters package - Concrete implementations of ports.
+
+This module provides factory functions to get instances of the adapters.
+All adapters implement their respective Port interfaces, allowing for
+easy swapping of implementations without changing business logic.
+"""
+
+import os
+from typing import Optional
+
+# Lazy imports to avoid circular dependencies
+
+
+async def get_vector_store_adapter(
+    host: Optional[str] = None,
+    port: Optional[int] = None
+) -> "VectorStorePort":
+    """
+    Factory function to get the configured vector store adapter.
+    
+    Currently returns ChromaDBAdapter. In v2, this can be configured
+    to return QdrantAdapter based on environment settings.
+    
+    Args:
+        host: ChromaDB host (defaults to CHROMA_HOST env var or localhost)
+        port: ChromaDB port (defaults to CHROMA_PORT env var or 8000)
+    
+    Returns:
+        Configured VectorStorePort instance
+    
+    Example:
+        adapter = await get_vector_store_adapter()
+        await adapter.create_collection("domain-123", dimension=768)
+    """
+    from adapters.vector_store.chroma_db import ChromaDBAdapter
+    
+    host = host or os.getenv("CHROMA_HOST", "localhost")
+    port = port or int(os.getenv("CHROMA_PORT", "8000"))
+    
+    return ChromaDBAdapter(host=host, port=port)
+
+
+async def get_embedding_adapter(
+    api_key: Optional[str] = None,
+    model: Optional[str] = None
+) -> "EmbeddingPort":
+    """
+    Factory function to get the configured embedding adapter.
+    
+    Currently returns GeminiAdapter. In v2, this can be configured
+    to use OpenAIAdapter or OllamaAdapter based on settings.
+    
+    Args:
+        api_key: API key for the embedding service (defaults to GEMINI_API_KEY env var)
+        model: Model name (defaults to GEMINI_EMBEDDING_MODEL env var or text-embedding-004)
+    
+    Returns:
+        Configured EmbeddingPort instance
+    
+    Example:
+        adapter = await get_embedding_adapter()
+        embeddings = await adapter.embed(["text to embed"])
+    """
+    from adapters.embedding.gemini import GeminiAdapter
+    
+    api_key = api_key or os.getenv("GEMINI_API_KEY")
+    model = model or os.getenv("GEMINI_EMBEDDING_MODEL", "text-embedding-004")
+    
+    if not api_key:
+        raise ValueError(
+            "Gemini API key is required. Set GEMINI_API_KEY environment variable."
+        )
+    
+    return GeminiAdapter(api_key=api_key, model=model)
+
+
+# Type imports for type hints
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ports.vector_store import VectorStorePort
+    from ports.embedding import EmbeddingPort
