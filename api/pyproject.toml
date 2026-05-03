@@ -62,7 +62,7 @@ dev = [
 ]
 
 [project.scripts]
-knowledge-api = "main:main"
+knowledge-api = "start:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -70,17 +70,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
-
-[tool.uv]
-dev-dependencies = [
-    "pytest>=8.3.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-cov>=6.0.0",
-    "httpx>=0.27.0",
-    "mypy>=1.13.0",
-    "ruff>=0.8.0",
-    "pre-commit>=4.0.0",
-]
 
 [tool.ruff]
 target-version = "py313"
