@@ -25,7 +25,7 @@ from api import (
     domains_router, api_keys_router, ingestion_router, 
     search_router, health_router
 )
-from mcp import get_mcp_app, MCPAuthMiddleware
+from mcp_server import get_mcp_app, MCPAuthMiddleware
 from core.logging_config import configure_logging, get_logger
 from core.logging_middleware import LoggingMiddleware
 
