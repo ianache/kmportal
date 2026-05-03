@@ -5,28 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Any authenticated user can find relevant knowledge within authorized domains in seconds, using semantic or hybrid search over indexed documents
-**Current focus:** Phase 1 — Bootstrap infrastructure
+**Current focus:** Phase 5 — BFF layer
 
 ## Current Position
 
-Phase: 1 of 10 (Bootstrap infrastructure)
-Plan: 6 of 6 completed
+Phase: 5 of 10 (BFF layer)
+Plan: 1 of 3 completed (Plan 05-01)
 Status: In Progress
-Last activity: 2026-05-02 — Phase 1 infrastructure scaffolded, abstractions defined
+Last activity: 2026-05-03 — Plan 05-01 completed: BFF foundation with Express, Keycloak OAuth2, Redis sessions
 
-### Phase 1 Progress
+### Phase 5 Progress
 
-| Task | Status | Notes |
+| Plan | Status | Notes |
 |------|--------|-------|
-| Monorepo structure | ✅ Complete | api/, ingestion/, bff/, frontend/, shared/ |
-| Docker Compose | ✅ Complete | 6 services: postgres, mongodb, chromadb, redis, kafka, rabbitmq |
-| VectorStorePort | ✅ Complete | Abstract interface in api/src/ports/ |
-| EmbeddingPort | ✅ Complete | Abstract interface in api/src/ports/ |
-| Environment config | ✅ Complete | .env.example with all variables |
-| Health endpoints | ✅ Complete | FastAPI /health endpoint ready |
-| Documentation | ✅ Complete | README.md, api/README.md, DESIGN.md |
+| Plan 05-01: BFF Foundation + OAuth2 Proxy | ✅ Complete | Express, TypeScript, Keycloak OAuth2, Redis sessions |
+| Plan 05-02: Core API Proxy + REST Exposure | ⏳ Pending | Proxy middleware, Bearer injection |
+| Plan 05-03: WebSocket Events + Redis Caching | ⏳ Pending | Socket.IO, ingestion events, cache layer |
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -74,6 +70,14 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-02
-Stopped at: Phase 1 infrastructure scaffolded - Docker Compose, Ports & Adapters, monorepo structure complete
-Resume file: .planning/phases/01-bootstrap-infrastructure/01-SUMMARY.md
+Last session: 2026-05-03
+Stopped at: Plan 05-01 completed - BFF foundation with Express, Keycloak OAuth2, Redis sessions
+Resume file: .planning/phases/05-bff-layer/05-01-SUMMARY.md
+
+### Phase 5 Plans
+
+| Plan | Description | Status |
+|------|-------------|--------|
+| 05-01 | BFF Foundation + OAuth2 Proxy | ✅ COMPLETE |
+| 05-02 | Core API Proxy + REST Exposure | ⏳ Next |
+| 05-03 | WebSocket Events + Redis Caching | ⏳ Pending |
