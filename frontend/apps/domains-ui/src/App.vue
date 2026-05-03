@@ -314,7 +314,7 @@ async function handleCreate() {
 }
 
 onMounted(() => {
-  store.loadDomains()
+  store.fetchDomains()
 })
 </script>
 
