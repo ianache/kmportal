@@ -18,6 +18,15 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    port: 5101,
+    strictPort: true,
+    origin: 'http://localhost:5101',
+  },
+  preview: {
+    port: 5101,
+    strictPort: true,
+  },
   build: {
     target: 'esnext'
   }

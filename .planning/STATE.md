@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Any authenticated user can find relevant knowledge within authorized domains in seconds, using semantic or hybrid search over indexed documents
-**Current focus:** Phase 5 — BFF layer
+**Current focus:** Phase 6 — Frontend Shell
 
 ## Current Position
 
-Phase: 5 of 10 (BFF layer)
-Plan: 3 of 3 completed (Plan 05-03)
+Phase: 6 of 10 (Frontend Shell)
+Plan: 3 of 3 completed (06-01, 06-02, 06-03)
 Status: Complete
-Last activity: 2026-05-03 — Plan 05-03 completed: WebSocket events, Redis caching, pub/sub integration
+Last activity: 2026-05-03 — Phase 6 completed: Shell with auth, design system, Module Federation
 
-### Phase 5 Progress
+### Phase 6 Progress
 
 | Plan | Status | Notes |
 |------|--------|-------|
-| Plan 05-01: BFF Foundation + OAuth2 Proxy | ✅ Complete | Express, TypeScript, Keycloak OAuth2, Redis sessions |
-| Plan 05-02: Core API Proxy + REST Exposure | ✅ Complete | http-proxy-middleware, JWT Bearer injection, Winston logging |
-| Plan 05-03: WebSocket Events + Redis Caching | ✅ Complete | Socket.IO, Redis pub/sub, caching, invalidation |
+| Plan 06-01: Auth State Management + BFF Integration | ✅ Complete | Pinia store, BFF client, auth guards, views |
+| Plan 06-02: Design System + Global Layout | ✅ Complete | Design tokens, UI components, ShellLayout |
+| Plan 06-03: Module Federation Integration | ✅ Complete | Singleton config, all micro-UIs connected |
 
 Progress: [██████████] 100%
 
@@ -71,13 +71,13 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-05-03
-Stopped at: Phase 5 COMPLETE - BFF layer with WebSocket, caching, pub/sub
-Resume file: .planning/phases/05-bff-layer/05-03-SUMMARY.md
+Stopped at: Phase 6 COMPLETE - Frontend Shell with auth, design system, Module Federation
+Resume file: .planning/phases/06-frontend-shell/06-SUMMARY.md
 
-### Phase 5 Plans
+### Phase 6 Plans
 
 | Plan | Description | Status |
 |------|-------------|--------|
-| 05-01 | BFF Foundation + OAuth2 Proxy | ✅ COMPLETE |
-| 05-02 | Core API Proxy + REST Exposure | ✅ COMPLETE |
-| 05-03 | WebSocket Events + Redis Caching | ✅ COMPLETE |
+| 06-01 | Auth State Management + BFF Integration | ✅ COMPLETE |
+| 06-02 | Design System + Global Layout | ✅ COMPLETE |
+| 06-03 | Module Federation Integration | ✅ COMPLETE |

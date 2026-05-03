@@ -11,7 +11,11 @@
       "PowerShell(cmd /c \"dir /a \"\"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\"\"\")",
       "PowerShell(cmd /c \"dir /a /s \"\"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\\\\.planning\"\"\")",
       "PowerShell(New-Item *)",
-      "PowerShell(cmd /c \"dir \"\"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\\\\.planning\\\\research\\\\STACK.md\"\"\")"
+      "PowerShell(cmd /c \"dir \"\"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\\\\.planning\\\\research\\\\STACK.md\"\"\")",
+      "Bash(npm --version)",
+      "mcp__stitch__list_projects",
+      "mcp__stitch__list_screens",
+      "mcp__stitch__get_screen"
     ]
   }
 }
