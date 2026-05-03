@@ -97,9 +97,14 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Shell loads at the configured URL; authenticated user sees the global nav, sidebar, and layout; unauthenticated user is redirected to Keycloak login
   2. Shell renders correctly on desktop (1440px) and tablet (768px) breakpoints with no horizontal scroll or overflow
-  3. All design tokens from DESIGN.md are applied — primary `#007AFF`, background `#F5F5F7`, Inter typeface, glassmorphism headers and sidebars, 10px button radius, 12-16px card radius
+  3. All design tokens from DESIGN.md are applied — primary `#0058bc`, background `#f9f9ff`, Inter typeface, glassmorphism headers and sidebars, 10px button radius, 12-16px card radius
   4. Vue, Pinia, and Vue Router are declared as `singleton: true` in the Module Federation config and verified to produce a single shared instance across host and remotes
-**Plans**: TBD
+**Plans**: 3 plans (2 waves)
+
+Plans:
+- [ ] 06-01-PLAN.md — Auth State Management + BFF Integration (Pinia auth store, session API, guards, login/logout flow)
+- [ ] 06-02-PLAN.md — Design System + Global Layout (CSS design tokens, glassmorphism header/sidebar, responsive breakpoints)
+- [ ] 06-03-PLAN.md — Module Federation Shell Integration (singleton verification, remote loading, error boundaries)
 **UI hint**: yes
 
 ### Phase 7: Core micro UIs
@@ -161,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Document ingestion pipeline | ✅ | Complete (70%) | 2026-05-03 |
 | 4. Search engine | ✅ | Complete | 2026-05-03 |
 | 5. BFF layer | ✅ | Complete | 2026-05-03 |
-| 6. Frontend shell | 0/TBD | Not started | - |
+| 6. Frontend shell | 0/3 | Planned | - |
 | 7. Core micro UIs | 0/TBD | Not started | - |
 | 8. Admin and API keys | 0/TBD | Not started | - |
 | 9. MCP integration | 0/TBD | Not started | - |
