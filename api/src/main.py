@@ -12,31 +12,49 @@ Endpoints:
 """
 
 import os
+import time
 from contextlib import asynccontextmanager
+from datetime import datetime
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from fastapi.middleware.gzip import GZipMiddleware
 
 from db.database import init_db, close_db
-from api import domains_router, api_keys_router, ingestion_router, search_router
+from api import (
+    domains_router, api_keys_router, ingestion_router, 
+    search_router, health_router
+)
 from mcp import get_mcp_app, MCPAuthMiddleware
+from core.logging_config import configure_logging, get_logger
+from core.logging_middleware import LoggingMiddleware
 
+# Initialize logger
+logger = get_logger(__name__)
 
-# Models
-class HealthResponse(BaseModel):
-    """Health check response model."""
-    service: str
-    status: str
-    version: str
-    environment: str
+# Track application start time
+_start_time = time.time()
 
 
 class Config:
     """Application configuration from environment."""
     ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
     VERSION = os.getenv("VERSION", "0.2.0")
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    JSON_LOGS = os.getenv("JSON_LOGS", "false").lower() == "true"
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5100").split(",")
+    
+    @classmethod
+    def is_production(cls) -> bool:
+        """Check if running in production environment."""
+        return cls.ENVIRONMENT == "production"
+
+
+# Configure structured logging on module load
+configure_logging(
+    log_level=Config.LOG_LEVEL,
+    json_format=Config.JSON_LOGS or Config.is_production()
+)
 
 
 # Lifecycle management
@@ -50,22 +68,37 @@ async def lifespan(app: FastAPI):
     - Shutdown: Close connections gracefully
     """
     # Startup
-    print(f"🚀 Starting Knowledge Management API v{Config.VERSION}")
-    print(f"   Environment: {Config.ENVIRONMENT}")
+    logger.info(
+        "application_startup",
+        version=Config.VERSION,
+        environment=Config.ENVIRONMENT,
+        log_level=Config.LOG_LEVEL,
+        structured_logging=Config.JSON_LOGS or Config.is_production()
+    )
     
-    # Initialize database
-    print("   Initializing database...")
-    await init_db()
-    print("   ✅ Database initialized")
-    
-    # TODO: Verify vector store connectivity
-    # TODO: Verify embedding provider connectivity
+    try:
+        # Initialize database
+        logger.info("database_initialization_start")
+        await init_db()
+        logger.info("database_initialization_complete")
+        
+        # Calculate startup time
+        startup_time = time.time() - _start_time
+        logger.info("application_startup_complete", startup_time_ms=round(startup_time * 1000, 2))
+        
+    except Exception as e:
+        logger.error("application_startup_failed", error=str(e), error_type=type(e).__name__)
+        raise
     
     yield
     
     # Shutdown
-    print("🛑 Shutting down API")
-    await close_db()
+    logger.info("application_shutdown_start")
+    try:
+        await close_db()
+        logger.info("application_shutdown_complete")
+    except Exception as e:
+        logger.error("application_shutdown_error", error=str(e))
 
 
 # Create FastAPI app
@@ -86,6 +119,14 @@ app = FastAPI(
     
     - Web users: OAuth2/OIDC via Keycloak (JWT Bearer token)
     - API clients: API Key in X-API-Key header
+    
+    ## Health Endpoints
+    
+    - `GET /health` - Basic health check
+    - `GET /health/detailed` - Comprehensive health check
+    - `GET /health/ready` - Kubernetes readiness probe
+    - `GET /health/live` - Kubernetes liveness probe
+    - `GET /metrics` - Prometheus metrics
     """,
     version=Config.VERSION,
     docs_url="/docs",
@@ -94,7 +135,12 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware
+# Add middleware (order matters - first added is first processed)
+
+# 1. GZip compression for responses
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# 2. CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=Config.CORS_ORIGINS,
@@ -103,42 +149,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 3. Request logging middleware (must be after CORS to log all requests)
+app.add_middleware(LoggingMiddleware)
+
 # Include routers
 app.include_router(domains_router, prefix="/v1")
 app.include_router(api_keys_router, prefix="/v1")
 app.include_router(ingestion_router, prefix="/v1")
 app.include_router(search_router)
+app.include_router(health_router)
 
 # Mount MCP server as ASGI sub-app
 mcp_app = get_mcp_app()
 mcp_app.add_middleware(MCPAuthMiddleware)
 app.mount("/mcp", mcp_app)
-
-
-@app.get(
-    "/health",
-    response_model=HealthResponse,
-    status_code=status.HTTP_200_OK,
-    tags=["Health"],
-    summary="Health check endpoint",
-    description="Returns service health status. Used by Docker and Kubernetes for health probes."
-)
-async def health_check() -> HealthResponse:
-    """
-    Health check endpoint.
-    
-    Returns basic health information about the service.
-    In Phase 2, this checks database connectivity.
-    
-    Returns:
-        HealthResponse with service status
-    """
-    return HealthResponse(
-        service="knowledge-api",
-        status="healthy",
-        version=Config.VERSION,
-        environment=Config.ENVIRONMENT
-    )
 
 
 @app.get(
@@ -152,8 +176,21 @@ async def root():
     return {
         "message": "Knowledge Management Center API",
         "version": Config.VERSION,
+        "environment": Config.ENVIRONMENT,
         "docs": "/docs",
-        "health": "/health"
+        "health": "/health",
+        "metrics": "/metrics"
+    }
+
+
+@app.get("/version", tags=["System"])
+async def version():
+    """Get API version information."""
+    return {
+        "version": Config.VERSION,
+        "environment": Config.ENVIRONMENT,
+        "timestamp": datetime.utcnow().isoformat(),
+        "uptime_seconds": int(time.time() - _start_time)
     }
 
 
@@ -163,5 +200,6 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=8000,
-        reload=Config.ENVIRONMENT == "development"
+        reload=Config.ENVIRONMENT == "development",
+        access_log=False  # We use structured logging instead
     )
