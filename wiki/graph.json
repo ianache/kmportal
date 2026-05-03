@@ -1,0 +1,199 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "concept",
+      "description": "A personal knowledge management tool/system designed to organize, search, and process information intelligently.",
+      "id": "Knowledge Management Center"
+    },
+    {
+      "type": "concept",
+      "description": "The core system for structuring and maintaining a knowledge repository, configured via `.llmwikidoc.toml`.",
+      "id": "llmwikidoc"
+    },
+    {
+      "type": "concept",
+      "description": "The specific LLM model configured to be used by the `llmwikidoc` system.",
+      "id": "gemini-2.5-flash"
+    },
+    {
+      "type": "concept",
+      "description": "The root directory where the knowledge base information is organized, including concepts, entities, and summaries.",
+      "id": "wiki/"
+    },
+    {
+      "type": "concept",
+      "description": "A feature within `llmwikidoc` that manages the reliability score of information with mechanisms for reinforcement, contradiction penalties, and decay over time.",
+      "id": "Confidence System"
+    },
+    {
+      "type": "concept",
+      "description": "An advanced search mechanism combining lexical (BM25), semantic (Vectors), and graph-based approaches for information retrieval.",
+      "id": "Hybrid Search System"
+    },
+    {
+      "type": "concept",
+      "description": "An AI assistant (claude.ai/code) provided with specific working rules for interacting with this project repository.",
+      "id": "Claude Code"
+    },
+    {
+      "type": "concept",
+      "description": "The planned functionality for bringing knowledge into the system from various sources like folders, S3, async REST APIs, Kafka, and RabbitMQ.",
+      "id": "Knowledge Ingestion"
+    },
+    {
+      "type": "concept",
+      "description": "The planned user interface for the 'Knowledge Management Center', to be built using Vue and Pinia.",
+      "id": "Web Interface"
+    },
+    {
+      "type": "concept",
+      "description": "A planned NodeJS component acting as an API Rest and Websocket server, bridging the web interface and Python APIs, integrated with Keycloak for security.",
+      "id": "BFF (Backend For Frontend)"
+    },
+    {
+      "type": "concept",
+      "description": "Planned backend services developed with Python 1.13+, using uv, FastAPI, and FastMCP, exposing functionalities to the BFF.",
+      "id": "Python APIs"
+    },
+    {
+      "type": "concept",
+      "description": "An external identity and access management solution planned for security integration with the BFF.",
+      "id": "Keycloak"
+    },
+    {
+      "type": "concept",
+      "description": "A lexical search algorithm used as a component of the Hybrid Search System.",
+      "id": "BM25"
+    },
+    {
+      "type": "concept",
+      "description": "A semantic search method based on vector embeddings, used as a component of the Hybrid Search System.",
+      "id": "Vectores"
+    },
+    {
+      "type": "concept",
+      "description": "A search method based on relationships and graphs, used as a component of the Hybrid Search System.",
+      "id": "Grafos"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "CLAUDE.md"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "NodeJS"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "uv"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "FastAPI"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "FastMCP"
+    }
+  ],
+  "edges": [
+    {
+      "type": "uses",
+      "source": "Knowledge Management Center",
+      "target": "llmwikidoc"
+    },
+    {
+      "type": "depends_on",
+      "source": "Knowledge Management Center",
+      "target": "Knowledge Ingestion"
+    },
+    {
+      "type": "related_to",
+      "source": "Knowledge Management Center",
+      "target": "Web Interface"
+    },
+    {
+      "type": "uses",
+      "source": "llmwikidoc",
+      "target": "gemini-2.5-flash"
+    },
+    {
+      "type": "related_to",
+      "source": "llmwikidoc",
+      "target": "wiki/"
+    },
+    {
+      "type": "implements",
+      "source": "llmwikidoc",
+      "target": "Confidence System"
+    },
+    {
+      "type": "implements",
+      "source": "llmwikidoc",
+      "target": "Hybrid Search System"
+    },
+    {
+      "type": "uses",
+      "source": "Hybrid Search System",
+      "target": "BM25"
+    },
+    {
+      "type": "uses",
+      "source": "Hybrid Search System",
+      "target": "Vectores"
+    },
+    {
+      "type": "uses",
+      "source": "Hybrid Search System",
+      "target": "Grafos"
+    },
+    {
+      "type": "depends_on",
+      "source": "Web Interface",
+      "target": "BFF (Backend For Frontend)"
+    },
+    {
+      "type": "uses",
+      "source": "BFF (Backend For Frontend)",
+      "target": "NodeJS"
+    },
+    {
+      "type": "related_to",
+      "source": "BFF (Backend For Frontend)",
+      "target": "Keycloak"
+    },
+    {
+      "type": "calls",
+      "source": "BFF (Backend For Frontend)",
+      "target": "Python APIs"
+    },
+    {
+      "type": "uses",
+      "source": "Python APIs",
+      "target": "uv"
+    },
+    {
+      "type": "uses",
+      "source": "Python APIs",
+      "target": "FastAPI"
+    },
+    {
+      "type": "uses",
+      "source": "Python APIs",
+      "target": "FastMCP"
+    },
+    {
+      "type": "related_to",
+      "source": "CLAUDE.md",
+      "target": "Claude Code"
+    }
+  ]
+}

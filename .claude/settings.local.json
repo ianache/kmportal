@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /d \"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\")",
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Name, Mode, LastWriteTime)",
+      "Bash(Format-Table -AutoSize)",
+      "PowerShell(Test-Path \"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\"; \\(Get-ChildItem -Path \"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\" -Recurse -File | Measure-Object\\).Count)",
+      "PowerShell(Get-Item *)",
+      "Skill(gsd:new-project)",
+      "PowerShell(cmd /c \"dir /a \"\"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\"\"\")",
+      "PowerShell(cmd /c \"dir /a /s \"\"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\\\\.planning\"\"\")",
+      "PowerShell(New-Item *)",
+      "PowerShell(cmd /c \"dir \"\"D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\\\\.planning\\\\research\\\\STACK.md\"\"\")"
+    ]
+  }
+}

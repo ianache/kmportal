@@ -130,71 +130,72 @@
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| INFRA-01 | Phase 1 | Pending |
-| INFRA-02 | Phase 1 | Pending |
-| INFRA-03 | Phase 1 | Pending |
-| INFRA-04 | Phase 1 | Pending |
-| INFRA-05 | Phase 1 | Pending |
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
-| AUTH-04 | Phase 8 | Pending |
-| AUTH-05 | Phase 2 | Pending |
-| DOM-01 | Phase 2 | Pending |
-| DOM-02 | Phase 2 | Pending |
-| DOM-03 | Phase 4 | Pending |
-| DOM-04 | Phase 7 | Pending |
-| ING-01 | Phase 3 | Pending |
-| ING-02 | Phase 3 | Pending |
-| ING-03 | Phase 3 | Pending |
-| ING-04 | Phase 3 | Pending |
-| ING-05 | Phase 3 | Pending |
-| ING-06 | Phase 3 | Pending |
-| ING-07 | Phase 3 | Pending |
-| ING-08 | Phase 3 | Pending |
-| ING-09 | Phase 3 | Pending |
-| ING-10 | Phase 3 | Pending |
-| EMB-01 | Phase 3 | Pending |
-| EMB-02 | Phase 3 | Pending |
-| EMB-03 | Phase 3 | Pending |
-| EMB-04 | Phase 3 | Pending |
-| EMB-05 | Phase 3 | Pending |
-| SRCH-01 | Phase 4 | Pending |
-| SRCH-02 | Phase 4 | Pending |
-| SRCH-03 | Phase 4 | Pending |
-| SRCH-04 | Phase 4 | Pending |
-| SRCH-05 | Phase 4 | Pending |
-| API-01 | Phase 2 | Pending |
-| API-02 | Phase 2 | Pending |
-| API-03 | Phase 2 | Pending |
-| API-04 | Phase 8 | Pending |
-| API-05 | Phase 2 | Pending |
-| BFF-01 | Phase 5 | Pending |
-| BFF-02 | Phase 5 | Pending |
-| BFF-03 | Phase 5 | Pending |
-| BFF-04 | Phase 5 | Pending |
-| FE-01 | Phase 6 | Pending |
-| FE-02 | Phase 6 | Pending |
-| FE-03 | Phase 7 | Pending |
-| FE-04 | Phase 7 | Pending |
-| FE-05 | Phase 7 | Pending |
-| FE-06 | Phase 8 | Pending |
-| FE-07 | Phase 8 | Pending |
-| FE-08 | Phase 7 | Pending |
-| FE-09 | Phase 6 | Pending |
-| MCP-01 | Phase 9 | Pending |
-| MCP-02 | Phase 9 | Pending |
-| MCP-03 | Phase 9 | Pending |
-| MCP-04 | Phase 9 | Pending |
-| MCP-05 | Phase 9 | Pending |
+| Requirement | Phase | Phase Name | Status |
+|-------------|-------|------------|--------|
+| INFRA-01 | Phase 1 | Bootstrap infrastructure | Pending |
+| INFRA-02 | Phase 1 | Bootstrap infrastructure | Pending |
+| INFRA-03 | Phase 1 | Bootstrap infrastructure | Pending |
+| INFRA-04 | Phase 1 | Bootstrap infrastructure | Pending |
+| INFRA-05 | Phase 1 | Bootstrap infrastructure | Pending |
+| AUTH-01 | Phase 2 | Core API foundation | Pending |
+| AUTH-02 | Phase 2 | Core API foundation | Pending |
+| AUTH-03 | Phase 2 | Core API foundation | Pending |
+| AUTH-04 | Phase 8 | Admin and API keys | Pending |
+| AUTH-05 | Phase 2 | Core API foundation | Pending |
+| DOM-01 | Phase 2 | Core API foundation | Pending |
+| DOM-02 | Phase 2 | Core API foundation | Pending |
+| DOM-03 | Phase 4 | Search engine | Pending |
+| DOM-04 | Phase 7 | Core micro UIs | Pending |
+| ING-01 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-02 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-03 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-04 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-05 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-06 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-07 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-08 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-09 | Phase 3 | Document ingestion pipeline | Pending |
+| ING-10 | Phase 3 | Document ingestion pipeline | Pending |
+| EMB-01 | Phase 3 | Document ingestion pipeline | Pending |
+| EMB-02 | Phase 3 | Document ingestion pipeline | Pending |
+| EMB-03 | Phase 3 | Document ingestion pipeline | Pending |
+| EMB-04 | Phase 3 | Document ingestion pipeline | Pending |
+| EMB-05 | Phase 3 | Document ingestion pipeline | Pending |
+| SRCH-01 | Phase 4 | Search engine | Pending |
+| SRCH-02 | Phase 4 | Search engine | Pending |
+| SRCH-03 | Phase 4 | Search engine | Pending |
+| SRCH-04 | Phase 4 | Search engine | Pending |
+| SRCH-05 | Phase 4 | Search engine | Pending |
+| API-01 | Phase 2 | Core API foundation | Pending |
+| API-02 | Phase 2 | Core API foundation | Pending |
+| API-03 | Phase 2 | Core API foundation | Pending |
+| API-04 | Phase 8 | Admin and API keys | Pending |
+| API-05 | Phase 2 | Core API foundation | Pending |
+| BFF-01 | Phase 5 | BFF layer | Pending |
+| BFF-02 | Phase 5 | BFF layer | Pending |
+| BFF-03 | Phase 5 | BFF layer | Pending |
+| BFF-04 | Phase 5 | BFF layer | Pending |
+| FE-01 | Phase 6 | Frontend shell | Pending |
+| FE-02 | Phase 6 | Frontend shell | Pending |
+| FE-03 | Phase 7 | Core micro UIs | Pending |
+| FE-04 | Phase 7 | Core micro UIs | Pending |
+| FE-05 | Phase 7 | Core micro UIs | Pending |
+| FE-06 | Phase 8 | Admin and API keys | Pending |
+| FE-07 | Phase 8 | Admin and API keys | Pending |
+| FE-08 | Phase 7 | Core micro UIs | Pending |
+| FE-09 | Phase 6 | Frontend shell | Pending |
+| MCP-01 | Phase 9 | MCP integration | Pending |
+| MCP-02 | Phase 9 | MCP integration | Pending |
+| MCP-03 | Phase 9 | MCP integration | Pending |
+| MCP-04 | Phase 9 | MCP integration | Pending |
+| MCP-05 | Phase 9 | MCP integration | Pending |
 
 **Coverage:**
 - v1 requirements: 54 total
 - Mapped to phases: 54
 - Unmapped: 0 ✓
+- Phase 10 (Production Hardening): system-level validation phase — no discrete new v1 requirements
 
 ---
 *Requirements defined: 2026-05-02*
-*Last updated: 2026-05-02 after initial definition*
+*Last updated: 2026-05-02 after roadmap creation (10 phases)*

@@ -1,0 +1,233 @@
+{
+  "knowledge management center::the project name is 'knowledge management center'.": {
+    "statement": "The project name is 'Knowledge Management Center'.",
+    "entity": "Knowledge Management Center",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "llmwikidoc::the `llmwikidoc` system is configured to use the 'gemini-2.5": {
+    "statement": "The `llmwikidoc` system is configured to use the 'gemini-2.5-flash' model.",
+    "entity": "llmwikidoc",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "llmwikidoc::the `llmwikidoc` system's wiki directory is set to 'wiki'.": {
+    "statement": "The `llmwikidoc` system's wiki directory is set to 'wiki'.",
+    "entity": "llmwikidoc",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "llmwikidoc::the `llmwikidoc` system's context depth is configured to 2.": {
+    "statement": "The `llmwikidoc` system's context depth is configured to 2.",
+    "entity": "llmwikidoc",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "confidence system::the initial confidence score for knowledge is 0.7.": {
+    "statement": "The initial confidence score for knowledge is 0.7.",
+    "entity": "Confidence System",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "confidence system::the confidence score reinforces by 0.1.": {
+    "statement": "The confidence score reinforces by 0.1.",
+    "entity": "Confidence System",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "confidence system::the confidence score contradicts by -0.2.": {
+    "statement": "The confidence score contradicts by -0.2.",
+    "entity": "Confidence System",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "confidence system::the confidence score decays over 30 days.": {
+    "statement": "The confidence score decays over 30 days.",
+    "entity": "Confidence System",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "hybrid search system::the bm25 search weight is 0.33.": {
+    "statement": "The BM25 search weight is 0.33.",
+    "entity": "Hybrid Search System",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "hybrid search system::the vector search weight is 0.33.": {
+    "statement": "The vector search weight is 0.33.",
+    "entity": "Hybrid Search System",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "hybrid search system::the graph search weight is 0.34.": {
+    "statement": "The graph search weight is 0.34.",
+    "entity": "Hybrid Search System",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "claude code::`claude.md` provides working rules for claude code.": {
+    "statement": "`CLAUDE.md` provides working rules for Claude Code.",
+    "entity": "Claude Code",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "knowledge management center::the project is currently a new, empty project with no source": {
+    "statement": "The project is currently a new, empty project with no source code, build system, or dependencies.",
+    "entity": "Knowledge Management Center",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "knowledge management center::the objective is to develop a complete knowledge management ": {
+    "statement": "The objective is to develop a complete knowledge management platform organized in knowledge domains.",
+    "entity": "Knowledge Management Center",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "knowledge ingestion::knowledge ingestion sources include folders, s3, async rest ": {
+    "statement": "Knowledge ingestion sources include folders, S3, async REST APIs, Kafka topics, and RabbitMQ.",
+    "entity": "Knowledge Ingestion",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "knowledge management center::the platform will expose knowledge via restful apis.": {
+    "statement": "The platform will expose knowledge via RESTful APIs.",
+    "entity": "Knowledge Management Center",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "web interface::the web interface will be based on vue + pinia.": {
+    "statement": "The Web Interface will be based on Vue + Pinia.",
+    "entity": "Web Interface",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "bff (backend for frontend)::the bff will use nodejs and integrate security with keycloak": {
+    "statement": "The BFF will use NodeJS and integrate security with Keycloak.",
+    "entity": "BFF (Backend For Frontend)",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "python apis::python apis will be developed using python 1.13+, uv, fastap": {
+    "statement": "Python APIs will be developed using Python 1.13+, uv, FastAPI, and FastMCP.",
+    "entity": "Python APIs",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "wiki/::the `wiki/` directory contains `concepts/`, `entities/`, and": {
+    "statement": "The `wiki/` directory contains `concepts/`, `entities/`, and `summaries/` subdirectories.",
+    "entity": "wiki/",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  },
+  "knowledge management center::next steps include initializing the base system, developing ": {
+    "statement": "Next steps include initializing the base system, developing validation scripts, and implementing query endpoints.",
+    "entity": "Knowledge Management Center",
+    "confidence": 0.7,
+    "sources": [
+      "snapshot-20260503-021407"
+    ],
+    "created": "2026-05-03T02:14:31Z",
+    "last_reinforced": "2026-05-03T02:14:31Z",
+    "contradicted_by": []
+  }
+}
