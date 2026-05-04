@@ -7,6 +7,13 @@ export default defineConfig({
     vue(),
     federation({
       name: 'shell',
+      filename: 'remoteEntry.js',
+      exposes: {
+        './bffClient': './src/services/bffClient.ts',
+        './BaseButton': './src/components/ui/BaseButton.vue',
+        './BaseCard': './src/components/ui/BaseCard.vue',
+        './BaseInput': './src/components/ui/BaseInput.vue',
+      },
       remotes: {
         domainsUi: 'http://localhost:5101/assets/remoteEntry.js',
         searchUi: 'http://localhost:5103/assets/remoteEntry.js',

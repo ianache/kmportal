@@ -238,14 +238,16 @@ to connect to a separate ChromaDB container without requiring the
             distances = data.get("distances", [[]])[0] or []
             
             for i, chunk_id in enumerate(ids):
-                # Convert distance to similarity score (ChromaDB uses cosine distance)
-                # distance = 1 - cosine_similarity, so similarity = 1 - distance
+                # Convert distance to similarity score
+                # ChromaDB uses L2 distance by default, convert to similarity
+                # Using exponential decay: score = exp(-distance)
                 distance = distances[i] if i < len(distances) else 0.0
-                score = 1.0 - distance
+                import math
+                score = math.exp(-distance)
                 
                 results.append(SearchResult(
                     chunk_id=chunk_id,
-                    score=max(0.0, min(1.0, score)),  # Clamp to [0, 1]
+                    score=score,
                     text=documents[i] if i < len(documents) else "",
                     metadata=metadatas[i] if i < len(metadatas) else {}
                 ))

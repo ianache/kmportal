@@ -2,6 +2,16 @@
 
 ## Concepts
 
+- [SAMPLE_CONTENTS](concepts/sample_contents.md) — A dictionary within `reingest.py` containing predefined textual content for vari
+
+- [Collection ID by Domain ID](concepts/collection_id_by_domain_id.md) — The architectural decision to use the unique identifier of a document's domain (
+
+- [Document Re-ingestion Process](concepts/document_re-ingestion_process.md) — The workflow of extracting content from already processed documents, generating 
+
+- [ChromaDB Collection](concepts/chromadb_collection.md) — A logical grouping of vector embeddings within the ChromaDB vector store, unique
+
+- [Embedding Adapter](concepts/embedding_adapter.md) — An abstract component or interface (obtained via `get_embedding_adapter`) respon
+
 - [Ollama Embedding](concepts/ollama_embedding.md) — A project wiki concept related to the integration and use of Ollama for generati
 
 - [CanvasToolbox](concepts/canvastoolbox.md) — A project wiki concept documenting an architectural decision regarding a UI comp
@@ -1440,6 +1450,8 @@
 
 ## Modules
 
+- [api/reingest.py](entities/apireingestpy.md) — A new Python script responsible for re-indexing documents with 'done' status int
+
 - [api/test_embedding.py](entities/apitest_embeddingpy.md) — A new utility script for verifying the functionality of the configured embedding
 
 - [api/check_db.py](entities/apicheck_dbpy.md) — A new utility script providing asynchronous functions to check database connecti
@@ -2174,7 +2186,7 @@
 
 - [DomainAccessChecker](entities/domainaccesschecker.md) — A class that provides a customizable FastAPI dependency for checking a user's ac
 
-- [Document](entities/document.md) — A data model representing a document in the application's database.
+- [Document](entities/document.md) — A SQLAlchemy model representing a document in the application's database, contai
 
 - [DomainAccess](entities/domainaccess.md) — Represents the SQLAlchemy ORM model for a user's access grant to a specific doma
 
@@ -2266,7 +2278,7 @@
 
 - [GeminiAdapter](entities/geminiadapter.md) — An existing Python adapter class for Gemini embeddings, now updated to include a
 
-- [ChromaDBAdapter](entities/chromadbadapter.md) — A concrete implementation of the VectorStorePort interface, used for interacting
+- [ChromaDBAdapter](entities/chromadbadapter.md) — An adapter class for interacting with the ChromaDB vector store, providing metho
 
 - [SearchService (Example)](entities/searchservice_example.md) — An example domain service demonstrating the usage of the VectorStorePort interfa
 
@@ -2287,6 +2299,10 @@
 - [Network](entities/network.md) — A class from the `pyvis.network` module used to build and display interactive ne
 
 ## Functions
+
+- [chunk_text](entities/chunk_text.md) — A utility function that splits a given text string into smaller, potentially ove
+
+- [reingest_documents](entities/reingest_documents.md) — The main asynchronous function in `reingest.py` that orchestrates the entire doc
 
 - [test](entities/test.md) — An asynchronous function within `api/test_embedding.py` that initializes an embe
 

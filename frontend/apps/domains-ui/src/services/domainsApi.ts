@@ -1,75 +1,70 @@
-import type { Domain, Document, CreateDomainRequest, UpdateDomainRequest } from '../types'
-
-const BFF_URL = import.meta.env.VITE_BFF_URL || 'http://localhost:3000'
-
-interface DomainListResponse {
-  items: Domain[]
-  total: number
-  page: number
-  page_size: number
-  pages: number
-}
+import { bffClient } from 'shell/bffClient'
+import type { 
+  Domain, 
+  DomainListResponse, 
+  DocumentListResponse, 
+  DocumentFilters 
+} from '../types/domains'
 
 class DomainsApiClient {
-  private baseUrl: string
-
-  constructor() {
-    this.baseUrl = BFF_URL
-  }
-
-  private async request<T>(
-    method: string,
-    path: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${this.baseUrl}${path}`
-
-    const response = await fetch(url, {
-      method,
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    })
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-      throw new Error(error.message || error.error || `HTTP ${response.status}`)
+  async getDomains(page = 1, pageSize = 20): Promise<DomainListResponse> {
+    const response = await bffClient.get<DomainListResponse>(
+      `/v1/domains?page=${page}&page_size=${pageSize}`
+    )
+    
+    if (response.error) {
+      throw new Error(response.error.message)
     }
-
-    return response.json()
-  }
-
-  async getDomains(): Promise<Domain[]> {
-    const data = await this.request<DomainListResponse>('GET', '/api/v1/domains')
-    return data.items
+    
+    if (!response.data) {
+      throw new Error('No data received from domains API')
+    }
+    
+    return response.data
   }
 
   async getDomain(id: string): Promise<Domain> {
-    return this.request<Domain>('GET', `/api/v1/domains/${id}`)
+    const response = await bffClient.get<Domain>(`/v1/domains/${id}`)
+    
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+    
+    if (!response.data) {
+      throw new Error('No data received from domain API')
+    }
+    
+    return response.data
   }
 
-  async createDomain(data: CreateDomainRequest): Promise<Domain> {
-    return this.request<Domain>('POST', '/api/v1/domains', {
-      body: JSON.stringify(data)
+  async getDomainDocuments(
+    domainId: string, 
+    page = 1, 
+    pageSize = 20,
+    filters: DocumentFilters = {}
+  ): Promise<DocumentListResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString()
     })
-  }
+    
+    if (filters.status) params.append('status', filters.status)
+    if (filters.type) params.append('type', filters.type)
+    if (filters.query) params.append('q', filters.query)
 
-  async updateDomain(id: string, data: UpdateDomainRequest): Promise<Domain> {
-    return this.request<Domain>('PUT', `/api/v1/domains/${id}`, {
-      body: JSON.stringify(data)
-    })
-  }
-
-  async deleteDomain(id: string): Promise<void> {
-    return this.request<void>('DELETE', `/api/v1/domains/${id}`)
-  }
-
-  async getDomainDocuments(domainId: string): Promise<Document[]> {
-    return this.request<Document[]>('GET', `/api/v1/domains/${domainId}/documents`)
+    const response = await bffClient.get<DocumentListResponse>(
+      `/v1/domains/${domainId}/documents?${params.toString()}`
+    )
+    
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+    
+    if (!response.data) {
+      throw new Error('No data received from documents API')
+    }
+    
+    return response.data
   }
 }
 

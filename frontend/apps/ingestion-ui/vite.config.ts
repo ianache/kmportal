@@ -8,6 +8,9 @@ export default defineConfig({
     federation({
       name: 'ingestionUi',
       filename: 'remoteEntry.js',
+      remotes: {
+        shell: 'http://localhost:5100/assets/remoteEntry.js',
+      },
       exposes: { './App': './src/App.vue' },
       shared: {
         vue: { singleton: true, requiredVersion: '^3.4.0' },

@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import { domainsApi } from '../services/domainsApi'
-import type { Domain, Document, CreateDomainRequest, UpdateDomainRequest } from '../types'
+import { domainsApi as api } from '../services/domainsApi'
+import type { Domain, Document, DocumentFilters } from '../types/domains'
 
 export const useDomainsStore = defineStore('domains', () => {
   // State
@@ -11,29 +11,74 @@ export const useDomainsStore = defineStore('domains', () => {
   const isLoading = ref(false)
   const isLoadingDocuments = ref(false)
   const error = ref<string | null>(null)
-  const isCreating = ref(false)
-  const isEditing = ref(false)
+  
+  const pagination = ref({
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    pages: 0
+  })
+
+  const documentPagination = ref({
+    page: 1,
+    pageSize: 20,
+    total: 0,
+    pages: 0
+  })
+
+  const documentFilters = ref<DocumentFilters>({
+    status: undefined,
+    type: undefined,
+    query: undefined
+  })
 
   // Getters
   const hasDomains = computed(() => domains.value.length > 0)
-  const hasError = computed(() => error.value !== null)
+  const hasSelectedDomain = computed(() => selectedDomain.value !== null)
+  
   const sortedDomains = computed(() => {
     return [...domains.value].sort((a, b) => 
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )
   })
 
+  const filteredDocuments = computed(() => documents.value)
+
   // Actions
-  async function fetchDomains() {
+  async function loadDomains() {
     isLoading.value = true
     error.value = null
     
     try {
-      domains.value = await domainsApi.getDomains()
+      const response = await api.getDomains(pagination.value.page, pagination.value.pageSize)
+      domains.value = response.items
+      pagination.value.total = response.total
+      pagination.value.pages = response.pages
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to fetch domains'
+      error.value = err instanceof Error ? err.message : 'Failed to load domains'
     } finally {
       isLoading.value = false
+    }
+  }
+
+  async function loadDocuments(domainId: string) {
+    isLoadingDocuments.value = true
+    error.value = null
+    
+    try {
+      const response = await api.getDomainDocuments(
+        domainId, 
+        documentPagination.value.page, 
+        documentPagination.value.pageSize,
+        documentFilters.value
+      )
+      documents.value = response.items
+      documentPagination.value.total = response.total
+      documentPagination.value.pages = response.pages
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load documents'
+    } finally {
+      isLoadingDocuments.value = false
     }
   }
 
@@ -42,14 +87,12 @@ export const useDomainsStore = defineStore('domains', () => {
     error.value = null
 
     try {
-      const [domain, docs] = await Promise.all([
-        domainsApi.getDomain(domainId),
-        domainsApi.getDomainDocuments(domainId)
-      ])
+      const domain = await api.getDomain(domainId)
       selectedDomain.value = domain
-      documents.value = docs
+      documentPagination.value.page = 1
+      await loadDocuments(domainId)
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to fetch domain details'
+      error.value = err instanceof Error ? err.message : 'Failed to select domain'
       selectedDomain.value = null
       documents.value = []
     } finally {
@@ -57,67 +100,42 @@ export const useDomainsStore = defineStore('domains', () => {
     }
   }
 
+  function setDocumentFilter(key: keyof DocumentFilters, value: any) {
+    documentFilters.value[key] = value
+    documentPagination.value.page = 1
+    if (selectedDomain.value) {
+      loadDocuments(selectedDomain.value.id)
+    }
+  }
+
+  function clearFilters() {
+    documentFilters.value = {
+      status: undefined,
+      type: undefined,
+      query: undefined
+    }
+    documentPagination.value.page = 1
+    if (selectedDomain.value) {
+      loadDocuments(selectedDomain.value.id)
+    }
+  }
+
   function clearSelection() {
     selectedDomain.value = null
     documents.value = []
+    error.value = null
   }
 
-  async function createDomain(data: CreateDomainRequest) {
-    isCreating.value = true
-    error.value = null
-    
-    try {
-      const newDomain = await domainsApi.createDomain(data)
-      domains.value.unshift(newDomain)
-      return newDomain
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to create domain'
-      throw err
-    } finally {
-      isCreating.value = false
+  function setPage(page: number) {
+    pagination.value.page = page
+    loadDomains()
+  }
+
+  function setDocumentPage(page: number) {
+    documentPagination.value.page = page
+    if (selectedDomain.value) {
+      loadDocuments(selectedDomain.value.id)
     }
-  }
-
-  async function updateDomain(domainId: string, data: UpdateDomainRequest) {
-    isEditing.value = true
-    error.value = null
-    
-    try {
-      const updated = await domainsApi.updateDomain(domainId, data)
-      const index = domains.value.findIndex(d => d.id === domainId)
-      if (index !== -1) {
-        domains.value[index] = updated
-      }
-      if (selectedDomain.value?.id === domainId) {
-        selectedDomain.value = updated
-      }
-      return updated
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to update domain'
-      throw err
-    } finally {
-      isEditing.value = false
-    }
-  }
-
-  async function deleteDomain(domainId: string) {
-    error.value = null
-    
-    try {
-      await domainsApi.deleteDomain(domainId)
-      domains.value = domains.value.filter(d => d.id !== domainId)
-      if (selectedDomain.value?.id === domainId) {
-        selectedDomain.value = null
-        documents.value = []
-      }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to delete domain'
-      throw err
-    }
-  }
-
-  function clearError() {
-    error.value = null
   }
 
   return {
@@ -128,19 +146,22 @@ export const useDomainsStore = defineStore('domains', () => {
     isLoading,
     isLoadingDocuments,
     error,
-    isCreating,
-    isEditing,
+    pagination,
+    documentPagination,
+    documentFilters,
     // Getters
     hasDomains,
-    hasError,
+    hasSelectedDomain,
     sortedDomains,
+    filteredDocuments,
     // Actions
-    fetchDomains,
+    loadDomains,
+    loadDocuments,
     selectDomain,
+    setDocumentFilter,
+    clearFilters,
     clearSelection,
-    createDomain,
-    updateDomain,
-    deleteDomain,
-    clearError,
+    setPage,
+    setDocumentPage
   }
 })

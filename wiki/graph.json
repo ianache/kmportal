@@ -1365,7 +1365,7 @@
     },
     {
       "type": "class",
-      "description": "A concrete implementation of the VectorStorePort interface, used for interacting with ChromaDB.",
+      "description": "An adapter class for interacting with the ChromaDB vector store, providing methods to manage collections and add embedded document chunks.",
       "id": "ChromaDBAdapter"
     },
     {
@@ -4085,7 +4085,7 @@
     },
     {
       "type": "class",
-      "description": "A data model representing a document in the application's database.",
+      "description": "A SQLAlchemy model representing a document in the application's database, containing attributes like ID, title, domain ID, and processing status.",
       "id": "Document"
     },
     {
@@ -6427,6 +6427,46 @@
       "type": "unknown",
       "description": "",
       "id": "sqlalchemy.text"
+    },
+    {
+      "type": "module",
+      "description": "A new Python script responsible for re-indexing documents with 'done' status into ChromaDB, handling chunking, embedding generation, and collection creation based on domain ID.",
+      "id": "api/reingest.py"
+    },
+    {
+      "type": "function",
+      "description": "The main asynchronous function in `reingest.py` that orchestrates the entire document re-ingestion process, including adapter initialization, database queries, text chunking, embedding generation, and ChromaDB collection management.",
+      "id": "reingest_documents"
+    },
+    {
+      "type": "function",
+      "description": "A utility function that splits a given text string into smaller, potentially overlapping chunks, typically used to prepare text for embedding and vector storage.",
+      "id": "chunk_text"
+    },
+    {
+      "type": "concept",
+      "description": "An abstract component or interface (obtained via `get_embedding_adapter`) responsible for transforming text into numerical vector embeddings, specifically noted to be using an Ollama model.",
+      "id": "Embedding Adapter"
+    },
+    {
+      "type": "concept",
+      "description": "A logical grouping of vector embeddings within the ChromaDB vector store, uniquely identified by a name, which in this commit is derived from a document's domain ID.",
+      "id": "ChromaDB Collection"
+    },
+    {
+      "type": "concept",
+      "description": "The workflow of extracting content from already processed documents, generating fresh embeddings for their chunks, and storing them in a vector database for retrieval.",
+      "id": "Document Re-ingestion Process"
+    },
+    {
+      "type": "decision",
+      "description": "The architectural decision to use the unique identifier of a document's domain (`domain_id`) as the name for its corresponding collection in ChromaDB, ensuring logical separation of document embeddings by domain.",
+      "id": "Collection ID by Domain ID"
+    },
+    {
+      "type": "variable",
+      "description": "A dictionary within `reingest.py` containing predefined textual content for various AI/ML concepts, used as example data for documents during the re-ingestion process.",
+      "id": "SAMPLE_CONTENTS"
     }
   ],
   "edges": [
@@ -8689,6 +8729,11 @@
       "type": "related_to",
       "source": "ChromaDBAdapter",
       "target": "QdrantAdapter"
+    },
+    {
+      "type": "related_to",
+      "source": "ChromaDBAdapter",
+      "target": "ChromaDB Collection"
     },
     {
       "type": "implements",
@@ -12676,6 +12721,11 @@
       "target": "generate_uuid"
     },
     {
+      "type": "related_to",
+      "source": "Document",
+      "target": "ChromaDB Collection"
+    },
+    {
       "type": "depends_on",
       "source": "Dependencies Module",
       "target": "Auth Module"
@@ -15834,6 +15884,46 @@
       "type": "uses",
       "source": "api/test_embedding.py",
       "target": "get_embedding_adapter"
+    },
+    {
+      "type": "implements",
+      "source": "api/reingest.py",
+      "target": "reingest_documents"
+    },
+    {
+      "type": "uses",
+      "source": "reingest_documents",
+      "target": "Embedding Adapter"
+    },
+    {
+      "type": "uses",
+      "source": "reingest_documents",
+      "target": "ChromaDBAdapter"
+    },
+    {
+      "type": "related_to",
+      "source": "reingest_documents",
+      "target": "Document"
+    },
+    {
+      "type": "calls",
+      "source": "reingest_documents",
+      "target": "chunk_text"
+    },
+    {
+      "type": "modifies",
+      "source": "reingest_documents",
+      "target": "ChromaDB Collection"
+    },
+    {
+      "type": "uses",
+      "source": "reingest_documents",
+      "target": "SAMPLE_CONTENTS"
+    },
+    {
+      "type": "related_to",
+      "source": "Collection ID by Domain ID",
+      "target": "ChromaDB Collection"
     }
   ]
 }

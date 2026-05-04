@@ -15399,5 +15399,93 @@
     "created": "2026-05-04T03:25:51Z",
     "last_reinforced": "2026-05-04T03:25:51Z",
     "contradicted_by": []
+  },
+  "api/reingest.py::the file `api/reingest.py` is a new script introduced in thi": {
+    "statement": "The file `api/reingest.py` is a new script introduced in this commit.",
+    "entity": "api/reingest.py",
+    "confidence": 0.7,
+    "sources": [
+      "487147e8017fa3131efc2fb362ccaf5dd07c0bed"
+    ],
+    "created": "2026-05-04T03:36:29Z",
+    "last_reinforced": "2026-05-04T03:36:29Z",
+    "contradicted_by": []
+  },
+  "reingest_documents::the `reingest_documents` function processes only documents t": {
+    "statement": "The `reingest_documents` function processes only documents that have a 'done' status in the database.",
+    "entity": "reingest_documents",
+    "confidence": 0.7,
+    "sources": [
+      "487147e8017fa3131efc2fb362ccaf5dd07c0bed"
+    ],
+    "created": "2026-05-04T03:36:29Z",
+    "last_reinforced": "2026-05-04T03:36:29Z",
+    "contradicted_by": []
+  },
+  "chromadb collection::chromadb collections are created and named using the string ": {
+    "statement": "ChromaDB collections are created and named using the string representation of a document's `domain_id`.",
+    "entity": "ChromaDB Collection",
+    "confidence": 0.7,
+    "sources": [
+      "487147e8017fa3131efc2fb362ccaf5dd07c0bed"
+    ],
+    "created": "2026-05-04T03:36:29Z",
+    "last_reinforced": "2026-05-04T03:36:29Z",
+    "contradicted_by": []
+  },
+  "embedding adapter::the re-ingestion process explicitly initializes and uses an ": {
+    "statement": "The re-ingestion process explicitly initializes and uses an embedding adapter, specifically noted as potentially using an Ollama model.",
+    "entity": "Embedding Adapter",
+    "confidence": 0.7,
+    "sources": [
+      "487147e8017fa3131efc2fb362ccaf5dd07c0bed"
+    ],
+    "created": "2026-05-04T03:36:29Z",
+    "last_reinforced": "2026-05-04T03:36:29Z",
+    "contradicted_by": []
+  },
+  "chunk_text::the `chunk_text` function splits text into chunks with a def": {
+    "statement": "The `chunk_text` function splits text into chunks with a default size of 500 characters and an overlap of 50 characters.",
+    "entity": "chunk_text",
+    "confidence": 0.7,
+    "sources": [
+      "487147e8017fa3131efc2fb362ccaf5dd07c0bed"
+    ],
+    "created": "2026-05-04T03:36:29Z",
+    "last_reinforced": "2026-05-04T03:36:29Z",
+    "contradicted_by": []
+  },
+  "chromadbadapter::the `chromadbadapter` instance is configured using environme": {
+    "statement": "The `ChromaDBAdapter` instance is configured using environment variables `CHROMA_HOST` (default 'localhost') and `CHROMA_PORT` (default '8001').",
+    "entity": "ChromaDBAdapter",
+    "confidence": 0.7,
+    "sources": [
+      "487147e8017fa3131efc2fb362ccaf5dd07c0bed"
+    ],
+    "created": "2026-05-04T03:36:29Z",
+    "last_reinforced": "2026-05-04T03:36:29Z",
+    "contradicted_by": []
+  },
+  "document re-ingestion process::each generated chunk for a document is assigned an id in the": {
+    "statement": "Each generated chunk for a document is assigned an ID in the format `'{document_id}-chunk-{index}'`.",
+    "entity": "Document Re-ingestion Process",
+    "confidence": 0.7,
+    "sources": [
+      "487147e8017fa3131efc2fb362ccaf5dd07c0bed"
+    ],
+    "created": "2026-05-04T03:36:29Z",
+    "last_reinforced": "2026-05-04T03:36:29Z",
+    "contradicted_by": []
+  },
+  "reingest_documents::the `reingest_documents` function attempts to retrieve docum": {
+    "statement": "The `reingest_documents` function attempts to retrieve document content from the `SAMPLE_CONTENTS` dictionary based on the document's title.",
+    "entity": "reingest_documents",
+    "confidence": 0.7,
+    "sources": [
+      "487147e8017fa3131efc2fb362ccaf5dd07c0bed"
+    ],
+    "created": "2026-05-04T03:36:29Z",
+    "last_reinforced": "2026-05-04T03:36:29Z",
+    "contradicted_by": []
   }
 }

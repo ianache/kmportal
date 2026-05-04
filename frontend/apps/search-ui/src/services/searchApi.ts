@@ -1,6 +1,5 @@
-import type { SearchRequest, SearchResponse, Domain } from '../types'
-
-const BFF_URL = import.meta.env.VITE_BFF_URL || 'http://localhost:3000'
+import { bffClient } from 'shell/bffClient'
+import type { SearchParams, SearchResponse, Domain } from '../types/search'
 
 interface DomainListResponse {
   items: Domain[]
@@ -11,77 +10,78 @@ interface DomainListResponse {
 }
 
 class SearchApiClient {
-  private baseUrl: string
-
-  constructor() {
-    this.baseUrl = BFF_URL
-  }
-
-  private async request<T>(
-    method: string,
-    path: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${this.baseUrl}${path}`
-
-    const response = await fetch(url, {
-      method,
-      credentials: 'include',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    })
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-      throw new Error(error.message || error.error || `HTTP ${response.status}`)
-    }
-
-    return response.json()
-  }
-
-  async search(request: SearchRequest): Promise<SearchResponse> {
-    const params = new URLSearchParams()
-    params.append('q', request.query)
+  async search(params: SearchParams): Promise<SearchResponse> {
+    const queryParams = new URLSearchParams()
+    queryParams.append('q', params.q)
     
-    if (request.domains?.length) {
-      request.domains.forEach(d => params.append('domains', d))
+    if (params.domains?.length) {
+      params.domains.forEach(d => queryParams.append('domains', d))
     }
     
-    if (request.filters?.types?.length) {
-      request.filters.types.forEach(t => params.append('types', t))
+    if (params.type) {
+      queryParams.append('type', params.type)
     }
     
-    if (request.filters?.date_from) {
-      params.append('date_from', request.filters.date_from)
+    if (params.date_from) {
+      queryParams.append('date_from', params.date_from)
     }
     
-    if (request.filters?.date_to) {
-      params.append('date_to', request.filters.date_to)
+    if (params.date_to) {
+      queryParams.append('date_to', params.date_to)
     }
     
-    if (request.page) {
-      params.append('page', request.page.toString())
-    }
-    
-    if (request.page_size) {
-      params.append('page_size', request.page_size.toString())
+    if (params.source) {
+      queryParams.append('source', params.source)
     }
 
-    return this.request<SearchResponse>('GET', `/api/v1/search?${params.toString()}`)
+    if (params.mode) {
+      queryParams.append('mode', params.mode)
+    }
+
+    if (params.top_k) {
+      queryParams.append('top_k', params.top_k.toString())
+    }
+    
+    if (params.page) {
+      queryParams.append('page', params.page.toString())
+    }
+    
+    if (params.page_size) {
+      queryParams.append('page_size', params.page_size.toString())
+    }
+
+    const response = await bffClient.get<SearchResponse>(`/v1/search?${queryParams.toString()}`)
+    
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+    
+    if (!response.data) {
+      throw new Error('No data received from search API')
+    }
+    
+    return response.data
   }
 
   async getDomains(): Promise<Domain[]> {
-    const data = await this.request<DomainListResponse>('GET', '/api/v1/domains')
-    return data.items
+    const response = await bffClient.get<DomainListResponse>('/v1/domains')
+    
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+    
+    return response.data?.items || []
   }
 
   async getSuggestions(query: string): Promise<string[]> {
-    const params = new URLSearchParams({ q: query })
-    return this.request<string[]>('GET', `/api/v1/search/suggest?${params.toString()}`)
+    const queryParams = new URLSearchParams({ q: query })
+    const response = await bffClient.get<string[]>(`/v1/search/suggest?${queryParams.toString()}`)
+    
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+    
+    return response.data || []
   }
 }
 
