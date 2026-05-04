@@ -4,6 +4,17 @@
 
 Plataforma completa de gestión del conocimiento organizado en dominios definidos por administradores. Ingesta documentos (PDF, texto plano, código fuente) desde múltiples fuentes (carpeta local, S3, REST async, Kafka, RabbitMQ), los indexa con embeddings vectoriales y los expone vía APIs RESTful seguras. Diseñada para uso interno vía Web y para integración de terceros vía API Keys y agentes AI vía MCP.
 
+## Current Milestone: v1.1 Domain Intelligence
+
+**Goal:** Extender la gestión de dominios con edición inline y un editor visual de ontología persistido en backend, con un Toolbox de canvas compartido reutilizable.
+
+**Target features:**
+- Edición de dominio — clic en card abre modal "Editar Dominio" (reutiliza formulario Create New Domain, pre-cargado, PUT /v1/domains/:id)
+- Icono de ontología en domain card (izquierda de fecha de creación) → abre editor visual
+- Editor visual de ontología — canvas con nodos (nombre, tipo, descripción, color/icono) y relaciones entre conceptos
+- Shared canvas Toolbox — componente en frontend/libs/canvas-toolbox con Zoom In/Out, Snap to grid, Fit to window
+- Backend ontology API — GET/PUT /v1/domains/:id/ontology
+
 ## Core Value
 
 Cualquier usuario autenticado puede encontrar conocimiento relevante dentro de los dominios autorizados en segundos, usando búsqueda semántica o híbrida sobre documentos indexados.
@@ -17,6 +28,11 @@ Cualquier usuario autenticado puede encontrar conocimiento relevante dentro de l
 ### Active
 
 - [ ] Administrador puede crear, editar y eliminar dominios de conocimiento de forma centralizada
+- [ ] Usuario puede editar un dominio existente vía modal "Editar Dominio" (reutiliza formulario de creación)
+- [ ] Domain card expone icono de ontología que abre editor visual de conceptos y relaciones
+- [ ] Editor visual de ontología permite crear/editar/eliminar nodos (concepto) y relaciones entre nodos
+- [ ] Canvas del editor incluye Toolbox compartido: Zoom In/Out, Snap to grid, Fit to window
+- [ ] Ontología de un dominio se persiste en backend y se recupera al reabrir el editor
 - [ ] Sistema ingesta documentos PDF, texto plano y código fuente desde carpeta local y REST API async
 - [ ] Sistema ingesta documentos desde S3, tópico Kafka y cola RabbitMQ
 - [ ] Documentos procesados se almacenan en PostgreSQL (metadata), MongoDB (contenido raw) y ChromaDB (embeddings)
@@ -93,4 +109,4 @@ Este documento evoluciona en transiciones de fase y milestones.
 4. Actualizar Context con estado actual
 
 ---
-*Last updated: 2026-05-02 after initialization*
+*Last updated: 2026-05-04 after milestone v1.1 start*
