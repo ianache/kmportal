@@ -64,19 +64,9 @@ export const useAuthStore = defineStore('auth', () => {
     window.location.href = `${BFF_URL}/auth/login`
   }
 
-  async function logout(): Promise<void> {
-    isLoading.value = true
-
-    try {
-      await fetch(`${BFF_URL}/auth/logout`, {
-        credentials: 'include',
-      })
-      user.value = null
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Logout failed'
-    } finally {
-      isLoading.value = false
-    }
+  function logout(): void {
+    user.value = null
+    window.location.href = `${BFF_URL}/auth/logout`
   }
 
   function handleAuthCallback(success: boolean, errorMsg?: string): void {

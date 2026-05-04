@@ -2,6 +2,14 @@ import type { SearchRequest, SearchResponse, Domain } from '../types'
 
 const BFF_URL = import.meta.env.VITE_BFF_URL || 'http://localhost:3000'
 
+interface DomainListResponse {
+  items: Domain[]
+  total: number
+  page: number
+  page_size: number
+  pages: number
+}
+
 class SearchApiClient {
   private baseUrl: string
 
@@ -15,7 +23,7 @@ class SearchApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${path}`
-    
+
     const response = await fetch(url, {
       method,
       credentials: 'include',
@@ -67,7 +75,8 @@ class SearchApiClient {
   }
 
   async getDomains(): Promise<Domain[]> {
-    return this.request<Domain[]>('GET', '/api/v1/domains')
+    const data = await this.request<DomainListResponse>('GET', '/api/v1/domains')
+    return data.items
   }
 
   async getSuggestions(query: string): Promise<string[]> {

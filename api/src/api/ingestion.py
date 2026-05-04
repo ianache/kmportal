@@ -20,7 +20,7 @@ from services.ingestion_service import (
     IngestionError
 )
 
-router = APIRouter(prefix="/v1/ingest", tags=["Ingestion"])
+router = APIRouter(prefix="/ingest", tags=["Ingestion"])
 
 
 @router.post(

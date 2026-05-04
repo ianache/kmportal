@@ -47,12 +47,12 @@ async def get_embedding_adapter(
     """
     Factory function to get the configured embedding adapter.
     
-    Currently returns GeminiAdapter. In v2, this can be configured
-    to use OpenAIAdapter or OllamaAdapter based on settings.
+    Returns GeminiAdapter if API key is available, otherwise MockEmbeddingAdapter.
+    In v2, this can be configured to use OpenAIAdapter or OllamaAdapter based on settings.
     
     Args:
         api_key: API key for the embedding service (defaults to GEMINI_API_KEY env var)
-        model: Model name (defaults to GEMINI_EMBEDDING_MODEL env var or text-embedding-004)
+        model: Model name (defaults to GEMINI_EMBEDDING_MODEL env var or embedding-001)
     
     Returns:
         Configured EmbeddingPort instance
@@ -61,16 +61,20 @@ async def get_embedding_adapter(
         adapter = await get_embedding_adapter()
         embeddings = await adapter.embed(["text to embed"])
     """
-    from adapters.embedding.gemini import GeminiAdapter
+    # Check if mock embedding is explicitly requested
+    if os.getenv("MOCK_EMBEDDING", "false").lower() == "true":
+        from adapters.embedding.mock import MockEmbeddingAdapter
+        return MockEmbeddingAdapter()
     
     api_key = api_key or os.getenv("GEMINI_API_KEY")
-    model = model or os.getenv("GEMINI_EMBEDDING_MODEL", "text-embedding-004")
+    model = model or os.getenv("GEMINI_EMBEDDING_MODEL", "embedding-001")
     
     if not api_key:
-        raise ValueError(
-            "Gemini API key is required. Set GEMINI_API_KEY environment variable."
-        )
+        # Fall back to mock adapter for testing
+        from adapters.embedding.mock import MockEmbeddingAdapter
+        return MockEmbeddingAdapter()
     
+    from adapters.embedding.gemini import GeminiAdapter
     return GeminiAdapter(api_key=api_key, model=model)
 
 

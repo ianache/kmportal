@@ -126,12 +126,10 @@ app.get('/auth/callback', async (req: Request, res: Response) => {
     logger.info('User authenticated successfully', { trace_id });
     
     // Redirect to frontend
-    const redirectUrl = config.corsOrigins[0] || 'http://localhost:5173';
-    res.redirect(`${redirectUrl}/auth/callback?success=true`);
+    res.redirect(`${config.frontendUrl}/auth/callback?success=true`);
   } catch (error) {
     logger.error('Callback error', { trace_id, error: (error as Error).message });
-    const redirectUrl = config.corsOrigins[0] || 'http://localhost:5173';
-    res.redirect(`${redirectUrl}/auth/callback?error=authentication_failed`);
+    res.redirect(`${config.frontendUrl}/auth/callback?error=authentication_failed`);
   }
 });
 
@@ -150,31 +148,45 @@ app.get('/auth/logout', async (req: Request, res: Response) => {
     
     // Redirect to Keycloak logout
     const keycloakLogoutUrl = `${config.keycloak.url}/realms/${config.keycloak.realm}/protocol/openid-connect/logout`;
-    const redirectUrl = config.corsOrigins[0] || 'http://localhost:5173';
-    
-    res.redirect(`${keycloakLogoutUrl}?redirect_uri=${encodeURIComponent(redirectUrl)}`);
+    res.redirect(`${keycloakLogoutUrl}?redirect_uri=${encodeURIComponent(config.frontendUrl)}`);
   } catch (error) {
     logger.error('Logout error', { trace_id, error: (error as Error).message });
     res.status(500).json({ error: 'Logout failed' });
   }
 });
 
-app.get('/auth/session', validateSession, (req: Request, res: Response) => {
-  const user = req.user;
-  
-  if (!user) {
-    res.status(401).json({ error: 'Not authenticated' });
+app.get('/auth/session', (req: Request, res: Response) => {
+  // Dev bypass: return mock session without validating
+  if (process.env.BYPASS_AUTH === 'true') {
+    res.json({
+      authenticated: true,
+      user: {
+        id: 'dev-user-00000000-0000-0000-0000-000000000000',
+        email: 'dev@localhost',
+        roles: ['km-admin', 'km-reader'],
+      },
+    });
     return;
   }
-  
-  // Return user info (without tokens - they stay server-side)
-  res.json({
-    authenticated: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      roles: user.roles,
-    },
+
+  // Normal flow: validate session first
+  validateSession(req, res, () => {
+    const user = req.user;
+    
+    if (!user) {
+      res.status(401).json({ error: 'Not authenticated' });
+      return;
+    }
+    
+    // Return user info (without tokens - they stay server-side)
+    res.json({
+      authenticated: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        roles: user.roles,
+      },
+    });
   });
 });
 

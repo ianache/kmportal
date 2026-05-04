@@ -2,6 +2,146 @@
 
 ## Concepts
 
+- [Gemini API batch embedding request payload](concepts/gemini_api_batch_embedding_request_payload.md) — The JSON structure sent to the Gemini API's `batchEmbedContents` endpoint, which
+
+- [health checks](concepts/health_checks.md) — An API endpoint or system process responsible for verifying the operational stat
+
+- [Any](concepts/any.md) — A Python type hint from the `typing` module indicating that a value can be of an
+
+- [structlog.contextvars.BoundContextvars](concepts/structlogcontextvarsboundcontextvars.md) — A specific type from the structlog library, previously used as the return type a
+
+- [uvicorn src.main:app](concepts/uvicorn_srcmainapp.md) — An incorrect command pattern for running the API that typically leads to `Module
+
+- [[tool.uv.scripts]](concepts/tooluvscripts.md) — A deprecated section in `pyproject.toml` previously used for `uv` script configu
+
+- [[project.optional-dependencies] dev](concepts/projectoptional-dependencies_dev.md) — A section in `pyproject.toml` where development-specific dependencies are now co
+
+- [uvicorn --app-dir src](concepts/uvicorn_--app-dir_src.md) — A specific command-line argument for uvicorn that designates the `src/` director
+
+- [absolute imports](concepts/absolute_imports.md) — A Python import style (e.g., `from db.database import ...`) that requires the co
+
+- [knowledge-api](concepts/knowledge-api.md) — The Docker image name for the Knowledge Management API.
+
+- [ModuleNotFoundError: No module named 'db'](concepts/modulenotfounderror_no_module_named_db.md) — A common Python error indicating that a module cannot be found, specifically 'db
+
+- [--app-dir src](concepts/--app-dir_src.md) — A uvicorn command-line flag that specifies 'src' as the application directory fo
+
+- [main:app](concepts/mainapp.md) — The entry point for the FastAPI application within the 'src' directory.
+
+- [start.sh](concepts/startsh.md) — A Bash script for starting the Knowledge Management API on Linux/macOS using uvi
+
+- [start.bat](concepts/startbat.md) — A Windows batch script for starting the Knowledge Management API using uvicorn w
+
+- [API startup process](concepts/api_startup_process.md) — The procedure for initiating the Knowledge Management API, now improved with rob
+
+- [local modules](concepts/local_modules.md) — Project-specific Python modules (db, api, mcp, core) located within the applicat
+
+- [ModuleNotFoundError](concepts/modulenotfounderror.md) — A Python error indicating that an imported module could not be found, specifical
+
+- [uvicorn](concepts/uvicorn.md) — An ASGI server used to run FastAPI applications.
+
+- [PYTHONPATH](concepts/pythonpath.md) — An environment variable used by Python to determine the list of directories wher
+
+- [api/Dockerfile](concepts/apidockerfile.md) — The Dockerfile responsible for building the API service's container image.
+
+- [Audit Logging](concepts/audit_logging.md) — A low-priority planned feature for specific administrative action logging.
+
+- [Redis Caching](concepts/redis_caching.md) — A low-priority planned caching mechanism for the BFF, with variables defined but
+
+- [Multi-stage Build Optimizations](concepts/multi-stage_build_optimizations.md) — Low-priority Dockerfile optimizations for smaller and faster builds.
+
+- [Docker Compose Overrides](concepts/docker_compose_overrides.md) — Low-priority missing Docker Compose configurations for different environments.
+
+- [Highlighting y Snippets](concepts/highlighting_y_snippets.md) — A medium-priority feature for search result presentation, partially implemented.
+
+- [OpenTelemetry Tracing](concepts/opentelemetry_tracing.md) — A medium-priority planned system for distributed tracing, with variables defined
+
+- [Cross-Encoder](concepts/cross-encoder.md) — A technology planned for medium-priority reranking of search results.
+
+- [SSL/TLS Termination](concepts/ssltls_termination.md) — A high-priority security configuration for HTTPS in production, currently not im
+
+- [Automated Backups](concepts/automated_backups.md) — A high-priority planned strategy for backing up various databases, deferred to P
+
+- [Kubernetes Manifests](concepts/kubernetes_manifests.md) — High-priority missing deployment configurations for Kubernetes.
+
+- [Async Workers](concepts/async_workers.md) — A high-priority planned system for asynchronous ingestion processing.
+
+- [MongoDB Integration](concepts/mongodb_integration.md) — A high-priority planned integration for storing document content, currently defe
+
+- [Domain access check](concepts/domain_access_check.md) — A critical pending implementation for the job status endpoint to prevent informa
+
+- [API key validation](concepts/api_key_validation.md) — A critical pending implementation within 'get_current_user_optional' for complet
+
+- [Rate limiting middleware](concepts/rate_limiting_middleware.md) — A critical pending implementation to enforce API key rate limits.
+
+- [rate_limit](concepts/rate_limit.md) — A field in the APIKey model, defaulting to 1000 requests per hour, that needs en
+
+- [Prometheus Metrics](concepts/prometheus_metrics.md) — A system for exposing application metrics in a format compatible with Prometheus
+
+- [Version Endpoint](concepts/version_endpoint.md) — An API endpoint that provides information about the application's current versio
+
+- [GZip compression middleware](concepts/gzip_compression_middleware.md) — A middleware component that automatically compresses HTTP responses to reduce ba
+
+- [Production Configuration](concepts/production_configuration.md) — A comprehensive set of environment variables and settings specifically tailored 
+
+- [Health Checks](concepts/health_checks.md) — Endpoints designed to monitor the operational status and dependency health of th
+
+- [Request Logging Middleware](concepts/request_logging_middleware.md) — A middleware component that automatically intercepts and logs details of incomin
+
+- [Structured Logging](concepts/structured_logging.md) — A system for generating machine-readable logs, facilitating easier parsing, quer
+
+- [Observability](concepts/observability.md) — The ability to understand the internal state of the system from its external out
+
+- [Production Hardening](concepts/production_hardening.md) — The overall initiative to enhance the application's resilience, stability, and m
+
+- [get_document_status](concepts/get_document_status.md) — An MCP tool that allows AI agents to inquire about the ingestion and processing 
+
+- [get_domain_info](concepts/get_domain_info.md) — An MCP tool that provides AI agents with detailed metadata and configuration for
+
+- [list_domains](concepts/list_domains.md) — An MCP tool that enables AI agents to retrieve a list of all accessible knowledg
+
+- [search_knowledge](concepts/search_knowledge.md) — An MCP tool that allows AI agents to query the knowledge base using various sear
+
+- [/mcp/messages](concepts/mcpmessages.md) — The message POST endpoint of the FastMCP server, designed for AI agents to send 
+
+- [/mcp/sse](concepts/mcpsse.md) — The Server-Sent Events (SSE) endpoint provided by the FastMCP server, used for r
+
+- [Domain Restrictions](concepts/domain_restrictions.md) — A security mechanism applied to API keys, limiting the API key's access to a pre
+
+- [Scopes](concepts/scopes.md) — Permission identifiers (e.g., 'read', 'write', 'admin') associated with an API k
+
+- [X-API-Key Header](concepts/x-api-key_header.md) — The custom HTTP header (`X-API-Key`) required for authenticating requests to the
+
+- [MCP Tools](concepts/mcp_tools.md) — A conceptual category encompassing the functions and capabilities exposed by the
+
+- [FastMCP Server](concepts/fastmcp_server.md) — An instance of the FastMCP framework serving as the Model Context Protocol serve
+
+- [FE-03](concepts/fe-03.md) — A frontend requirement related to the interactive user experience, particularly 
+
+- [DOM-04](concepts/dom-04.md) — A requirement specifying that search functionality must respect user's domain ac
+
+- [SearchResponse](concepts/searchresponse.md) — An interface defining the structure of the response received from a search query
+
+- [SearchRequest](concepts/searchrequest.md) — An interface defining the parameters for a search query, including query string,
+
+- [Core API /api/v1/search](concepts/core_api_apiv1search.md) — The Core API's REST endpoint for performing search operations, which the BFF pro
+
+- [BFF /api/v1/search](concepts/bff_apiv1search.md) — The Backend For Frontend (BFF) REST API endpoint through which the Search Micro 
+
+- [07-04-PLAN.md](concepts/07-04-planmd.md) — The execution plan document for implementing the Shell Notifications Micro UI.
+
+- [07-03-PLAN.md](concepts/07-03-planmd.md) — The execution plan document for implementing the Ingestion Status Micro UI.
+
+- [07-02-PLAN.md](concepts/07-02-planmd.md) — The execution plan document for implementing the Domain Explorer Micro UI.
+
+- [07-01-PLAN.md](concepts/07-01-planmd.md) — The detailed execution plan document for implementing the Search Micro UI, outli
+
+- [FE-09 requirement](concepts/fe-09_requirement.md) — A frontend requirement resolved by the completion of Phase 6.
+
+- [FE-02 requirement](concepts/fe-02_requirement.md) — A frontend requirement resolved by the completion of Phase 6.
+
+- [FE-01 requirement](concepts/fe-01_requirement.md) — A frontend requirement resolved by the completion of Phase 6.
+
 - [Module Federation Integration](concepts/module_federation_integration.md) — The process of setting up Module Federation for the Frontend Shell to host and c
 
 - [Auth State Management](concepts/auth_state_management.md) — The system responsible for handling user authentication, session validation, log
@@ -78,7 +218,7 @@
 
 - [VectorStoreError](concepts/vectorstoreerror.md) — A base exception class for errors originating from vector store operations.
 
-- [SearchResult](concepts/searchresult.md) — A data structure representing a single search result from the vector store, incl
+- [SearchResult](concepts/searchresult.md) — An interface defining the structure of a single search result, encompassing chun
 
 - [ABC](concepts/abc.md) — Python's Abstract Base Class (ABC) mechanism, used to define abstract interfaces
 
@@ -346,7 +486,7 @@
 
 - [VectorStorePort abstraction](concepts/vectorstoreport_abstraction.md) — An architectural abstraction layer for vector database interactions, crucial for
 
-- [AI Agent Integration](concepts/ai_agent_integration.md) — Enables external AI agents to query the knowledge base as a tool call via the Fa
+- [AI Agent Integration](concepts/ai_agent_integration.md) — A new system capability allowing external Artificial Intelligence agents to prog
 
 - [Vue Shell](concepts/vue_shell.md) — The main frontend application, built with Vue.js, hosting Micro UIs.
 
@@ -384,7 +524,7 @@
 
 - [Ingestion pipeline](concepts/ingestion_pipeline.md) — The system responsible for processing and storing incoming documents into the pl
 
-- [Dead Letter Queue (DLQ)](concepts/dead_letter_queue_dlq.md) — A mechanism for handling messages that cannot be processed successfully, prevent
+- [Dead Letter Queue (DLQ)](concepts/dead_letter_queue_dlq.md) — A high-priority pending implementation for handling failed asynchronous tasks.
 
 - [Async Ingestion Poison Pills](concepts/async_ingestion_poison_pills.md) — A critical pitfall where malformed or problematic documents halt the asynchronou
 
@@ -432,7 +572,7 @@
 
 - [ASGI](concepts/asgi.md) — Asynchronous Server Gateway Interface, a standard for Python async web servers, 
 
-- [WebSocket](concepts/websocket.md) — Enables real-time, bi-directional communication, primarily used for ingestion st
+- [WebSocket](concepts/websocket.md) — A communication protocol providing full-duplex communication channels over a sin
 
 - [REST](concepts/rest.md) — Architectural style for networked applications, used for communication between c
 
@@ -460,7 +600,7 @@
 
 - [D001](concepts/d001.md) — Decision to implement VectorStorePort and EmbeddingPort abstractions in Phase 1 
 
-- [Phase 7: Core micro UIs](concepts/phase_7_core_micro_uis.md) — Phase developing essential micro UIs for search, domain exploration, and ingesti
+- [Phase 7: Core micro UIs](concepts/phase_7_core_micro_uis.md) — A project phase focused on implementing core user interface components as indepe
 
 - [Phase 6: Frontend shell](concepts/phase_6_frontend_shell.md) — Phase establishing the Vue 3 Module Federation host and integrating the design s
 
@@ -516,9 +656,9 @@
 
 - [PostgreSQL Database](concepts/postgresql_database.md) — The relational database used for storing document metadata and performing full-t
 
-- [Search Analytics](concepts/search_analytics.md) — A module for logging and tracking search queries, results, and performance metri
+- [Search Analytics](concepts/search_analytics.md) — A medium-priority planned feature for logging and tracking search queries and me
 
-- [Suggestions and Autocomplete](concepts/suggestions_and_autocomplete.md) — Features to provide query suggestions and autocomplete capabilities to users.
+- [Suggestions and Autocomplete](concepts/suggestions_and_autocomplete.md) — Medium-priority planned features to improve the search experience.
 
 - [Highlighting and Snippets](concepts/highlighting_and_snippets.md) — A feature to highlight matching terms and generate contextual text snippets in s
 
@@ -764,7 +904,7 @@
 
 - [Advanced Monitoring](concepts/advanced_monitoring.md) — Advanced system monitoring using tools like Prometheus/Grafana, deferred to Phas
 
-- [CI/CD Pipeline](concepts/cicd_pipeline.md) — An automated process for continuous integration and continuous deployment, defer
+- [CI/CD Pipeline](concepts/cicd_pipeline.md) — An automated process for continuous integration and continuous deployment, encom
 
 - [Contract Testing](concepts/contract_testing.md) — A testing strategy to ensure that concrete adapters correctly adhere to the inte
 
@@ -860,13 +1000,13 @@
 
 - [API Key](concepts/api_key.md) — Authentication token used by 3rd Party/AI Agents and for specific administrative
 
-- [EmbeddingPort](concepts/embeddingport.md) — An abstract interface (port) that defines the contract for any text embedding ge
+- [EmbeddingPort](concepts/embeddingport.md) — An interface (port) defining the contract for embedding operations, implemented 
 
-- [VectorStorePort](concepts/vectorstoreport.md) — An abstract base class (ABC) defining the interface for a vector store, whose co
+- [VectorStorePort](concepts/vectorstoreport.md) — An interface (port) defining the contract for vector store operations, implement
 
 - [Swagger UI](concepts/swagger_ui.md) — An interactive API documentation tool automatically generated from OpenAPI speci
 
-- [Luminous Knowledge design system](concepts/luminous_knowledge_design_system.md) — The defined design system to which the frontend shell and micro UIs must adhere.
+- [Luminous Knowledge design system](concepts/luminous_knowledge_design_system.md) — The defined design system whose principles and components are implemented in the
 
 - [Monorepo](concepts/monorepo.md) — A software development strategy where code for multiple projects is stored in a 
 
@@ -906,9 +1046,9 @@
 
 - [Health Endpoints](concepts/health_endpoints.md) — A requirement for each service to expose a `/health` endpoint returning a 200 st
 
-- [Webhooks](concepts/webhooks.md) — Configurable webhooks per domain for external system integrations (v2 requiremen
+- [Webhooks](concepts/webhooks.md) — A medium-priority planned feature for configurable HTTP notifications.
 
-- [Email Notifications](concepts/email_notifications.md) — Planned notifications via email for ingestion events like errors or completion (
+- [Email Notifications](concepts/email_notifications.md) — A medium-priority planned feature for email-based event notifications.
 
 - [Real-time Ingestion Notifications](concepts/real-time_ingestion_notifications.md) — WebSocket-based notifications provided by the BFF to the frontend about document
 
@@ -938,7 +1078,7 @@
 
 - [OpenTelemetry](concepts/opentelemetry.md) — Used for distributed tracing across services (v2 requirement).
 
-- [Helm Charts](concepts/helm_charts.md) — Used for reproducible deployment of services on Kubernetes (v2 requirement).
+- [Helm Charts](concepts/helm_charts.md) — High-priority missing packaging for reproducible Kubernetes deployments.
 
 - [Ollama LLM Provider](concepts/ollama_llm_provider.md) — Planned support for using local Ollama models as an alternative LLM provider (v2
 
@@ -946,7 +1086,7 @@
 
 - [FastMCP Framework](concepts/fastmcp_framework.md) — The framework used to integrate AI agent tools into the Core API.
 
-- [Module Federation](concepts/module_federation.md) — A feature enabling multiple separate builds to form a single application, used h
+- [Module Federation](concepts/module_federation.md) — A webpack feature utilized to allow the Frontend Shell to host and dynamically l
 
 - [NodeJS Runtime](concepts/nodejs_runtime.md) — The runtime environment used for the BFF service.
 
@@ -1052,7 +1192,7 @@
 
 - [Micro-frontend](concepts/micro-frontend.md) — An architectural pattern for the frontend, consisting of a central shell integra
 
-- [uv](concepts/uv.md) — A fast Python package manager used for dependency management and running project
+- [uv](concepts/uv.md) — A fast Python package installer and dependency resolver, also used here to run d
 
 - [FastMCP server](concepts/fastmcp_server.md) — A server component that exposes the knowledge base to external AI agents via the
 
@@ -1080,7 +1220,7 @@
 
 - [PROJECT.md](concepts/projectmd.md) — A planning documentation file detailing the project vision, constraints, and key
 
-- [README.md](concepts/readmemd.md) — The main project documentation file, providing an overview, architecture, roadma
+- [README.md](concepts/readmemd.md) — Documentation file providing quick start guides, common issues, and API usage in
 
 - [wiki.html](concepts/wikihtml.md) — An HTML file generated by `show_wiki.py` that displays the interactive wiki grap
 
@@ -1242,7 +1382,7 @@
 
 - [Large Language Models (LLMs)](concepts/large_language_models_llms.md) — General category of AI models to be used for processing, indexing, and querying 
 
-- [FastMCP](concepts/fastmcp.md) — A library for an MCP (Micro-service Communication Protocol) server (Phase 9).
+- [FastMCP](concepts/fastmcp.md) — A third-party dependency (package) used to implement the Model Context Protocol,
 
 - [Model Context Protocol (MCP)](concepts/model_context_protocol_mcp.md) — A protocol enabling tools like Google Stitch and allowing third-party AI agents 
 
@@ -1282,9 +1422,99 @@
 
 - [llmwikidoc](concepts/llmwikidoc.md) — The core system for structuring and maintaining a knowledge repository, configur
 
-- [Knowledge Management Center](concepts/knowledge_management_center.md) — A greenfield enterprise knowledge management platform for internal authenticated
+- [Knowledge Management Center](concepts/knowledge_management_center.md) — The project that is being documented regarding its pending implementations.
 
 ## Modules
+
+- [adapters/__init__.py](entities/adapters__init__py.md) — The initialization module for the adapters package, now providing factory functi
+
+- [mcp_server](entities/mcp_server.md) — The new name for the Model Context Protocol (MCP) module located at `api/src/mcp
+
+- [src/](entities/src.md) — The primary source code directory of the API, which needs to be correctly recogn
+
+- [api/pyproject.toml](entities/apipyprojecttoml.md) — Project configuration file, updated to remove deprecated UV settings and move de
+
+- [api/README.md](entities/apireadmemd.md) — Documentation file for the Knowledge Management API, now significantly updated w
+
+- [api/src/core](entities/apisrccore.md) — A Python sub-package within 'api/src' for core utilities and middleware.
+
+- [api/src](entities/apisrc.md) — The root Python package for the Knowledge Management API, containing the main ap
+
+- [src.main:app](entities/srcmainapp.md) — The specific entry point within the API's `src` directory that the uvicorn serve
+
+- [start.py](entities/startpy.md) — A recommended Python script serving as the entry point to run the API, encapsula
+
+- [start.bat](entities/startbat.md) — A new Batch script designed to launch the Knowledge Management API, specifically
+
+- [start.sh](entities/startsh.md) — A new Bash script designed to launch the Knowledge Management API, specifically 
+
+- [store](entities/store.md) — A global state management module (e.g., Vuex or Pinia store) responsible for han
+
+- [api/src/api/ingestion.py](entities/apisrcapiingestionpy.md) — Source file containing the job status endpoint and a TODO for domain access chec
+
+- [CDN for assets](entities/cdn_for_assets.md) — A low-priority planned content delivery network for static frontend assets.
+
+- [Neo4j Graph Database](entities/neo4j_graph_database.md) — A medium-priority planned graph database for document relationships and search.
+
+- [Grafana](entities/grafana.md) — A high-priority visualization tool for monitoring, paired with Prometheus.
+
+- [Prometheus](entities/prometheus.md) — A high-priority monitoring system, with its /metrics endpoint already existing.
+
+- [ARQ](entities/arq.md) — A technology planned for implementing asynchronous workers with queues and retry
+
+- [ingestion_service.py](entities/ingestion_servicepy.md) — A Python file related to ingestion, affected by MongoDB integration.
+
+- [.env.production.example](entities/envproductionexample.md) — An example file documenting all required environment variables for a production 
+
+- [ci-cd.yml](entities/ci-cdyml.md) — A GitHub Actions workflow definition for the CI/CD pipeline, orchestrating testi
+
+- [health.py](entities/healthpy.md) — A Python module that defines various health check endpoints (/health, /health/de
+
+- [logging_middleware.py](entities/logging_middlewarepy.md) — A Python module implementing a middleware for automatic HTTP request logging, ge
+
+- [logging_config.py](entities/logging_configpy.md) — The Python module responsible for configuring structured logging using structlog
+
+- [api/src/mcp/server.py](entities/apisrcmcpserverpy.md) — A new module housing the core logic for the FastMCP server, including its defini
+
+- [api/src/mcp/auth.py](entities/apisrcmcpauthpy.md) — A new module dedicated to handling API key-based authentication for the MCP serv
+
+- [api/src/mcp/__init__.py](entities/apisrcmcp__init__py.md) — The package initialization file for the `mcp` module, defining what symbols are 
+
+- [api/src/main.py](entities/apisrcmainpy.md) — The primary application file for the Knowledge Management Center API, updated to
+
+- [frontend/apps/search-ui/src/types/search.ts](entities/frontendappssearch-uisrctypessearchts.md) — TypeScript interfaces defining the data structures for search requests, response
+
+- [frontend/apps/search-ui/src/components/SearchResultCard.vue](entities/frontendappssearch-uisrccomponentssearchresultcardvue.md) — A Vue component designed to display an individual search result, including highl
+
+- [frontend/apps/search-ui/src/components/SearchFilters.vue](entities/frontendappssearch-uisrccomponentssearchfiltersvue.md) — A Vue component implementing the user interface for filtering search results by 
+
+- [frontend/apps/search-ui/src/services/searchApi.ts](entities/frontendappssearch-uisrcservicessearchapits.md) — A service module providing the API client for interacting with the Backend For F
+
+- [frontend/apps/search-ui/src/stores/search.ts](entities/frontendappssearch-uisrcstoressearchts.md) — A Pinia store responsible for managing the state and handling API calls related 
+
+- [frontend/apps/search-ui](entities/frontendappssearch-ui.md) — The dedicated Vue.js application that will host the Search Micro UI, intended to
+
+- [Shell Notifications Micro UI](entities/shell_notifications_micro_ui.md) — A micro-UI for displaying real-time toast notifications and updating a notificat
+
+- [Ingestion Status Micro UI](entities/ingestion_status_micro_ui.md) — A micro-UI providing real-time updates for ingestion jobs via WebSocket, includi
+
+- [Domain Explorer Micro UI](entities/domain_explorer_micro_ui.md) — A micro-UI for listing domains with document counts, browsing documents, and vie
+
+- [Search Micro UI](entities/search_micro_ui.md) — A micro-UI responsible for semantic and filtered search, displaying highlighted 
+
+- [searchUi micro-UI](entities/searchui_micro-ui.md) — One of the micro-frontend applications updated to be a Module Federation remote 
+
+- [ingestionUi micro-UI](entities/ingestionui_micro-ui.md) — One of the micro-frontend applications updated to be a Module Federation remote 
+
+- [domainsUi micro-UI](entities/domainsui_micro-ui.md) — One of the micro-frontend applications updated to be a Module Federation remote 
+
+- [adminUi micro-UI](entities/adminui_micro-ui.md) — One of the micro-frontend applications updated to be a Module Federation remote 
+
+- [Design tokens CSS](entities/design_tokens_css.md) — A CSS file at `src/styles/design-tokens.css` defining global design variables fo
+
+- [BFF API client](entities/bff_api_client.md) — An HTTP client at `src/services/bffClient.ts` for proxying requests to the Core 
+
+- [Pinia auth store](entities/pinia_auth_store.md) — A Pinia store at `src/stores/auth.ts` managing user session, login/logout action
 
 - [frontend/apps/shell/src/types/auth.ts](entities/frontendappsshellsrctypesauthts.md) — TypeScript type definitions for authentication-related data structures used acro
 
@@ -1320,7 +1550,7 @@
 
 - [frontend/apps/search-ui/src/main.ts](entities/frontendappssearch-uisrcmaints.md) — The primary entry point file for the search-ui Vue.js application, responsible f
 
-- [App.vue](entities/appvue.md) — The root Vue component for the application, imported and mounted by main.ts.
+- [App.vue](entities/appvue.md) — The main Vue component for the domains user interface, responsible for displayin
 
 - [Vue](entities/vue.md) — The JavaScript framework utilized for building the user interface of the domains
 
@@ -1512,7 +1742,7 @@
 
 - [python-jose](entities/python-jose.md) — A library for JWT validation, specifically for RS256 tokens from Keycloak.
 
-- [mcp](entities/mcp.md) — Contains the protocol primitives for the Model Context Protocol, often a transit
+- [mcp](entities/mcp.md) — The former name of the Model Context Protocol module that caused a naming confli
 
 - [fastmcp](entities/fastmcp.md) — A server implementation for the Model Context Protocol, designed to be mounted a
 
@@ -1578,7 +1808,7 @@
 
 - [ingestion-ui](entities/ingestion-ui.md) — A UI component or sub-package within the frontend monorepo, likely related to da
 
-- [domains-ui](entities/domains-ui.md) — A UI component or sub-package within the frontend monorepo, likely related to do
+- [domains-ui](entities/domains-ui.md) — The frontend application responsible for the user interface related to knowledge
 
 - [MCP Server (FastMCP)](entities/mcp_server_fastmcp.md) — Component exposing knowledge base as MCP-compliant tools for AI agents.
 
@@ -1618,7 +1848,7 @@
 
 - [ingestion/extractors.py](entities/ingestionextractorspy.md) — A Python module containing functions for extracting text from various file forma
 
-- [main.py](entities/mainpy.md) — The main entry point for the FastAPI application within the `src/` directory.
+- [main.py](entities/mainpy.md) — The main FastAPI application entry point that now imports and mounts the `mcp_se
 
 - [api/api_keys.py](entities/apiapi_keyspy.md) — A Python module containing the FastAPI route definitions for API key management 
 
@@ -1632,7 +1862,7 @@
 
 - [api/src/services/domain_service.py](entities/apisrcservicesdomain_servicepy.md) — Module containing the business logic and repository operations for domain manage
 
-- [api/src/core/dependencies.py](entities/apisrccoredependenciespy.md) — A Python module defining FastAPI dependency functions for role and access contro
+- [api/src/core/dependencies.py](entities/apisrccoredependenciespy.md) — Source file containing the 'get_current_user_optional' function and a TODO for r
 
 - [api/src/core/auth.py](entities/apisrccoreauthpy.md) — A Python module containing utilities for JWT validation and user authentication.
 
@@ -1680,7 +1910,7 @@
 
 - [25-KnowledgeManagement/](entities/25-knowledgemanagement.md) — The root directory of the monorepo, containing all project services and shared c
 
-- [api/src/adapters/embedding/gemini.py](entities/apisrcadaptersembeddinggeminipy.md) — The Python file intended to implement the EmbeddingPort for the Gemini API.
+- [api/src/adapters/embedding/gemini.py](entities/apisrcadaptersembeddinggeminipy.md) — The Python module containing the implementation of the GeminiAdapter.
 
 - [api/src/adapters/vector_store/chroma_db.py](entities/apisrcadaptersvector_storechroma_dbpy.md) — Contains the ChromaDBAdapter, a concrete implementation of the VectorStorePort u
 
@@ -1712,7 +1942,7 @@
 
 - [FastMCP](entities/fastmcp.md) — A server for exposing tools to AI agents, integrated in Phase 9.
 
-- [Vue Router](entities/vue_router.md) — The official router for Vue.js, specified for use with navigation guards in the 
+- [Vue Router](entities/vue_router.md) — The application's routing system configured at `src/router/index.ts` with auth g
 
 - [Pinia](entities/pinia.md) — A state management library for Vue.js, specified for use in the authentication s
 
@@ -1724,9 +1954,9 @@
 
 - [Kafka](entities/kafka.md) — Distributed streaming platform, an option for the Message Broker.
 
-- [Redis](entities/redis.md) — Used for session storage in the BFF and as a pub/sub relay for WebSocket notific
+- [Redis](entities/redis.md) — A technology required for implementing rate limiting and caching.
 
-- [ChromaDB](entities/chromadb.md) — The initial (MVP) vector database, used in HTTP mode.
+- [ChromaDB](entities/chromadb.md) — The current database used for storing document content.
 
 - [MongoDB](entities/mongodb.md) — The document store used for raw text and chunk content with flexible metadata.
 
@@ -1744,7 +1974,7 @@
 
 - [MCP Server](entities/mcp_server.md) — An ASGI sub-app within the Core API, providing tools for AI agents to interact w
 
-- [Frontend Shell](entities/frontend_shell.md) — The main frontend application, acting as a Module Federation host, managing navi
+- [Frontend Shell](entities/frontend_shell.md) — The main host application for the frontend, built with Vue 3 and Module Federati
 
 - [BFF (Backend for Frontend)](entities/bff_backend_for_frontend.md) — NodeJS REST API that consumes the Core API, exposes endpoints to the frontend, m
 
@@ -1760,7 +1990,7 @@
 
 - [Frontend](entities/frontend.md) — The user interface for the platform, built with Vue 3, Pinia, and designed with 
 
-- [BFF](entities/bff.md) — The Backend For Frontend layer, responsible for OAuth2 proxy, API forwarding, an
+- [BFF](entities/bff.md) — The Backend For Frontend service where Redis caching is planned.
 
 - [Core API](entities/core_api.md) — The primary programmatic interface for interacting with the platform, offering e
 
@@ -1769,6 +1999,22 @@
 - [llmwikidoc Configuration](entities/llmwikidoc_configuration.md) — Configuration settings for the llmwikidoc tool, defining model, directory, conte
 
 ## Classs
+
+- [MCPAuthMiddleware](entities/mcpauthmiddleware.md) — An authentication middleware for MCP endpoints that validates API keys provided 
+
+- [ToastContainer component](entities/toastcontainer_component.md) — A reusable UI component at `src/components/ui/ToastContainer.vue` that implement
+
+- [BaseInput component](entities/baseinput_component.md) — A reusable UI component at `src/components/ui/BaseInput.vue` for text input fiel
+
+- [BaseCard component](entities/basecard_component.md) — A reusable UI component at `src/components/ui/BaseCard.vue` providing card conta
+
+- [BaseButton component](entities/basebutton_component.md) — A reusable UI component at `src/components/ui/BaseButton.vue` supporting primary
+
+- [ShellLayout component](entities/shelllayout_component.md) — A global layout component at `src/components/layout/ShellLayout.vue` featuring a
+
+- [LoginRequired view](entities/loginrequired_view.md) — A Vue view component at `src/views/LoginRequired.vue` prompting users to log in 
+
+- [AuthCallback view](entities/authcallback_view.md) — A Vue view component at `src/views/AuthCallback.vue` dedicated to handling OAuth
 
 - [ItemSearchEngine](entities/itemsearchengine.md) — A class that provides advanced search, filtering, and sorting capabilities for i
 
@@ -1882,7 +2128,7 @@
 
 - [IngestionJob](entities/ingestionjob.md) — A database model representing a specific job to ingest a document, tracking its 
 
-- [APIKey](entities/apikey.md) — A database model for managing API keys, including their hash, associated scopes,
+- [APIKey](entities/apikey.md) — A model used in the API that includes a 'rate_limit' field.
 
 - [Domain](entities/domain.md) — A data model representing a domain in the application's database.
 
@@ -1932,11 +2178,11 @@
 
 - [EmbeddingError](entities/embeddingerror.md) — The base exception class for all errors that can occur during embedding operatio
 
-- [OllamaAdapter](entities/ollamaadapter.md) — A planned future adapter implementation of the EmbeddingPort for local embedding
+- [OllamaAdapter](entities/ollamaadapter.md) — A medium-priority planned adapter for local embeddings using Ollama.
 
-- [OpenAIAdapter](entities/openaiadapter.md) — A planned future adapter implementation of the EmbeddingPort using OpenAI (v2).
+- [OpenAIAdapter](entities/openaiadapter.md) — A medium-priority planned adapter to use OpenAI as an embedding provider.
 
-- [QdrantAdapter](entities/qdrantadapter.md) — A planned future adapter implementation of the VectorStorePort using Qdrant (v2)
+- [QdrantAdapter](entities/qdrantadapter.md) — A medium-priority planned adapter for Qdrant, intended to replace ChromaDB.
 
 - [SearchService Class](entities/searchservice_class.md) — A Python class that encapsulates the core business logic for different search mo
 
@@ -1954,7 +2200,7 @@
 
 - [DomainResponse](entities/domainresponse.md) — A Pydantic schema for serializing and structuring domain data for API responses.
 
-- [APIKeyService](entities/apikeyservice.md) — A dedicated service layer for managing API keys, providing functionalities for c
+- [APIKeyService](entities/apikeyservice.md) — A service responsible for validating API keys, utilized by `MCPAuthMiddleware` t
 
 - [DomainService](entities/domainservice.md) — A service class responsible for orchestrating CRUD operations on domains and man
 
@@ -1996,9 +2242,9 @@
 
 - [DomainModel](entities/domainmodel.md) — SQLAlchemy model representing a knowledge domain with attributes like id, name, 
 
-- [GeminiAdapter](entities/geminiadapter.md) — An adapter class for integrating with the Gemini API to generate document embedd
+- [GeminiAdapter](entities/geminiadapter.md) — An adapter class that implements the EmbeddingPort interface, using Google's Gem
 
-- [ChromaDBAdapter](entities/chromadbadapter.md) — An adapter class for interacting with the ChromaDB vector store, used by the sea
+- [ChromaDBAdapter](entities/chromadbadapter.md) — A concrete implementation of the VectorStorePort interface, used for interacting
 
 - [SearchService (Example)](entities/searchservice_example.md) — An example domain service demonstrating the usage of the VectorStorePort interfa
 
@@ -2019,6 +2265,34 @@
 - [Network](entities/network.md) — A class from the `pyvis.network` module used to build and display interactive ne
 
 ## Functions
+
+- [_embed_batch](entities/_embed_batch.md) — A private method within GeminiAdapter responsible for constructing and sending a
+
+- [get_embedding_adapter](entities/get_embedding_adapter.md) — An asynchronous factory function that returns a configured EmbeddingPort impleme
+
+- [get_vector_store_adapter](entities/get_vector_store_adapter.md) — An asynchronous factory function that returns a configured VectorStorePort imple
+
+- [bind_request_context](entities/bind_request_context.md) — A function within `logging_config.py` designed to bind request-specific context 
+
+- [knowledge-api (script)](entities/knowledge-api_script.md) — The command-line entry point defined in `pyproject.toml` for the API.
+
+- [loadDomains](entities/loaddomains.md) — An incorrectly named method that was previously called to retrieve domain data, 
+
+- [fetchDomains](entities/fetchdomains.md) — The correct method name in the 'store' module used to retrieve domain data.
+
+- [onMounted](entities/onmounted.md) — A Vue lifecycle hook that runs after the component has been mounted to the DOM.
+
+- [Endpoint /metrics](entities/endpoint_metrics.md) — An existing endpoint that provides metrics but lacks a full monitoring stack.
+
+- [Job status endpoint](entities/job_status_endpoint.md) — An endpoint in the API ingestion module that requires domain access checks.
+
+- [check_domain_access](entities/check_domain_access.md) — A utility function that verifies if an authenticated API key is authorized to ac
+
+- [require_scope](entities/require_scope.md) — A utility function that checks if an authenticated API key has the necessary sco
+
+- [get_mcp_app](entities/get_mcp_app.md) — A function within the `mcp_server` module that returns the ASGI application inst
+
+- [useBreakpoint composable](entities/usebreakpoint_composable.md) — A Vue composable at `useBreakpoint.ts` used for detecting responsive breakpoints
 
 - [NestedPropertyAccess](entities/nestedpropertyaccess.md) — A utility function for safely retrieving values from deeply nested object proper
 
@@ -2200,7 +2474,7 @@
 
 - [init_db](entities/init_db.md) — An asynchronous function that connects to the database and creates all tables de
 
-- [get_current_user_optional](entities/get_current_user_optional.md) — FastAPI dependency that attempts to authenticate a user using a JWT token from t
+- [get_current_user_optional](entities/get_current_user_optional.md) — An existing function in the API core dependencies that requires API key validati
 
 - [verify_api_key](entities/verify_api_key.md) — A function from `core.auth` that compares a plaintext API key with a stored hash
 

@@ -1,60 +1,127 @@
 """FastAPI dependencies for authentication and authorization."""
 
+import os
 from typing import Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status, Security
+from fastapi import Depends, HTTPException, status, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from db.database import get_db
+from db.database import get_db, AsyncSessionLocal
 from core.auth import verify_jwt_token, extract_user_from_token, hash_api_key
 from schemas import UserInToken, UserResponse
 from models import User, DomainAccess, DomainAccessRole
+from services.api_key_service import APIKeyService
 
 
 # Security scheme
 security = HTTPBearer(auto_error=False)
 
+# Cache only the scalar UUID — ORM objects become detached when their session closes
+_dev_user_id_cache: Optional[UUID] = None
+
+_DEV_KEYCLOAK_ID = "dev-user-00000000-0000-0000-0000-000000000000"
+
+
+async def _get_or_create_dev_user_id(db: AsyncSession) -> UUID:
+    """Return the dev bypass user's UUID, creating the user if needed. Cached."""
+    global _dev_user_id_cache
+
+    if _dev_user_id_cache is not None:
+        return _dev_user_id_cache
+
+    result = await db.execute(
+        select(User.id).where(User.keycloak_id == _DEV_KEYCLOAK_ID)
+    )
+    user_id = result.scalar_one_or_none()
+
+    if not user_id:
+        async with AsyncSessionLocal() as write_session:
+            dev_user = User(
+                keycloak_id=_DEV_KEYCLOAK_ID,
+                email="dev@localhost",
+                full_name="Dev Bypass User",
+                roles=["km-admin", "km-reader"],
+                is_active=True,
+            )
+            write_session.add(dev_user)
+            await write_session.commit()
+            await write_session.refresh(dev_user)
+            user_id = dev_user.id
+
+    _dev_user_id_cache = user_id
+    return user_id
+
 
 async def get_current_user_optional(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Security(security),
     db: AsyncSession = Depends(get_db)
 ) -> Optional[UserInToken]:
     """
-    Get current user from JWT token (optional).
-    
-    Returns None if no valid token provided.
+    Get current user from JWT token or API Key (optional).
+
+    Returns None if no valid authentication provided.
     """
+    bypass_auth = os.getenv("BYPASS_AUTH", "false").lower() == "true"
+
+    if bypass_auth:
+        user_id = await _get_or_create_dev_user_id(db)
+        return UserInToken(
+            id=user_id,
+            keycloak_id=_DEV_KEYCLOAK_ID,
+            email="dev@localhost",
+            roles=["km-admin", "km-reader"],
+        )
+
+    # Try API Key auth first (from X-API-Key header)
+    api_key = request.headers.get("X-API-Key")
+    if api_key:
+        api_key_service = APIKeyService(db)
+        valid_key = await api_key_service.validate_api_key(api_key)
+
+        if valid_key:
+            # Get the user who created the API key
+            result = await db.execute(
+                select(User).where(User.id == valid_key.created_by)
+            )
+            user = result.scalar_one_or_none()
+
+            if user:
+                return UserInToken(
+                    id=user.id,
+                    keycloak_id=user.keycloak_id,
+                    email=user.email,
+                    roles=user.roles,
+                )
+
     if not credentials:
         return None
-    
+
     token = credentials.credentials
-    
-    # Try JWT auth first
+
+    # Try JWT auth
     payload = await verify_jwt_token(token)
     if payload:
         user_data = extract_user_from_token(payload)
-        
+
         # Get or create user in database
         result = await db.execute(
             select(User).where(User.keycloak_id == user_data.keycloak_id)
         )
         user = result.scalar_one_or_none()
-        
+
         if user:
             user_data.id = user.id
             # Update roles if changed
             if set(user.roles) != set(user_data.roles):
                 user.roles = user_data.roles
                 await db.commit()
-        
+
         return user_data
-    
-    # Try API Key auth
-    # TODO: Implement API key validation
-    
+
     return None
 
 
@@ -115,14 +182,25 @@ class DomainAccessChecker:
     
     async def __call__(
         self,
-        domain_id: UUID,
+        domain_id: Optional[UUID] = None,
         user: UserInToken = Depends(get_current_user),
         db: AsyncSession = Depends(get_db)
     ) -> UserInToken:
-        """Check domain access."""
+        """Check domain access.
+
+        domain_id is optional here so Form-body endpoints (e.g. ingest) don't
+        produce a 422. Admins bypass the check entirely; non-admins must supply
+        a domain_id (from path or query) that they have access to.
+        """
         # Global admins always have access
         if "km-admin" in user.roles:
             return user
+
+        if not domain_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Domain access required"
+            )
         
         # Check specific domain access
         if not user.id:

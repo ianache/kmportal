@@ -16,26 +16,24 @@ from schemas import (
 )
 from services.search_service import SearchService
 from adapters.vector_store.chroma_db import ChromaDBAdapter
-from adapters.embedding.gemini import GeminiAdapter
+from adapters import get_embedding_adapter
 import os
+import asyncio
 
 router = APIRouter(prefix="/v1", tags=["Search"])
 
 
-def get_search_service(db: AsyncSession = Depends(get_db)) -> SearchService:
+async def get_search_service(db: AsyncSession = Depends(get_db)) -> SearchService:
     """Factory to create search service with dependencies."""
     # Create vector store adapter
     vector_store = ChromaDBAdapter(
         host=os.getenv("CHROMA_HOST", "localhost"),
         port=int(os.getenv("CHROMA_PORT", "8000"))
     )
-    
-    # Create embedding adapter
-    embedding_provider = GeminiAdapter(
-        api_key=os.getenv("GEMINI_API_KEY", ""),
-        model=os.getenv("GEMINI_EMBEDDING_MODEL", "text-embedding-004")
-    )
-    
+
+    # Create embedding adapter using factory (handles missing API key gracefully)
+    embedding_provider = await get_embedding_adapter()
+
     return SearchService(
         db=db,
         vector_store=vector_store,
@@ -63,7 +61,7 @@ def get_search_service(db: AsyncSession = Depends(get_db)) -> SearchService:
 )
 async def search_documents(
     q: str = Query(..., min_length=1, max_length=1000, description="Search query"),
-    domains: List[UUID] = Query(..., description="Domain IDs to search (comma-separated)"),
+    domains: List[UUID] = Query(default=[], description="Domain IDs to search (comma-separated)"),
     mode: str = Query("hybrid", pattern="^(semantic|keyword|hybrid)$", description="Search mode"),
     top_k: int = Query(10, ge=1, le=100, description="Number of results"),
     type: Optional[str] = Query(None, description="Filter by document type (pdf, txt, etc.)"),

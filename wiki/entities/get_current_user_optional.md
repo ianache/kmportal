@@ -2,16 +2,16 @@
 type: function
 name: get_current_user_optional
 created: 2026-05-03T14:00:46Z
-updated: 2026-05-03T14:00:46Z
-confidence: 0.70
-sources: [snapshot-20260503-134042]
+updated: 2026-05-03T16:47:15Z
+confidence: 0.75
+sources: [snapshot-20260503-134042, 7ce3dfb5dee6f0314eaf5f1c094a96577be92842]
 related: []
 tier: working
 ---
 # get_current_user_optional
 
-FastAPI dependency that attempts to authenticate a user using a JWT token from the Authorization header. If successful, it returns a `UserInToken` object; otherwise, it returns `None`. It also manages user synchronization with the database.
+An existing function in the API core dependencies that requires API key validation.
 
 ## References
 
-- [snapshot: snapshot-20260503-134042]
+- [7ce3dfb5](../summaries/7ce3dfb5.md)

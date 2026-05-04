@@ -9,6 +9,7 @@ export const useDomainsStore = defineStore('domains', () => {
   const selectedDomain = ref<Domain | null>(null)
   const documents = ref<Document[]>([])
   const isLoading = ref(false)
+  const isLoadingDocuments = ref(false)
   const error = ref<string | null>(null)
   const isCreating = ref(false)
   const isEditing = ref(false)
@@ -37,9 +38,9 @@ export const useDomainsStore = defineStore('domains', () => {
   }
 
   async function selectDomain(domainId: string) {
-    isLoading.value = true
+    isLoadingDocuments.value = true
     error.value = null
-    
+
     try {
       const [domain, docs] = await Promise.all([
         domainsApi.getDomain(domainId),
@@ -52,7 +53,7 @@ export const useDomainsStore = defineStore('domains', () => {
       selectedDomain.value = null
       documents.value = []
     } finally {
-      isLoading.value = false
+      isLoadingDocuments.value = false
     }
   }
 
@@ -125,6 +126,7 @@ export const useDomainsStore = defineStore('domains', () => {
     selectedDomain,
     documents,
     isLoading,
+    isLoadingDocuments,
     error,
     isCreating,
     isEditing,

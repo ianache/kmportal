@@ -20,6 +20,14 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    port: 5100,
+    strictPort: true,
+    proxy: {
+      '/api': 'http://localhost:3000',
+      '/auth': 'http://localhost:3000',
+    },
+  },
   build: {
     target: 'esnext'
   }

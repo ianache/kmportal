@@ -94,8 +94,12 @@ async def verify_jwt_token(token: str) -> Optional[Dict[str, Any]]:
         return payload
         
     except (JWTError, JWTClaimsError) as e:
+        import logging
+        logging.error(f"JWT Verification failed: {e}")
         return None
     except Exception as e:
+        import logging
+        logging.error(f"Unexpected error in JWT verification: {e}")
         return None
 
 

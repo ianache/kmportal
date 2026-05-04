@@ -87,7 +87,7 @@ class GeminiAdapter(EmbeddingPort):
         self._batch_size = batch_size
         self._timeout = timeout
         
-        self._base_url = "https://generativelanguage.googleapis.com/v1beta"
+        self._base_url = "https://generativelanguage.googleapis.com/v1"
         self._client: Optional[httpx.AsyncClient] = None
     
     @property

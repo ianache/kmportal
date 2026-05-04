@@ -69,12 +69,18 @@ class WebSocketService {
     })
 
     this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error)
       this.isConnecting.value = false
       this.reconnectAttempts++
-      
+
+      const authErrors = ['Authentication required', 'Not authenticated', 'Invalid session', 'Authentication failed']
+      if (authErrors.includes(error.message)) {
+        // Expected in dev when BYPASS_AUTH=true — stop retrying
+        this.socket?.disconnect()
+        return
+      }
+
+      console.warn('WebSocket connection error:', error.message)
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        console.error('Max reconnection attempts reached')
         this.socket?.disconnect()
       }
     })

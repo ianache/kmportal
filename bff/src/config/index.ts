@@ -17,6 +17,7 @@ interface Config {
     secret: string;
     maxAge: number;
   };
+  frontendUrl: string;
   corsOrigins: string[];
   cookie: {
     domain: string;
@@ -75,6 +76,7 @@ export const config: Config = {
     secret: getEnvVar('SESSION_SECRET', true),
     maxAge: getEnvVarAsNumber('SESSION_MAX_AGE', false, 7 * 24 * 60 * 60 * 1000), // 7 days
   },
+  frontendUrl: getEnvVar('FRONTEND_URL', false, 'http://localhost:5173'),
   corsOrigins: getEnvVarAsArray('CORS_ORIGINS'),
   cookie: {
     domain: getEnvVar('COOKIE_DOMAIN', false, 'localhost'),

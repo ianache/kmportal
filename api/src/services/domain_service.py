@@ -33,8 +33,13 @@ class DomainService:
         domain = Domain(
             name=domain_data.name,
             description=domain_data.description,
+            name_en=domain_data.name_en,
+            description_en=domain_data.description_en,
             embedding_model=domain_data.embedding_model,
             embedding_dimension=domain_data.embedding_dimension,
+            tags=domain_data.tags or [],
+            visibility=domain_data.visibility,
+            cover_image=domain_data.cover_image,
             created_by=created_by
         )
         
@@ -51,13 +56,15 @@ class DomainService:
         )
         self.db.add(access)
         await self.db.commit()
-        
-        return domain
+
+        return await self.get_domain(domain.id)
     
     async def get_domain(self, domain_id: UUID) -> Optional[Domain]:
         """Get domain by ID."""
         result = await self.db.execute(
-            select(Domain).where(Domain.id == domain_id)
+            select(Domain)
+            .where(Domain.id == domain_id)
+            .options(selectinload(Domain.documents))
         )
         return result.scalar_one_or_none()
     
@@ -72,7 +79,7 @@ class DomainService:
         # Build query
         if is_admin:
             # Admins see all domains
-            query = select(Domain)
+            query = select(Domain).options(selectinload(Domain.documents))
             count_query = select(func.count(Domain.id))
         else:
             # Regular users see only domains they have access to
@@ -80,6 +87,7 @@ class DomainService:
                 select(Domain)
                 .join(DomainAccess)
                 .where(DomainAccess.user_id == user_id)
+                .options(selectinload(Domain.documents))
             )
             count_query = (
                 select(func.count(Domain.id))
@@ -114,11 +122,20 @@ class DomainService:
             domain.name = domain_data.name
         if domain_data.description is not None:
             domain.description = domain_data.description
+        if domain_data.name_en is not None:
+            domain.name_en = domain_data.name_en
+        if domain_data.description_en is not None:
+            domain.description_en = domain_data.description_en
+        if domain_data.tags is not None:
+            domain.tags = domain_data.tags
+        if domain_data.visibility is not None:
+            domain.visibility = domain_data.visibility
+        if domain_data.cover_image is not None:
+            domain.cover_image = domain_data.cover_image
         
         await self.db.commit()
-        await self.db.refresh(domain)
-        
-        return domain
+
+        return await self.get_domain(domain_id)
     
     async def delete_domain(self, domain_id: UUID) -> bool:
         """Delete domain."""
@@ -209,8 +226,13 @@ def to_domain_response(domain: Domain) -> DomainResponse:
         id=domain.id,
         name=domain.name,
         description=domain.description,
+        name_en=domain.name_en,
+        description_en=domain.description_en,
         embedding_model=domain.embedding_model,
         embedding_dimension=domain.embedding_dimension,
+        tags=domain.tags or [],
+        visibility=domain.visibility or 'private',
+        cover_image=domain.cover_image,
         created_by=domain.created_by,
         created_at=domain.created_at,
         updated_at=domain.updated_at,

@@ -2,16 +2,16 @@
 type: module
 name: frontend/apps/search-ui/
 created: 2026-05-03T13:48:14Z
-updated: 2026-05-03T13:48:14Z
-confidence: 0.70
-sources: [snapshot-20260503-134042]
+updated: 2026-05-03T15:45:38Z
+confidence: 0.75
+sources: [snapshot-20260503-134042, 84b671379308f138d087db6da1e652a7dc1d2916]
 related: []
 tier: working
 ---
-# frontend/apps/search-ui/
+# frontend/apps/search-ui
 
-A micro UI application for search functionality, running on port 5103.
+The dedicated Vue.js application that will host the Search Micro UI, intended to be loaded as a Module Federation remote.
 
 ## References
 
-- [snapshot: snapshot-20260503-134042]
+- [84b67137](../summaries/84b67137.md)

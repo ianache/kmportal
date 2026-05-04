@@ -148,6 +148,12 @@ docker compose config  # Validar docker-compose.yml
 docker compose up -d
 ```
 
+### Up local
+
+```
+uvicorn main:app --app-dir src --reload --host 0.0.0.0 --port 8000 --env-file .env
+```
+
 ### Producción (Phase 10)
 - Kubernetes manifests
 - Helm charts

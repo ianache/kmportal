@@ -212,4 +212,4 @@ def get_mcp_app():
     Returns:
         ASGI app that can be mounted on the main FastAPI application
     """
-    return mcp.sse_app()
+    return mcp.http_app(transport="sse")

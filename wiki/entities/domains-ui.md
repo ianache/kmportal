@@ -2,16 +2,16 @@
 type: module
 name: domains-ui
 created: 2026-05-03T13:53:13Z
-updated: 2026-05-03T14:11:25Z
-confidence: 0.80
-sources: [snapshot-20260503-134042]
+updated: 2026-05-03T18:17:56Z
+confidence: 0.85
+sources: [snapshot-20260503-134042, 1ee5cb7164d6ad1b726f1829718fb49c10eeebfd]
 related: []
 tier: working
 ---
 # domains-ui
 
-A UI component or sub-package within the frontend monorepo, likely related to domain management.
+The frontend application responsible for the user interface related to knowledge domains.
 
 ## References
 
-- [snapshot: snapshot-20260503-134042]
+- [1ee5cb71](../summaries/1ee5cb71.md)

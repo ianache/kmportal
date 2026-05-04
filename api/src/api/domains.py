@@ -30,7 +30,7 @@ from services.domain_service import (
     to_domain_access_response
 )
 
-router = APIRouter(prefix="/v1/domains", tags=["Domains"])
+router = APIRouter(prefix="/domains", tags=["Domains"])
 
 
 @router.post(

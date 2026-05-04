@@ -80,13 +80,16 @@ const BYPASS_AUTH = import.meta.env.VITE_BYPASS_AUTH === 'true'
 
 // Navigation guard
 router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+
   // Dev bypass — set VITE_BYPASS_AUTH=true in .env.local
   if (BYPASS_AUTH) {
+    if (!authStore.isAuthenticated) {
+      await authStore.fetchSession().catch(() => {})
+    }
     next()
     return
   }
-
-  const authStore = useAuthStore()
 
   // Skip auth check for public routes
   if (to.meta.public) {

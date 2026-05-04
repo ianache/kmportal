@@ -139,7 +139,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { ref, computed, inject } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { WebSocketKey, type WebSocketService } from '../../services/websocket'

@@ -6646,12 +6646,13 @@
   "frontend shell::the frontend shell is configured as a module federation host": {
     "statement": "The Frontend Shell is configured as a Module Federation host.",
     "entity": "FRONTEND SHELL",
-    "confidence": 0.7,
+    "confidence": 0.8,
     "sources": [
-      "snapshot-20260503-134042"
+      "snapshot-20260503-134042",
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
     ],
     "created": "2026-05-03T13:53:14Z",
-    "last_reinforced": "2026-05-03T13:53:14Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
     "contradicted_by": []
   },
   "frontend shell::the frontend shell exposes 'vue', 'pinia', 'vue-router', '@k": {
@@ -13813,6 +13814,1348 @@
     ],
     "created": "2026-05-03T15:10:43Z",
     "last_reinforced": "2026-05-03T15:10:43Z",
+    "contradicted_by": []
+  },
+  "frontend shell::phase 6 of the project roadmap, 'frontend shell', is now com": {
+    "statement": "Phase 6 of the project roadmap, 'Frontend shell', is now complete.",
+    "entity": "Frontend Shell",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "pinia auth store::a pinia auth store (`src/stores/auth.ts`) has been added for": {
+    "statement": "A Pinia auth store (`src/stores/auth.ts`) has been added for session management and role-based access.",
+    "entity": "Pinia auth store",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "bff api client::a bff api client (`src/services/bffclient.ts`) for the core ": {
+    "statement": "A BFF API client (`src/services/bffClient.ts`) for the Core API proxy has been created with error handling.",
+    "entity": "BFF API client",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "vue router::vue router (`src/router/index.ts`) implements auth guards fo": {
+    "statement": "Vue Router (`src/router/index.ts`) implements auth guards for public, protected, and admin routes.",
+    "entity": "Vue Router",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "authcallback view::authcallback (`src/views/authcallback.vue`) and loginrequire": {
+    "statement": "AuthCallback (`src/views/AuthCallback.vue`) and LoginRequired (`src/views/LoginRequired.vue`) views have been implemented.",
+    "entity": "AuthCallback view",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "shelllayout component::the shelllayout component (`src/components/layout/shelllayou": {
+    "statement": "The ShellLayout component (`src/components/layout/ShellLayout.vue`) includes a glassmorphism sidebar navigation and responsive design.",
+    "entity": "ShellLayout component",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "design tokens css::design tokens for colors, typography, spacing, border radius": {
+    "statement": "Design tokens for colors, typography, spacing, border radius, glassmorphism, and shadows are defined in `src/styles/design-tokens.css`.",
+    "entity": "Design tokens CSS",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "basebutton component::basebutton, basecard, baseinput, and toastcontainer ui compo": {
+    "statement": "BaseButton, BaseCard, BaseInput, and ToastContainer UI components have been implemented in `src/components/ui/`.",
+    "entity": "BaseButton component",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "usebreakpoint composable::the `usebreakpoint` composable is available for responsive b": {
+    "statement": "The `useBreakpoint` composable is available for responsive breakpoint detection.",
+    "entity": "useBreakpoint composable",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "module federation::all four micro-uis (adminui, domainsui, ingestionui, searchu": {
+    "statement": "All four micro-UIs (adminUi, domainsUi, ingestionUi, searchUi) have been updated for Module Federation, configured as remotes, and use singleton dependencies.",
+    "entity": "Module Federation",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "module federation::vue, pinia, and vue router are configured as shared singleto": {
+    "statement": "Vue, Pinia, and Vue Router are configured as shared singletons across Module Federation.",
+    "entity": "Module Federation",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "frontend shell::the frontend shell implementation resolves requirements fe-0": {
+    "statement": "The Frontend Shell implementation resolves requirements FE-01, FE-02, and FE-09.",
+    "entity": "Frontend Shell",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "frontend shell::new permissions for 'npm --version' and 'mcp__stitch' comman": {
+    "statement": "New permissions for 'npm --version' and 'mcp__stitch' commands were added to `.claude/settings.local.json`.",
+    "entity": "Frontend Shell",
+    "confidence": 0.7,
+    "sources": [
+      "95382f796214e85c2daa06111a3c90111f9d8fcb"
+    ],
+    "created": "2026-05-03T15:30:06Z",
+    "last_reinforced": "2026-05-03T15:30:06Z",
+    "contradicted_by": []
+  },
+  "phase 7: core micro uis::phase 7, 'core micro uis', now has 4 planned micro-uis organ": {
+    "statement": "Phase 7, 'Core micro UIs', now has 4 planned micro-UIs organized into 2 waves.",
+    "entity": "Phase 7: Core micro UIs",
+    "confidence": 0.7,
+    "sources": [
+      "84b671379308f138d087db6da1e652a7dc1d2916"
+    ],
+    "created": "2026-05-03T15:45:38Z",
+    "last_reinforced": "2026-05-03T15:45:38Z",
+    "contradicted_by": []
+  },
+  "search micro ui::the search micro ui will allow users to enter queries, view ": {
+    "statement": "The Search Micro UI will allow users to enter queries, view real search results with highlighted text and relevance scores, and filter results dynamically without page reloads.",
+    "entity": "Search Micro UI",
+    "confidence": 0.7,
+    "sources": [
+      "84b671379308f138d087db6da1e652a7dc1d2916"
+    ],
+    "created": "2026-05-03T15:45:38Z",
+    "last_reinforced": "2026-05-03T15:45:38Z",
+    "contradicted_by": []
+  },
+  "search micro ui::the search micro ui's functionality must adhere to domain ac": {
+    "statement": "The Search Micro UI's functionality must adhere to domain access permissions as specified by requirement DOM-04.",
+    "entity": "Search Micro UI",
+    "confidence": 0.7,
+    "sources": [
+      "84b671379308f138d087db6da1e652a7dc1d2916"
+    ],
+    "created": "2026-05-03T15:45:38Z",
+    "last_reinforced": "2026-05-03T15:45:38Z",
+    "contradicted_by": []
+  },
+  "frontend/apps/search-ui/src/stores/search.ts::the `frontend/apps/search-ui/src/stores/search.ts` module ex": {
+    "statement": "The `frontend/apps/search-ui/src/stores/search.ts` module exports a Pinia store named `useSearchStore`.",
+    "entity": "frontend/apps/search-ui/src/stores/search.ts",
+    "confidence": 0.7,
+    "sources": [
+      "84b671379308f138d087db6da1e652a7dc1d2916"
+    ],
+    "created": "2026-05-03T15:45:38Z",
+    "last_reinforced": "2026-05-03T15:45:38Z",
+    "contradicted_by": []
+  },
+  "frontend/apps/search-ui/src/services/searchapi.ts::the `frontend/apps/search-ui/src/services/searchapi.ts` modu": {
+    "statement": "The `frontend/apps/search-ui/src/services/searchApi.ts` module exports an API client named `searchApi` for BFF search endpoints.",
+    "entity": "frontend/apps/search-ui/src/services/searchApi.ts",
+    "confidence": 0.7,
+    "sources": [
+      "84b671379308f138d087db6da1e652a7dc1d2916"
+    ],
+    "created": "2026-05-03T15:45:38Z",
+    "last_reinforced": "2026-05-03T15:45:38Z",
+    "contradicted_by": []
+  },
+  "searchrequest::the core api contract defines a `searchrequest` interface fo": {
+    "statement": "The Core API contract defines a `SearchRequest` interface for GET `/api/v1/search` including parameters like `q`, `domains`, `type`, `date_from`, `date_to`, and `source`.",
+    "entity": "SearchRequest",
+    "confidence": 0.7,
+    "sources": [
+      "84b671379308f138d087db6da1e652a7dc1d2916"
+    ],
+    "created": "2026-05-03T15:45:38Z",
+    "last_reinforced": "2026-05-03T15:45:38Z",
+    "contradicted_by": []
+  },
+  "websocket::the ingestion status micro ui and shell notifications micro ": {
+    "statement": "The Ingestion Status Micro UI and Shell Notifications Micro UI will both integrate with WebSockets for real-time event-driven updates.",
+    "entity": "WebSocket",
+    "confidence": 0.7,
+    "sources": [
+      "84b671379308f138d087db6da1e652a7dc1d2916"
+    ],
+    "created": "2026-05-03T15:45:38Z",
+    "last_reinforced": "2026-05-03T15:45:38Z",
+    "contradicted_by": []
+  },
+  "frontend/apps/search-ui::the `frontend/apps/search-ui` application is designated as a": {
+    "statement": "The `frontend/apps/search-ui` application is designated as an autonomous Module Federation remote.",
+    "entity": "frontend/apps/search-ui",
+    "confidence": 0.7,
+    "sources": [
+      "84b671379308f138d087db6da1e652a7dc1d2916"
+    ],
+    "created": "2026-05-03T15:45:38Z",
+    "last_reinforced": "2026-05-03T15:45:38Z",
+    "contradicted_by": []
+  },
+  "fastmcp server::the fastmcp server is mounted at the '/mcp' path in the main": {
+    "statement": "The FastMCP Server is mounted at the '/mcp' path in the main FastAPI application.",
+    "entity": "FastMCP Server",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "mcpauthmiddleware::the `mcpauthmiddleware` is applied to the fastmcp server sub": {
+    "statement": "The `MCPAuthMiddleware` is applied to the FastMCP Server sub-application.",
+    "entity": "MCPAuthMiddleware",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "x-api-key header::authentication for mcp requests requires an `x-api-key` head": {
+    "statement": "Authentication for MCP requests requires an `X-API-Key` header.",
+    "entity": "X-API-Key Header",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "mcpauthmiddleware::the `mcpauthmiddleware` validates api keys against a databas": {
+    "statement": "The `MCPAuthMiddleware` validates API keys against a database using `APIKeyService`.",
+    "entity": "MCPAuthMiddleware",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "mcpauthmiddleware::upon successful authentication, `mcpauthmiddleware` adds `ap": {
+    "statement": "Upon successful authentication, `MCPAuthMiddleware` adds `api_key`, `scopes`, and `allowed_domains` information to the `request.state` object.",
+    "entity": "MCPAuthMiddleware",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "scopes::api keys can be configured with specific `scopes` (e.g., 're": {
+    "statement": "API keys can be configured with specific `scopes` (e.g., 'read', 'write', 'admin') to control access levels.",
+    "entity": "Scopes",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "domain restrictions::api keys can be configured with `domain restrictions` to lim": {
+    "statement": "API keys can be configured with `domain restrictions` to limit access to specific knowledge domains.",
+    "entity": "Domain Restrictions",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "require_scope::the `require_scope` function grants access if the 'admin' sc": {
+    "statement": "The `require_scope` function grants access if the 'admin' scope is present, regardless of other scope requirements.",
+    "entity": "require_scope",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "check_domain_access::the `check_domain_access` function allows access to any doma": {
+    "statement": "The `check_domain_access` function allows access to any domain if the API key has no `allowed_domains` configured (i.e., the `allowed_domains` list is empty).",
+    "entity": "check_domain_access",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "api/src/main.py::the `cors_origins` environment variable in `api/src/main.py`": {
+    "statement": "The `CORS_ORIGINS` environment variable in `api/src/main.py` now includes `http://localhost:5100`.",
+    "entity": "api/src/main.py",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "fastmcp server::the project uses `fastmcp` with a version requirement of `fa": {
+    "statement": "The project uses `fastmcp` with a version requirement of `fastmcp>=0.4.0`.",
+    "entity": "FastMCP Server",
+    "confidence": 0.7,
+    "sources": [
+      "b9b3d430e1b5bec94737e59fabb58bd06c50cf9f"
+    ],
+    "created": "2026-05-03T16:29:09Z",
+    "last_reinforced": "2026-05-03T16:29:09Z",
+    "contradicted_by": []
+  },
+  "logging_config.py::logging_config.py configures structlog for json logs in prod": {
+    "statement": "logging_config.py configures structlog for JSON logs in production and colored console logs in development.",
+    "entity": "logging_config.py",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "logging_config.py::logging_config.py enables request context binding for correl": {
+    "statement": "logging_config.py enables request context binding for correlation IDs and automatic exception formatting with stack traces.",
+    "entity": "logging_config.py",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "logging_middleware.py::logging_middleware.py automatically logs all http requests, ": {
+    "statement": "logging_middleware.py automatically logs all HTTP requests, including timing, status codes, unique request IDs, and client IP.",
+    "entity": "logging_middleware.py",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "health.py::health.py provides /health for basic load balancer checks, /": {
+    "statement": "health.py provides /health for basic load balancer checks, /health/detailed for full dependency checks, /health/ready for Kubernetes readiness, and /health/live for Kubernetes liveness.",
+    "entity": "health.py",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "health.py::health.py exposes prometheus-compatible metrics via the /met": {
+    "statement": "health.py exposes Prometheus-compatible metrics via the /metrics endpoint.",
+    "entity": "health.py",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "health checks::health checks include monitoring for the database, vector st": {
+    "statement": "Health Checks include monitoring for the database, vector store, and embedding provider.",
+    "entity": "Health Checks",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "main.py::main.py configures structured logging and adds gzip compress": {
+    "statement": "main.py configures structured logging and adds GZip compression and request logging middleware on application startup.",
+    "entity": "main.py",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "main.py::main.py implements graceful shutdown handling and a version ": {
+    "statement": "main.py implements graceful shutdown handling and a version endpoint with uptime tracking.",
+    "entity": "main.py",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "ci-cd.yml::ci-cd.yml defines a multi-stage ci/cd pipeline including lin": {
+    "statement": "ci-cd.yml defines a multi-stage CI/CD pipeline including linting, type checking, unit tests, Docker image building, and deployment stages.",
+    "entity": "ci-cd.yml",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "ci-cd.yml::ci-cd.yml supports testing and building for api, bff, and fr": {
+    "statement": "ci-cd.yml supports testing and building for API, BFF, and Frontend applications.",
+    "entity": "ci-cd.yml",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "ci-cd.yml::ci-cd.yml integrates with github container registry (ghcr) a": {
+    "statement": "ci-cd.yml integrates with GitHub Container Registry (GHCR) and uses Docker Buildx for multi-platform builds with layer caching.",
+    "entity": "ci-cd.yml",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  ".env.production.example::.env.production.example documents required environment varia": {
+    "statement": ".env.production.example documents required environment variables for database, MongoDB, Redis, ChromaDB, Kafka, RabbitMQ, Keycloak, AI/ML API keys, security settings, monitoring, performance tuning, and feature flags.",
+    "entity": ".env.production.example",
+    "confidence": 0.7,
+    "sources": [
+      "628b33660c75e4b4763107bd57db8b9a63570c62"
+    ],
+    "created": "2026-05-03T16:38:49Z",
+    "last_reinforced": "2026-05-03T16:38:49Z",
+    "contradicted_by": []
+  },
+  "knowledge management center::the knowledge management center project has completed phases": {
+    "statement": "The Knowledge Management Center project has completed Phases 1-10, achieving a functional MVP.",
+    "entity": "Knowledge Management Center",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "knowledge management center::there are 25 pending implementation items across all priorit": {
+    "statement": "There are 25 pending implementation items across all priority levels documented for the project.",
+    "entity": "Knowledge Management Center",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "apikey::the apikey model defines a 'rate_limit' field with a default": {
+    "statement": "The APIKey model defines a 'rate_limit' field with a default of 1000 requests per hour.",
+    "entity": "APIKey",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "rate limiting middleware::no middleware is currently implemented to enforce the 'rate_": {
+    "statement": "No middleware is currently implemented to enforce the 'rate_limit' for API keys.",
+    "entity": "Rate limiting middleware",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "get_current_user_optional::`api/src/core/dependencies.py` at line 56 contains a todo fo": {
+    "statement": "`api/src/core/dependencies.py` at line 56 contains a TODO for API key validation within `get_current_user_optional`.",
+    "entity": "get_current_user_optional",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "job status endpoint::`api/src/api/ingestion.py` at line 180 contains a todo for a": {
+    "statement": "`api/src/api/ingestion.py` at line 180 contains a TODO for a domain access check within the job status endpoint.",
+    "entity": "Job status endpoint",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "mongodb integration::document content is currently stored in chromadb, but mongod": {
+    "statement": "Document content is currently stored in ChromaDB, but MongoDB Integration is deferred/mentioned in the wiki for this purpose.",
+    "entity": "MongoDB Integration",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "async workers::ingestion processing is currently synchronous and requires a": {
+    "statement": "Ingestion processing is currently synchronous and requires Async Workers with ARQ for asynchronous processing.",
+    "entity": "Async Workers",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "prometheus::the '/metrics' endpoint is implemented, but the full prometh": {
+    "statement": "The '/metrics' endpoint is implemented, but the full Prometheus + Grafana Monitoring Stack is not.",
+    "entity": "Prometheus",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "kubernetes manifests::there are no existing kubernetes manifests for the project.": {
+    "statement": "There are no existing Kubernetes Manifests for the project.",
+    "entity": "Kubernetes Manifests",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "helm charts::there are no existing helm charts for the project.": {
+    "statement": "There are no existing Helm Charts for the project.",
+    "entity": "Helm Charts",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "automated backups::automated backups are deferred to phase 10.": {
+    "statement": "Automated Backups are deferred to Phase 10.",
+    "entity": "Automated Backups",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "ssl/tls termination::ssl/tls termination is not implemented in production, and th": {
+    "statement": "SSL/TLS Termination is not implemented in production, and the Dockerfile exposes port 8000 without SSL.",
+    "entity": "SSL/TLS Termination",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "qdrantadapter::qdrantadapter, openaiadapter, and ollamaadapter are planned ": {
+    "statement": "QdrantAdapter, OpenAIAdapter, and OllamaAdapter are planned for v2 to offer alternative embedding and vector database providers.",
+    "entity": "QdrantAdapter",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "opentelemetry tracing::opentelemetry tracing variables are defined in '.env.product": {
+    "statement": "OpenTelemetry Tracing variables are defined in '.env.production.example' but the implementation is pending.",
+    "entity": "OpenTelemetry Tracing",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "redis caching::redis caching in the bff has variables defined but is not im": {
+    "statement": "Redis Caching in the BFF has variables defined but is not implemented.",
+    "entity": "Redis Caching",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "docker compose overrides::the project lacks docker compose overrides for different env": {
+    "statement": "The project lacks Docker Compose Overrides for different environments (development, staging, production).",
+    "entity": "Docker Compose Overrides",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "audit logging::audit logging is not implemented.": {
+    "statement": "Audit Logging is not implemented.",
+    "entity": "Audit Logging",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "cdn for assets::the project requires a cdn for static assets in production.": {
+    "statement": "The project requires a CDN for static assets in production.",
+    "entity": "CDN for assets",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "knowledge management center::the list of pending implementations includes 3 critical, 8 h": {
+    "statement": "The list of pending implementations includes 3 Critical, 8 High, 9 Medium, and 5 Low priority items.",
+    "entity": "Knowledge Management Center",
+    "confidence": 0.7,
+    "sources": [
+      "7ce3dfb5dee6f0314eaf5f1c094a96577be92842"
+    ],
+    "created": "2026-05-03T16:47:16Z",
+    "last_reinforced": "2026-05-03T16:47:16Z",
+    "contradicted_by": []
+  },
+  "onmounted::the `onmounted` lifecycle hook in `app.vue` is responsible f": {
+    "statement": "The `onMounted` lifecycle hook in `App.vue` is responsible for initiating the loading of domain data.",
+    "entity": "onMounted",
+    "confidence": 0.7,
+    "sources": [
+      "1ee5cb7164d6ad1b726f1829718fb49c10eeebfd"
+    ],
+    "created": "2026-05-03T18:17:56Z",
+    "last_reinforced": "2026-05-03T18:17:56Z",
+    "contradicted_by": []
+  },
+  "fetchdomains::the correct method name to retrieve domains from the `store`": {
+    "statement": "The correct method name to retrieve domains from the `store` module is `fetchDomains()`.",
+    "entity": "fetchDomains",
+    "confidence": 0.7,
+    "sources": [
+      "1ee5cb7164d6ad1b726f1829718fb49c10eeebfd"
+    ],
+    "created": "2026-05-03T18:17:56Z",
+    "last_reinforced": "2026-05-03T18:17:56Z",
+    "contradicted_by": []
+  },
+  "loaddomains::calling `store.loaddomains()` previously caused an 'uncaught": {
+    "statement": "Calling `store.loadDomains()` previously caused an 'Uncaught TypeError: store.loadDomains is not a function' runtime error.",
+    "entity": "loadDomains",
+    "confidence": 0.7,
+    "sources": [
+      "1ee5cb7164d6ad1b726f1829718fb49c10eeebfd"
+    ],
+    "created": "2026-05-03T18:17:56Z",
+    "last_reinforced": "2026-05-03T18:17:56Z",
+    "contradicted_by": []
+  },
+  "app.vue::the `app.vue` component is located at `frontend/apps/domains": {
+    "statement": "The `App.vue` component is located at `frontend/apps/domains-ui/src/App.vue` within the project.",
+    "entity": "App.vue",
+    "confidence": 0.7,
+    "sources": [
+      "1ee5cb7164d6ad1b726f1829718fb49c10eeebfd"
+    ],
+    "created": "2026-05-03T18:17:56Z",
+    "last_reinforced": "2026-05-03T18:17:56Z",
+    "contradicted_by": []
+  },
+  "api/dockerfile::the `api/dockerfile` now includes the `env pythonpath=/app/s": {
+    "statement": "The `api/Dockerfile` now includes the `ENV PYTHONPATH=/app/src` instruction.",
+    "entity": "api/Dockerfile",
+    "confidence": 0.7,
+    "sources": [
+      "481f056490e149b1f8a16d994685017cfecc4bc6"
+    ],
+    "created": "2026-05-03T18:19:55Z",
+    "last_reinforced": "2026-05-03T18:19:55Z",
+    "contradicted_by": []
+  },
+  "pythonpath::the `pythonpath` environment variable is set to `/app/src` i": {
+    "statement": "The `PYTHONPATH` environment variable is set to `/app/src` inside the `api` Docker container.",
+    "entity": "PYTHONPATH",
+    "confidence": 0.7,
+    "sources": [
+      "481f056490e149b1f8a16d994685017cfecc4bc6"
+    ],
+    "created": "2026-05-03T18:19:55Z",
+    "last_reinforced": "2026-05-03T18:19:55Z",
+    "contradicted_by": []
+  },
+  "modulenotfounderror::before this change, the `api` docker container startup was f": {
+    "statement": "Before this change, the `api` Docker container startup was failing due to `ModuleNotFoundError: No module named 'db'`.",
+    "entity": "ModuleNotFoundError",
+    "confidence": 0.7,
+    "sources": [
+      "481f056490e149b1f8a16d994685017cfecc4bc6"
+    ],
+    "created": "2026-05-03T18:19:55Z",
+    "last_reinforced": "2026-05-03T18:19:55Z",
+    "contradicted_by": []
+  },
+  "uvicorn::the `uvicorn` server is configured to run the application fr": {
+    "statement": "The `uvicorn` server is configured to run the application from `src.main:app`.",
+    "entity": "uvicorn",
+    "confidence": 0.7,
+    "sources": [
+      "481f056490e149b1f8a16d994685017cfecc4bc6"
+    ],
+    "created": "2026-05-03T18:19:55Z",
+    "last_reinforced": "2026-05-03T18:19:55Z",
+    "contradicted_by": []
+  },
+  "local modules::the `/app/src` directory is expected to contain local projec": {
+    "statement": "The `/app/src` directory is expected to contain local project modules like `db`, `api`, `mcp`, and `core`.",
+    "entity": "local modules",
+    "confidence": 0.7,
+    "sources": [
+      "481f056490e149b1f8a16d994685017cfecc4bc6"
+    ],
+    "created": "2026-05-03T18:19:55Z",
+    "last_reinforced": "2026-05-03T18:19:55Z",
+    "contradicted_by": []
+  },
+  "start.sh::the `start.sh` script is a bash script designed for linux, m": {
+    "statement": "The `start.sh` script is a Bash script designed for Linux, Mac, and WSL environments.",
+    "entity": "start.sh",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "start.bat::the `start.bat` script is a batch script designed for window": {
+    "statement": "The `start.bat` script is a Batch script designed for Windows environments.",
+    "entity": "start.bat",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "start.py::the `start.py` script is a python script designed for cross-": {
+    "statement": "The `start.py` script is a Python script designed for cross-platform compatibility.",
+    "entity": "start.py",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "start.bat::`start.bat` sets the `pythonpath` environment variable to in": {
+    "statement": "`start.bat` sets the `PYTHONPATH` environment variable to include the script's directory.",
+    "entity": "start.bat",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "start.sh::`start.sh` exports the `pythonpath` environment variable to ": {
+    "statement": "`start.sh` exports the `PYTHONPATH` environment variable to include its own directory.",
+    "entity": "start.sh",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "start.py::`start.py` adds the 'src' subdirectory (relative to its own ": {
+    "statement": "`start.py` adds the 'src' subdirectory (relative to its own location) to Python's `sys.path`.",
+    "entity": "start.py",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "start.bat::`start.bat` accepts host and port as positional command-line": {
+    "statement": "`start.bat` accepts host and port as positional command-line arguments.",
+    "entity": "start.bat",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "start.sh::`start.sh` uses `host`, `port`, and `reload` environment var": {
+    "statement": "`start.sh` uses `HOST`, `PORT`, and `RELOAD` environment variables, providing default values if not set.",
+    "entity": "start.sh",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "start.py::`start.py` retrieves `host`, `port`, and `reload` configurat": {
+    "statement": "`start.py` retrieves `HOST`, `PORT`, and `RELOAD` configurations from environment variables, with default values if not set, for uvicorn.",
+    "entity": "start.py",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "uvicorn::all startup scripts invoke uvicorn with `src.main:app` as th": {
+    "statement": "All startup scripts invoke uvicorn with `src.main:app` as the application entry point.",
+    "entity": "uvicorn",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "modulenotfounderror::the primary issue resolved by these scripts is `modulenotfou": {
+    "statement": "The primary issue resolved by these scripts is `ModuleNotFoundError: No module named db`.",
+    "entity": "ModuleNotFoundError",
+    "confidence": 0.7,
+    "sources": [
+      "00b2ff4cd38c376f0a91b6820ea861def44471a8"
+    ],
+    "created": "2026-05-03T18:24:21Z",
+    "last_reinforced": "2026-05-03T18:24:21Z",
+    "contradicted_by": []
+  },
+  "api/src::the 'api/src' directory is now a python package due to the a": {
+    "statement": "The 'api/src' directory is now a Python package due to the addition of 'api/src/__init__.py'.",
+    "entity": "api/src",
+    "confidence": 0.7,
+    "sources": [
+      "6c29d359fbe0e093c9a16aeeea2755743a548224"
+    ],
+    "created": "2026-05-03T18:28:59Z",
+    "last_reinforced": "2026-05-03T18:28:59Z",
+    "contradicted_by": []
+  },
+  "api/src/core::the 'api/src/core' directory is now a python package due to ": {
+    "statement": "The 'api/src/core' directory is now a Python package due to the addition of 'api/src/core/__init__.py'.",
+    "entity": "api/src/core",
+    "confidence": 0.7,
+    "sources": [
+      "6c29d359fbe0e093c9a16aeeea2755743a548224"
+    ],
+    "created": "2026-05-03T18:28:59Z",
+    "last_reinforced": "2026-05-03T18:28:59Z",
+    "contradicted_by": []
+  },
+  "start.bat::the 'start.bat' script now explicitly runs 'uvicorn main:app": {
+    "statement": "The 'start.bat' script now explicitly runs 'uvicorn main:app --app-dir src --reload' for Windows.",
+    "entity": "start.bat",
+    "confidence": 0.7,
+    "sources": [
+      "6c29d359fbe0e093c9a16aeeea2755743a548224"
+    ],
+    "created": "2026-05-03T18:28:59Z",
+    "last_reinforced": "2026-05-03T18:28:59Z",
+    "contradicted_by": []
+  },
+  "start.sh::the 'start.sh' script now explicitly runs 'uvicorn main:app ": {
+    "statement": "The 'start.sh' script now explicitly runs 'uvicorn main:app --app-dir src --reload' for Linux/macOS.",
+    "entity": "start.sh",
+    "confidence": 0.7,
+    "sources": [
+      "6c29d359fbe0e093c9a16aeeea2755743a548224"
+    ],
+    "created": "2026-05-03T18:28:59Z",
+    "last_reinforced": "2026-05-03T18:28:59Z",
+    "contradicted_by": []
+  },
+  "readme.md::the 'readme.md' provides four distinct methods for starting ": {
+    "statement": "The 'README.md' provides four distinct methods for starting the API: using 'uv' scripts, start scripts, direct uvicorn with '--app-dir src', and a Python module approach.",
+    "entity": "README.md",
+    "confidence": 0.7,
+    "sources": [
+      "6c29d359fbe0e093c9a16aeeea2755743a548224"
+    ],
+    "created": "2026-05-03T18:28:59Z",
+    "last_reinforced": "2026-05-03T18:28:59Z",
+    "contradicted_by": []
+  },
+  "--app-dir src::the 'readme.md' highlights '--app-dir src' as a critical fla": {
+    "statement": "The 'README.md' highlights '--app-dir src' as a critical flag for uvicorn to correctly locate modules.",
+    "entity": "--app-dir src",
+    "confidence": 0.7,
+    "sources": [
+      "6c29d359fbe0e093c9a16aeeea2755743a548224"
+    ],
+    "created": "2026-05-03T18:28:59Z",
+    "last_reinforced": "2026-05-03T18:28:59Z",
+    "contradicted_by": []
+  },
+  "modulenotfounderror: no module named 'db'::the commit specifically addresses and provides solutions for": {
+    "statement": "The commit specifically addresses and provides solutions for the 'ModuleNotFoundError: No module named 'db' error.",
+    "entity": "ModuleNotFoundError: No module named 'db'",
+    "confidence": 0.7,
+    "sources": [
+      "6c29d359fbe0e093c9a16aeeea2755743a548224"
+    ],
+    "created": "2026-05-03T18:28:59Z",
+    "last_reinforced": "2026-05-03T18:28:59Z",
+    "contradicted_by": []
+  },
+  "readme.md::the 'readme.md' now includes basic docker build and run inst": {
+    "statement": "The 'README.md' now includes basic Docker build and run instructions for the 'knowledge-api' image.",
+    "entity": "README.md",
+    "confidence": 0.7,
+    "sources": [
+      "6c29d359fbe0e093c9a16aeeea2755743a548224"
+    ],
+    "created": "2026-05-03T18:28:59Z",
+    "last_reinforced": "2026-05-03T18:28:59Z",
+    "contradicted_by": []
+  },
+  "api/readme.md::the `api/readme.md` has been updated to include 'correct vs ": {
+    "statement": "The `api/README.md` has been updated to include 'CORRECT vs INCORRECT' examples for running the API.",
+    "entity": "api/README.md",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "api/readme.md::the `api/readme.md` now explicitly explains why `--app-dir s": {
+    "statement": "The `api/README.md` now explicitly explains why `--app-dir src` is required for imports to work correctly.",
+    "entity": "api/README.md",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "absolute imports::the project's code uses absolute imports (e.g., `from db.dat": {
+    "statement": "The project's code uses absolute imports (e.g., `from db.database import ...`).",
+    "entity": "absolute imports",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "uvicorn --app-dir src::running `uvicorn main:app --app-dir src --reload` is a corre": {
+    "statement": "Running `uvicorn main:app --app-dir src --reload` is a correct way to start the API.",
+    "entity": "uvicorn --app-dir src",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "uvicorn src.main:app::running `uvicorn src.main:app --reload` will result in a `mo": {
+    "statement": "Running `uvicorn src.main:app --reload` will result in a `ModuleNotFoundError`.",
+    "entity": "uvicorn src.main:app",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "[tool.uv.scripts]::the `[tool.uv]` section, including `dev-dependencies`, has b": {
+    "statement": "The `[tool.uv]` section, including `dev-dependencies`, has been removed from `api/pyproject.toml`.",
+    "entity": "[tool.uv.scripts]",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "[project.optional-dependencies] dev::development dependencies are now defined under `[project.opt": {
+    "statement": "Development dependencies are now defined under `[project.optional-dependencies] dev` in `api/pyproject.toml`.",
+    "entity": "[project.optional-dependencies] dev",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "knowledge-api (script)::the `knowledge-api` script in `api/pyproject.toml` now point": {
+    "statement": "The `knowledge-api` script in `api/pyproject.toml` now points to `start:main` instead of `main:main`.",
+    "entity": "knowledge-api (script)",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "src/::the `src/` directory is established as the package root when": {
+    "statement": "The `src/` directory is established as the package root when `uvicorn` is run with `--app-dir src`.",
+    "entity": "src/",
+    "confidence": 0.7,
+    "sources": [
+      "21ae1cb83dc60ff4dde22b2ebcaca2b6b93e770f"
+    ],
+    "created": "2026-05-03T18:33:17Z",
+    "last_reinforced": "2026-05-03T18:33:17Z",
+    "contradicted_by": []
+  },
+  "bind_request_context::the `bind_request_context` function's return type annotation": {
+    "statement": "The `bind_request_context` function's return type annotation was updated.",
+    "entity": "bind_request_context",
+    "confidence": 0.7,
+    "sources": [
+      "fd69e6ef0329616d48966731b2ebf670dffaaf27"
+    ],
+    "created": "2026-05-03T18:37:11Z",
+    "last_reinforced": "2026-05-03T18:37:11Z",
+    "contradicted_by": []
+  },
+  "bind_request_context::the previous return type annotation for `bind_request_contex": {
+    "statement": "The previous return type annotation for `bind_request_context` was `structlog.contextvars.BoundContextvars`.",
+    "entity": "bind_request_context",
+    "confidence": 0.7,
+    "sources": [
+      "fd69e6ef0329616d48966731b2ebf670dffaaf27"
+    ],
+    "created": "2026-05-03T18:37:11Z",
+    "last_reinforced": "2026-05-03T18:37:11Z",
+    "contradicted_by": []
+  },
+  "bind_request_context::the current return type annotation for `bind_request_context": {
+    "statement": "The current return type annotation for `bind_request_context` is `Any`.",
+    "entity": "bind_request_context",
+    "confidence": 0.7,
+    "sources": [
+      "fd69e6ef0329616d48966731b2ebf670dffaaf27"
+    ],
+    "created": "2026-05-03T18:37:11Z",
+    "last_reinforced": "2026-05-03T18:37:11Z",
+    "contradicted_by": []
+  },
+  "bind_request_context::the `bind_request_context` function is located in `api/src/c": {
+    "statement": "The `bind_request_context` function is located in `api/src/core/logging_config.py`.",
+    "entity": "bind_request_context",
+    "confidence": 0.7,
+    "sources": [
+      "fd69e6ef0329616d48966731b2ebf670dffaaf27"
+    ],
+    "created": "2026-05-03T18:37:11Z",
+    "last_reinforced": "2026-05-03T18:37:11Z",
+    "contradicted_by": []
+  },
+  "mcp_server::the `mcp` package was renamed to `mcp_server` to resolve a n": {
+    "statement": "The `mcp` package was renamed to `mcp_server` to resolve a naming conflict.",
+    "entity": "mcp_server",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "fastmcp::the naming conflict was with the `fastmcp` dependency's inte": {
+    "statement": "The naming conflict was with the `fastmcp` dependency's internal 'mcp' package.",
+    "entity": "FastMCP",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "mcp::the conflict previously caused an `importerror: cannot impor": {
+    "statement": "The conflict previously caused an `ImportError: cannot import name 'McpError'`.",
+    "entity": "mcp",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "mcp_server::the `api/src/mcp` directory was renamed to `api/src/mcp_serv": {
+    "statement": "The `api/src/mcp` directory was renamed to `api/src/mcp_server`.",
+    "entity": "mcp_server",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "main.py::all import statements referencing the old `mcp` package were": {
+    "statement": "All import statements referencing the old `mcp` package were updated to `mcp_server`.",
+    "entity": "main.py",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "main.py::the api now starts successfully and serves requests on port ": {
+    "statement": "The API now starts successfully and serves requests on port 8000.",
+    "entity": "main.py",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "mcp_server::the `mcp_server` module is designed for ai agent integration": {
+    "statement": "The `mcp_server` module is designed for AI Agent Integration.",
+    "entity": "mcp_server",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "mcpauthmiddleware::`mcpauthmiddleware` authenticates requests using the `x-api-": {
+    "statement": "`MCPAuthMiddleware` authenticates requests using the `X-API-Key` header.",
+    "entity": "MCPAuthMiddleware",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "mcp_server::the `mcp_server` module exports `mcp`, `get_mcp_app`, `mcpau": {
+    "statement": "The `mcp_server` module exports `mcp`, `get_mcp_app`, `MCPAuthMiddleware`, `require_scope`, and `check_domain_access`.",
+    "entity": "mcp_server",
+    "confidence": 0.7,
+    "sources": [
+      "2b5b42cee5d76e6b2ac0b334a61337ea08652375"
+    ],
+    "created": "2026-05-03T18:43:00Z",
+    "last_reinforced": "2026-05-03T18:43:00Z",
+    "contradicted_by": []
+  },
+  "get_vector_store_adapter::`get_vector_store_adapter` uses `chroma_host` and `chroma_po": {
+    "statement": "`get_vector_store_adapter` uses `CHROMA_HOST` and `CHROMA_PORT` environment variables, defaulting to 'localhost' and '8000' respectively.",
+    "entity": "get_vector_store_adapter",
+    "confidence": 0.7,
+    "sources": [
+      "8b8f0027f8ba03e499f90bf08be43dde903ad8c9"
+    ],
+    "created": "2026-05-03T21:30:32Z",
+    "last_reinforced": "2026-05-03T21:30:32Z",
+    "contradicted_by": []
+  },
+  "get_embedding_adapter::`get_embedding_adapter` uses `gemini_api_key` and `gemini_em": {
+    "statement": "`get_embedding_adapter` uses `GEMINI_API_KEY` and `GEMINI_EMBEDDING_MODEL` environment variables, defaulting to 'text-embedding-004' for the model.",
+    "entity": "get_embedding_adapter",
+    "confidence": 0.7,
+    "sources": [
+      "8b8f0027f8ba03e499f90bf08be43dde903ad8c9"
+    ],
+    "created": "2026-05-03T21:30:32Z",
+    "last_reinforced": "2026-05-03T21:30:32Z",
+    "contradicted_by": []
+  },
+  "get_embedding_adapter::`get_embedding_adapter` raises a `valueerror` if the `gemini": {
+    "statement": "`get_embedding_adapter` raises a `ValueError` if the `GEMINI_API_KEY` environment variable or argument is not provided.",
+    "entity": "get_embedding_adapter",
+    "confidence": 0.7,
+    "sources": [
+      "8b8f0027f8ba03e499f90bf08be43dde903ad8c9"
+    ],
+    "created": "2026-05-03T21:30:32Z",
+    "last_reinforced": "2026-05-03T21:30:32Z",
+    "contradicted_by": []
+  },
+  "health checks::the factory functions allow health checks to verify connecti": {
+    "statement": "The factory functions allow health checks to verify connections to ChromaDB and Gemini embedding service.",
+    "entity": "health checks",
+    "confidence": 0.7,
+    "sources": [
+      "8b8f0027f8ba03e499f90bf08be43dde903ad8c9"
+    ],
+    "created": "2026-05-03T21:30:32Z",
+    "last_reinforced": "2026-05-03T21:30:32Z",
+    "contradicted_by": []
+  },
+  "adapters/__init__.py::the `adapters/__init__.py` module is designed to provide eas": {
+    "statement": "The `adapters/__init__.py` module is designed to provide easy swapping of adapter implementations without changing business logic, particularly for future versions.",
+    "entity": "adapters/__init__.py",
+    "confidence": 0.7,
+    "sources": [
+      "8b8f0027f8ba03e499f90bf08be43dde903ad8c9"
+    ],
+    "created": "2026-05-03T21:30:32Z",
+    "last_reinforced": "2026-05-03T21:30:32Z",
+    "contradicted_by": []
+  },
+  "gemini api batch embedding request payload::the `_embed_batch` method in `geminiadapter` now adds a `\"mo": {
+    "statement": "The `_embed_batch` method in `GeminiAdapter` now adds a `\"model\": f\"models/{self._model}\"` field to each individual request object within the `requests_payload` sent to the Gemini API.",
+    "entity": "Gemini API batch embedding request payload",
+    "confidence": 0.7,
+    "sources": [
+      "c9afdce35cfe3129d23567c6bab2322d15e267bc"
+    ],
+    "created": "2026-05-04T01:11:01Z",
+    "last_reinforced": "2026-05-04T01:11:01Z",
+    "contradicted_by": []
+  },
+  "_embed_batch::this modification resolves the 'model is not specified' erro": {
+    "statement": "This modification resolves the 'model is not specified' error previously encountered when making batch embedding requests to the Gemini API.",
+    "entity": "_embed_batch",
+    "confidence": 0.7,
+    "sources": [
+      "c9afdce35cfe3129d23567c6bab2322d15e267bc"
+    ],
+    "created": "2026-05-04T01:11:01Z",
+    "last_reinforced": "2026-05-04T01:11:01Z",
+    "contradicted_by": []
+  },
+  "gemini api batch embedding request payload::the change ensures that `batchembedcontents` requests confor": {
+    "statement": "The change ensures that `batchEmbedContents` requests conform to the Gemini API's requirement for a specified model.",
+    "entity": "Gemini API batch embedding request payload",
+    "confidence": 0.7,
+    "sources": [
+      "c9afdce35cfe3129d23567c6bab2322d15e267bc"
+    ],
+    "created": "2026-05-04T01:11:01Z",
+    "last_reinforced": "2026-05-04T01:11:01Z",
     "contradicted_by": []
   }
 }

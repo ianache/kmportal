@@ -5,7 +5,7 @@
   "nodes": [
     {
       "type": "concept",
-      "description": "A greenfield enterprise knowledge management platform for internal authenticated users, focused on semantic and hybrid search over indexed documents.",
+      "description": "The project that is being documented regarding its pending implementations.",
       "id": "Knowledge Management Center"
     },
     {
@@ -90,7 +90,7 @@
     },
     {
       "type": "tool",
-      "description": "A fast Python package manager used for dependency management and running project development tasks.",
+      "description": "A fast Python package installer and dependency resolver, also used here to run defined scripts from 'pyproject.toml'.",
       "id": "uv"
     },
     {
@@ -99,8 +99,8 @@
       "id": "FastAPI"
     },
     {
-      "type": "tool",
-      "description": "A library for an MCP (Micro-service Communication Protocol) server (Phase 9).",
+      "type": "concept",
+      "description": "A third-party dependency (package) used to implement the Model Context Protocol, whose internal 'mcp' package name caused a conflict.",
       "id": "FastMCP"
     },
     {
@@ -175,7 +175,7 @@
     },
     {
       "type": "module",
-      "description": "The initial (MVP) vector database, used in HTTP mode.",
+      "description": "The current database used for storing document content.",
       "id": "ChromaDB"
     },
     {
@@ -485,7 +485,7 @@
     },
     {
       "type": "module",
-      "description": "Used for session storage in the BFF and as a pub/sub relay for WebSocket notifications.",
+      "description": "A technology required for implementing rate limiting and caching.",
       "id": "Redis"
     },
     {
@@ -515,7 +515,7 @@
     },
     {
       "type": "module",
-      "description": "The Backend For Frontend layer, responsible for OAuth2 proxy, API forwarding, and session management, integrated with the Frontend Shell.",
+      "description": "The Backend For Frontend service where Redis caching is planned.",
       "id": "BFF"
     },
     {
@@ -574,8 +574,8 @@
       "id": "wiki.html"
     },
     {
-      "type": "module",
-      "description": "The main documentation file providing an overview, architectural principles, project structure, getting started guide, and API details.",
+      "type": "document",
+      "description": "Documentation file providing quick start guides, common issues, and API usage instructions for the Knowledge Management API.",
       "id": "README.md"
     },
     {
@@ -599,8 +599,8 @@
       "id": "DESIGN.md"
     },
     {
-      "type": "file",
-      "description": "A documentation file providing specific guidance and details for the Core API module.",
+      "type": "module",
+      "description": "Documentation file for the Knowledge Management API, now significantly updated with detailed running instructions and explanations.",
       "id": "api/README.md"
     },
     {
@@ -885,7 +885,7 @@
     },
     {
       "type": "module",
-      "description": "The main frontend application, acting as a Module Federation host, managing navigation, authentication state, and global layout.",
+      "description": "The main host application for the frontend, built with Vue 3 and Module Federation, providing global layout, authentication, and a design system for integrating micro-UIs.",
       "id": "Frontend Shell"
     },
     {
@@ -925,7 +925,7 @@
     },
     {
       "type": "concept",
-      "description": "A feature enabling multiple separate builds to form a single application, used here for 'search-ui' to act as a remote.",
+      "description": "A webpack feature utilized to allow the Frontend Shell to host and dynamically load remote micro-frontends and share dependencies as singletons.",
       "id": "Module Federation"
     },
     {
@@ -944,8 +944,8 @@
       "id": "Ollama LLM Provider"
     },
     {
-      "type": "concept",
-      "description": "Used for reproducible deployment of services on Kubernetes (v2 requirement).",
+      "type": "decision",
+      "description": "High-priority missing packaging for reproducible Kubernetes deployments.",
       "id": "Helm Charts"
     },
     {
@@ -954,13 +954,13 @@
       "id": "OpenTelemetry"
     },
     {
-      "type": "dependency",
-      "description": "Used for creating dashboards and visualizing observability data (v2 requirement).",
+      "type": "module",
+      "description": "A high-priority visualization tool for monitoring, paired with Prometheus.",
       "id": "Grafana"
     },
     {
-      "type": "dependency",
-      "description": "Used for monitoring and alerting, typically integrated with Grafana (v2 requirement).",
+      "type": "module",
+      "description": "A high-priority monitoring system, with its /metrics endpoint already existing.",
       "id": "Prometheus"
     },
     {
@@ -1019,13 +1019,13 @@
       "id": "Real-time Ingestion Notifications"
     },
     {
-      "type": "concept",
-      "description": "Planned notifications via email for ingestion events like errors or completion (v2 requirement).",
+      "type": "feature",
+      "description": "A medium-priority planned feature for email-based event notifications.",
       "id": "Email Notifications"
     },
     {
-      "type": "concept",
-      "description": "Configurable webhooks per domain for external system integrations (v2 requirement).",
+      "type": "feature",
+      "description": "A medium-priority planned feature for configurable HTTP notifications.",
       "id": "Webhooks"
     },
     {
@@ -1115,7 +1115,7 @@
     },
     {
       "type": "concept",
-      "description": "Phase developing essential micro UIs for search, domain exploration, and ingestion status.",
+      "description": "A project phase focused on implementing core user interface components as independent micro-UIs within the Module Federation host shell.",
       "id": "Phase 7: Core micro UIs"
     },
     {
@@ -1150,7 +1150,7 @@
     },
     {
       "type": "concept",
-      "description": "The defined design system to which the frontend shell and micro UIs must adhere.",
+      "description": "The defined design system whose principles and components are implemented in the Frontend Shell, including design tokens and UI components.",
       "id": "Luminous Knowledge design system"
     },
     {
@@ -1160,7 +1160,7 @@
     },
     {
       "type": "module",
-      "description": "The official router for Vue.js, specified for use with navigation guards in the Frontend Shell.",
+      "description": "The application's routing system configured at `src/router/index.ts` with auth guards for public, protected, and admin-only routes.",
       "id": "Vue Router"
     },
     {
@@ -1170,12 +1170,12 @@
     },
     {
       "type": "concept",
-      "description": "An abstract base class (ABC) defining the interface for a vector store, whose contract is being tested.",
+      "description": "An interface (port) defining the contract for vector store operations, implemented by concrete adapters like ChromaDBAdapter.",
       "id": "VectorStorePort"
     },
     {
-      "type": "class",
-      "description": "An abstract base class (interface) defining the contract for embedding providers within the system.",
+      "type": "concept",
+      "description": "An interface (port) defining the contract for embedding operations, implemented by concrete adapters like GeminiAdapter.",
       "id": "EmbeddingPort"
     },
     {
@@ -1364,23 +1364,23 @@
       "id": "Core API / Ingestion"
     },
     {
-      "type": "concept",
-      "description": "A concrete implementation of the `VectorStorePort` using ChromaDB, intended for the MVP phase of the project.",
+      "type": "class",
+      "description": "A concrete implementation of the VectorStorePort interface, used for interacting with ChromaDB.",
       "id": "ChromaDBAdapter"
     },
     {
-      "type": "concept",
-      "description": "A planned concrete implementation of the `VectorStorePort` using Qdrant, intended for a v2 migration.",
+      "type": "class",
+      "description": "A medium-priority planned adapter for Qdrant, intended to replace ChromaDB.",
       "id": "QdrantAdapter"
     },
     {
       "type": "class",
-      "description": "An adapter class for integrating with the Gemini API to generate document embeddings.",
+      "description": "An adapter class that implements the EmbeddingPort interface, using Google's Gemini API for generating text embeddings.",
       "id": "GeminiAdapter"
     },
     {
       "type": "class",
-      "description": "A planned future adapter implementation of the EmbeddingPort using OpenAI (v2).",
+      "description": "A medium-priority planned adapter to use OpenAI as an embedding provider.",
       "id": "OpenAIAdapter"
     },
     {
@@ -1405,7 +1405,7 @@
     },
     {
       "type": "concept",
-      "description": "An automated process for continuous integration and continuous deployment, deferred to Phase 10.",
+      "description": "An automated process for continuous integration and continuous deployment, encompassing testing, building, and deployment stages across different environments.",
       "id": "CI/CD Pipeline"
     },
     {
@@ -1485,7 +1485,7 @@
     },
     {
       "type": "concept",
-      "description": "A data structure representing a single search result from the vector store, including the chunk ID, score, and original text.",
+      "description": "An interface defining the structure of a single search result, encompassing chunk ID, relevance score, text content, document details, and metadata.",
       "id": "SearchResult"
     },
     {
@@ -1540,7 +1540,7 @@
     },
     {
       "type": "module",
-      "description": "The Python file intended to implement the EmbeddingPort for the Gemini API.",
+      "description": "The Python module containing the implementation of the GeminiAdapter.",
       "id": "api/src/adapters/embedding/gemini.py"
     },
     {
@@ -2130,7 +2130,7 @@
     },
     {
       "type": "module",
-      "description": "A Python module defining FastAPI dependency functions for role and access control.",
+      "description": "Source file containing the 'get_current_user_optional' function and a TODO for rate limiting middleware.",
       "id": "api/src/core/dependencies.py"
     },
     {
@@ -2250,7 +2250,7 @@
     },
     {
       "type": "class",
-      "description": "A dedicated service layer for managing API keys, providing functionalities for creation, secure storage, retrieval, validation, listing, and revocation.",
+      "description": "A service responsible for validating API keys, utilized by `MCPAuthMiddleware` to authenticate requests.",
       "id": "APIKeyService"
     },
     {
@@ -2330,7 +2330,7 @@
     },
     {
       "type": "module",
-      "description": "The main entry point for the FastAPI application within the `src/` directory.",
+      "description": "The main FastAPI application entry point that now imports and mounts the `mcp_server` module as a sub-application.",
       "id": "main.py"
     },
     {
@@ -2659,13 +2659,13 @@
       "id": "Highlighting and Snippets"
     },
     {
-      "type": "concept",
-      "description": "Features to provide query suggestions and autocomplete capabilities to users.",
+      "type": "feature",
+      "description": "Medium-priority planned features to improve the search experience.",
       "id": "Suggestions and Autocomplete"
     },
     {
-      "type": "concept",
-      "description": "A module for logging and tracking search queries, results, and performance metrics.",
+      "type": "feature",
+      "description": "A medium-priority planned feature for logging and tracking search queries and metrics.",
       "id": "Search Analytics"
     },
     {
@@ -2905,7 +2905,7 @@
     },
     {
       "type": "module",
-      "description": "A UI component or sub-package within the frontend monorepo, likely related to domain management.",
+      "description": "The frontend application responsible for the user interface related to knowledge domains.",
       "id": "domains-ui"
     },
     {
@@ -2950,7 +2950,7 @@
     },
     {
       "type": "concept",
-      "description": "Enables real-time, bi-directional communication, primarily used for ingestion status notifications from the BFF to the frontend.",
+      "description": "A communication protocol providing full-duplex communication channels over a single TCP connection, utilized for real-time updates.",
       "id": "WebSocket"
     },
     {
@@ -3084,8 +3084,8 @@
       "id": "Async Ingestion Poison Pills"
     },
     {
-      "type": "architectural element",
-      "description": "A mechanism for handling messages that cannot be processed successfully, preventing poison pills from blocking the pipeline.",
+      "type": "concept",
+      "description": "A high-priority pending implementation for handling failed asynchronous tasks.",
       "id": "Dead Letter Queue (DLQ)"
     },
     {
@@ -3194,8 +3194,8 @@
       "id": "fastapi"
     },
     {
-      "type": "module",
-      "description": "The ASGI server used to run FastAPI applications.",
+      "type": "tool",
+      "description": "An ASGI server used to run FastAPI applications.",
       "id": "uvicorn"
     },
     {
@@ -3225,7 +3225,7 @@
     },
     {
       "type": "module",
-      "description": "Contains the protocol primitives for the Model Context Protocol, often a transitive dependency of FastMCP.",
+      "description": "The former name of the Model Context Protocol module that caused a naming conflict with the 'FastMCP' dependency.",
       "id": "mcp"
     },
     {
@@ -3375,7 +3375,7 @@
     },
     {
       "type": "concept",
-      "description": "Enables external AI agents to query the knowledge base as a tool call via the FastMCP server.",
+      "description": "A new system capability allowing external Artificial Intelligence agents to programmatically access and interact with the knowledge base via the MCP.",
       "id": "AI Agent Integration"
     },
     {
@@ -3600,7 +3600,7 @@
     },
     {
       "type": "class",
-      "description": "A planned future adapter implementation of the EmbeddingPort for local embeddings using Ollama (v2).",
+      "description": "A medium-priority planned adapter for local embeddings using Ollama.",
       "id": "OllamaAdapter"
     },
     {
@@ -3929,8 +3929,8 @@
       "id": "create_domain"
     },
     {
-      "type": "function",
-      "description": "Lists all knowledge domains accessible to the current user, with pagination support.",
+      "type": "tool",
+      "description": "An MCP tool that enables AI agents to retrieve a list of all accessible knowledge domains.",
       "id": "list_domains"
     },
     {
@@ -3999,8 +3999,8 @@
       "id": "get_ingestion_status"
     },
     {
-      "type": "function",
-      "description": "Retrieves the current processing status of a specific Document by its ID from the database.",
+      "type": "tool",
+      "description": "An MCP tool that allows AI agents to inquire about the ingestion and processing status of specific documents within the knowledge base.",
       "id": "get_document_status"
     },
     {
@@ -4069,13 +4069,13 @@
       "id": "get_search_suggestions"
     },
     {
-      "type": "class",
-      "description": "A data transfer object (DTO) schema for incoming search query parameters.",
+      "type": "concept",
+      "description": "An interface defining the parameters for a search query, including query string, domains, search mode, result limit, and filters.",
       "id": "SearchRequest"
     },
     {
-      "type": "class",
-      "description": "A data transfer object (DTO) schema for the overall search operation response, containing a list of results.",
+      "type": "concept",
+      "description": "An interface defining the structure of the response received from a search query, including the query, results array, total count, and search time.",
       "id": "SearchResponse"
     },
     {
@@ -4190,7 +4190,7 @@
     },
     {
       "type": "function",
-      "description": "FastAPI dependency that attempts to authenticate a user using a JWT token from the Authorization header. If successful, it returns a `UserInToken` object; otherwise, it returns `None`. It also manages user synchronization with the database.",
+      "description": "An existing function in the API core dependencies that requires API key validation.",
       "id": "get_current_user_optional"
     },
     {
@@ -4434,8 +4434,8 @@
       "id": "Domain"
     },
     {
-      "type": "concept",
-      "description": "The SQLAlchemy ORM model representing an API key in the database, storing its hashed value, name, scopes, expiration, and activity status.",
+      "type": "class",
+      "description": "A model used in the API that includes a 'rate_limit' field.",
       "id": "APIKey"
     },
     {
@@ -5330,7 +5330,7 @@
     },
     {
       "type": "module",
-      "description": "The root Vue component for the application, imported and mounted by main.ts.",
+      "description": "The main Vue component for the domains user interface, responsible for displaying and managing knowledge domains.",
       "id": "App.vue"
     },
     {
@@ -5637,6 +5637,711 @@
       "type": "module",
       "description": "TypeScript type definitions for authentication-related data structures used across the Frontend Shell.",
       "id": "frontend/apps/shell/src/types/auth.ts"
+    },
+    {
+      "type": "module",
+      "description": "A Pinia store at `src/stores/auth.ts` managing user session, login/logout actions, and role-based access (isAdmin, isReader).",
+      "id": "Pinia auth store"
+    },
+    {
+      "type": "module",
+      "description": "An HTTP client at `src/services/bffClient.ts` for proxying requests to the Core API via the BFF, including 401 error handling.",
+      "id": "BFF API client"
+    },
+    {
+      "type": "class",
+      "description": "A Vue view component at `src/views/AuthCallback.vue` dedicated to handling OAuth2 callbacks.",
+      "id": "AuthCallback view"
+    },
+    {
+      "type": "class",
+      "description": "A Vue view component at `src/views/LoginRequired.vue` prompting users to log in when authentication is required.",
+      "id": "LoginRequired view"
+    },
+    {
+      "type": "class",
+      "description": "A global layout component at `src/components/layout/ShellLayout.vue` featuring a glassmorphism sidebar, responsive design, user info, and logout functionality.",
+      "id": "ShellLayout component"
+    },
+    {
+      "type": "module",
+      "description": "A CSS file at `src/styles/design-tokens.css` defining global design variables for colors (Luminous Knowledge), typography (Inter font), spacing, border radius, glassmorphism, shadows, and utility classes.",
+      "id": "Design tokens CSS"
+    },
+    {
+      "type": "class",
+      "description": "A reusable UI component at `src/components/ui/BaseButton.vue` supporting primary, secondary, tertiary, and danger variants.",
+      "id": "BaseButton component"
+    },
+    {
+      "type": "class",
+      "description": "A reusable UI component at `src/components/ui/BaseCard.vue` providing card containers with low, medium, and high elevation styles.",
+      "id": "BaseCard component"
+    },
+    {
+      "type": "class",
+      "description": "A reusable UI component at `src/components/ui/BaseInput.vue` for text input fields, including support for icons and validation.",
+      "id": "BaseInput component"
+    },
+    {
+      "type": "class",
+      "description": "A reusable UI component at `src/components/ui/ToastContainer.vue` that implements a notification system.",
+      "id": "ToastContainer component"
+    },
+    {
+      "type": "function",
+      "description": "A Vue composable at `useBreakpoint.ts` used for detecting responsive breakpoints (mobile, tablet, desktop).",
+      "id": "useBreakpoint composable"
+    },
+    {
+      "type": "module",
+      "description": "One of the micro-frontend applications updated to be a Module Federation remote and use singleton dependencies shared from the host shell.",
+      "id": "adminUi micro-UI"
+    },
+    {
+      "type": "module",
+      "description": "One of the micro-frontend applications updated to be a Module Federation remote and use singleton dependencies shared from the host shell.",
+      "id": "domainsUi micro-UI"
+    },
+    {
+      "type": "module",
+      "description": "One of the micro-frontend applications updated to be a Module Federation remote and use singleton dependencies shared from the host shell.",
+      "id": "ingestionUi micro-UI"
+    },
+    {
+      "type": "module",
+      "description": "One of the micro-frontend applications updated to be a Module Federation remote and use singleton dependencies shared from the host shell.",
+      "id": "searchUi micro-UI"
+    },
+    {
+      "type": "concept",
+      "description": "A frontend requirement resolved by the completion of Phase 6.",
+      "id": "FE-01 requirement"
+    },
+    {
+      "type": "concept",
+      "description": "A frontend requirement resolved by the completion of Phase 6.",
+      "id": "FE-02 requirement"
+    },
+    {
+      "type": "concept",
+      "description": "A frontend requirement resolved by the completion of Phase 6.",
+      "id": "FE-09 requirement"
+    },
+    {
+      "type": "module",
+      "description": "A micro-UI responsible for semantic and filtered search, displaying highlighted results with relevance scores, and respecting domain access permissions.",
+      "id": "Search Micro UI"
+    },
+    {
+      "type": "module",
+      "description": "A micro-UI for listing domains with document counts, browsing documents, and viewing metadata.",
+      "id": "Domain Explorer Micro UI"
+    },
+    {
+      "type": "module",
+      "description": "A micro-UI providing real-time updates for ingestion jobs via WebSocket, including job progress and file upload status.",
+      "id": "Ingestion Status Micro UI"
+    },
+    {
+      "type": "module",
+      "description": "A micro-UI for displaying real-time toast notifications and updating a notification bell using WebSocket integration.",
+      "id": "Shell Notifications Micro UI"
+    },
+    {
+      "type": "decision",
+      "description": "The detailed execution plan document for implementing the Search Micro UI, outlining requirements, artifacts, and API contracts.",
+      "id": "07-01-PLAN.md"
+    },
+    {
+      "type": "decision",
+      "description": "The execution plan document for implementing the Domain Explorer Micro UI.",
+      "id": "07-02-PLAN.md"
+    },
+    {
+      "type": "decision",
+      "description": "The execution plan document for implementing the Ingestion Status Micro UI.",
+      "id": "07-03-PLAN.md"
+    },
+    {
+      "type": "decision",
+      "description": "The execution plan document for implementing the Shell Notifications Micro UI.",
+      "id": "07-04-PLAN.md"
+    },
+    {
+      "type": "module",
+      "description": "The dedicated Vue.js application that will host the Search Micro UI, intended to be loaded as a Module Federation remote.",
+      "id": "frontend/apps/search-ui"
+    },
+    {
+      "type": "module",
+      "description": "A Pinia store responsible for managing the state and handling API calls related to search functionality within the Search Micro UI.",
+      "id": "frontend/apps/search-ui/src/stores/search.ts"
+    },
+    {
+      "type": "module",
+      "description": "A service module providing the API client for interacting with the Backend For Frontend (BFF) search endpoints.",
+      "id": "frontend/apps/search-ui/src/services/searchApi.ts"
+    },
+    {
+      "type": "module",
+      "description": "A Vue component implementing the user interface for filtering search results by document type, date range, and source.",
+      "id": "frontend/apps/search-ui/src/components/SearchFilters.vue"
+    },
+    {
+      "type": "module",
+      "description": "A Vue component designed to display an individual search result, including highlighted text chunks and relevance scores.",
+      "id": "frontend/apps/search-ui/src/components/SearchResultCard.vue"
+    },
+    {
+      "type": "module",
+      "description": "TypeScript interfaces defining the data structures for search requests, responses, and individual search results within the application.",
+      "id": "frontend/apps/search-ui/src/types/search.ts"
+    },
+    {
+      "type": "concept",
+      "description": "The Backend For Frontend (BFF) REST API endpoint through which the Search Micro UI will make search queries.",
+      "id": "BFF /api/v1/search"
+    },
+    {
+      "type": "concept",
+      "description": "The Core API's REST endpoint for performing search operations, which the BFF proxies requests to.",
+      "id": "Core API /api/v1/search"
+    },
+    {
+      "type": "concept",
+      "description": "A requirement specifying that search functionality must respect user's domain access permissions.",
+      "id": "DOM-04"
+    },
+    {
+      "type": "concept",
+      "description": "A frontend requirement related to the interactive user experience, particularly relevant to the dynamic updates in the Search Micro UI.",
+      "id": "FE-03"
+    },
+    {
+      "type": "concept",
+      "description": "An instance of the FastMCP framework serving as the Model Context Protocol server, specifically designed for AI agents to interact with the knowledge base.",
+      "id": "FastMCP Server"
+    },
+    {
+      "type": "concept",
+      "description": "A conceptual category encompassing the functions and capabilities exposed by the FastMCP server, such as searching knowledge, listing domains, and checking document statuses.",
+      "id": "MCP Tools"
+    },
+    {
+      "type": "function",
+      "description": "A function within the `mcp_server` module that returns the ASGI application instance for the MCP server.",
+      "id": "get_mcp_app"
+    },
+    {
+      "type": "class",
+      "description": "An authentication middleware for MCP endpoints that validates API keys provided in the `X-API-Key` header.",
+      "id": "MCPAuthMiddleware"
+    },
+    {
+      "type": "function",
+      "description": "A utility function that checks if an authenticated API key has the necessary scope to access a specific MCP resource.",
+      "id": "require_scope"
+    },
+    {
+      "type": "function",
+      "description": "A utility function that verifies if an authenticated API key is authorized to access a specific knowledge domain.",
+      "id": "check_domain_access"
+    },
+    {
+      "type": "concept",
+      "description": "The custom HTTP header (`X-API-Key`) required for authenticating requests to the MCP server, containing the client's unique API key.",
+      "id": "X-API-Key Header"
+    },
+    {
+      "type": "concept",
+      "description": "Permission identifiers (e.g., 'read', 'write', 'admin') associated with an API key, dictating the operational privileges an AI agent holds within the MCP system.",
+      "id": "Scopes"
+    },
+    {
+      "type": "concept",
+      "description": "A security mechanism applied to API keys, limiting the API key's access to a predefined set of knowledge domains within the system.",
+      "id": "Domain Restrictions"
+    },
+    {
+      "type": "module",
+      "description": "The primary application file for the Knowledge Management Center API, updated to include the mounting of the new FastMCP server as a sub-application at `/mcp`.",
+      "id": "api/src/main.py"
+    },
+    {
+      "type": "module",
+      "description": "The package initialization file for the `mcp` module, defining what symbols are publicly accessible when the package is imported.",
+      "id": "api/src/mcp/__init__.py"
+    },
+    {
+      "type": "module",
+      "description": "A new module dedicated to handling API key-based authentication for the MCP server, containing the `MCPAuthMiddleware` and related helper functions.",
+      "id": "api/src/mcp/auth.py"
+    },
+    {
+      "type": "module",
+      "description": "A new module housing the core logic for the FastMCP server, including its definition, endpoints, and the implementation of MCP tools.",
+      "id": "api/src/mcp/server.py"
+    },
+    {
+      "type": "endpoint",
+      "description": "The Server-Sent Events (SSE) endpoint provided by the FastMCP server, used for real-time, unidirectional communication from the server to connected AI agents.",
+      "id": "/mcp/sse"
+    },
+    {
+      "type": "endpoint",
+      "description": "The message POST endpoint of the FastMCP server, designed for AI agents to send structured requests, often invoking specific MCP tools or operations.",
+      "id": "/mcp/messages"
+    },
+    {
+      "type": "tool",
+      "description": "An MCP tool that allows AI agents to query the knowledge base using various search methodologies (semantic, keyword, hybrid).",
+      "id": "search_knowledge"
+    },
+    {
+      "type": "tool",
+      "description": "An MCP tool that provides AI agents with detailed metadata and configuration for a specified knowledge domain.",
+      "id": "get_domain_info"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "Request State"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "API key authentication"
+    },
+    {
+      "type": "concept",
+      "description": "The overall initiative to enhance the application's resilience, stability, and monitorability for production deployments.",
+      "id": "Production Hardening"
+    },
+    {
+      "type": "concept",
+      "description": "The ability to understand the internal state of the system from its external outputs, primarily through structured logging, metrics, and health checks.",
+      "id": "Observability"
+    },
+    {
+      "type": "concept",
+      "description": "A system for generating machine-readable logs, facilitating easier parsing, querying, and analysis of application events.",
+      "id": "Structured Logging"
+    },
+    {
+      "type": "module",
+      "description": "The Python module responsible for configuring structured logging using structlog for the API.",
+      "id": "logging_config.py"
+    },
+    {
+      "type": "concept",
+      "description": "A middleware component that automatically intercepts and logs details of incoming HTTP requests, including timing and status codes.",
+      "id": "Request Logging Middleware"
+    },
+    {
+      "type": "module",
+      "description": "A Python module implementing a middleware for automatic HTTP request logging, generating unique request IDs and extracting client IP.",
+      "id": "logging_middleware.py"
+    },
+    {
+      "type": "concept",
+      "description": "Endpoints designed to monitor the operational status and dependency health of the application, critical for load balancing and orchestration.",
+      "id": "Health Checks"
+    },
+    {
+      "type": "module",
+      "description": "A Python module that defines various health check endpoints (/health, /health/detailed, /health/ready, /health/live) and a Prometheus metrics endpoint (/metrics).",
+      "id": "health.py"
+    },
+    {
+      "type": "module",
+      "description": "A GitHub Actions workflow definition for the CI/CD pipeline, orchestrating testing for API, BFF, and frontend applications, Docker image builds, and deployments.",
+      "id": "ci-cd.yml"
+    },
+    {
+      "type": "concept",
+      "description": "A comprehensive set of environment variables and settings specifically tailored for deploying and operating the application in a production environment.",
+      "id": "Production Configuration"
+    },
+    {
+      "type": "module",
+      "description": "An example file documenting all required environment variables for a production deployment, covering various service integrations and operational settings.",
+      "id": ".env.production.example"
+    },
+    {
+      "type": "concept",
+      "description": "A middleware component that automatically compresses HTTP responses to reduce bandwidth usage and improve application performance.",
+      "id": "GZip compression middleware"
+    },
+    {
+      "type": "concept",
+      "description": "An API endpoint that provides information about the application's current version and its uptime.",
+      "id": "Version Endpoint"
+    },
+    {
+      "type": "concept",
+      "description": "A system for exposing application metrics in a format compatible with Prometheus, enabling detailed monitoring and alerting.",
+      "id": "Prometheus Metrics"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "Frontend Applications"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "API Docker Image"
+    },
+    {
+      "type": "field",
+      "description": "A field in the APIKey model, defaulting to 1000 requests per hour, that needs enforcement.",
+      "id": "rate_limit"
+    },
+    {
+      "type": "concept",
+      "description": "A critical pending implementation to enforce API key rate limits.",
+      "id": "Rate limiting middleware"
+    },
+    {
+      "type": "concept",
+      "description": "A critical pending implementation within 'get_current_user_optional' for complete dual authentication.",
+      "id": "API key validation"
+    },
+    {
+      "type": "function",
+      "description": "An endpoint in the API ingestion module that requires domain access checks.",
+      "id": "Job status endpoint"
+    },
+    {
+      "type": "concept",
+      "description": "A critical pending implementation for the job status endpoint to prevent information leakage.",
+      "id": "Domain access check"
+    },
+    {
+      "type": "decision",
+      "description": "A high-priority planned integration for storing document content, currently deferred.",
+      "id": "MongoDB Integration"
+    },
+    {
+      "type": "module",
+      "description": "A Python file related to ingestion, affected by MongoDB integration.",
+      "id": "ingestion_service.py"
+    },
+    {
+      "type": "concept",
+      "description": "A high-priority planned system for asynchronous ingestion processing.",
+      "id": "Async Workers"
+    },
+    {
+      "type": "module",
+      "description": "A technology planned for implementing asynchronous workers with queues and retry logic.",
+      "id": "ARQ"
+    },
+    {
+      "type": "decision",
+      "description": "High-priority missing deployment configurations for Kubernetes.",
+      "id": "Kubernetes Manifests"
+    },
+    {
+      "type": "decision",
+      "description": "A high-priority planned strategy for backing up various databases, deferred to Phase 10.",
+      "id": "Automated Backups"
+    },
+    {
+      "type": "decision",
+      "description": "A high-priority security configuration for HTTPS in production, currently not implemented.",
+      "id": "SSL/TLS Termination"
+    },
+    {
+      "type": "concept",
+      "description": "A technology planned for medium-priority reranking of search results.",
+      "id": "Cross-Encoder"
+    },
+    {
+      "type": "feature",
+      "description": "A medium-priority planned system for distributed tracing, with variables defined but not implemented.",
+      "id": "OpenTelemetry Tracing"
+    },
+    {
+      "type": "module",
+      "description": "A medium-priority planned graph database for document relationships and search.",
+      "id": "Neo4j Graph Database"
+    },
+    {
+      "type": "feature",
+      "description": "A medium-priority feature for search result presentation, partially implemented.",
+      "id": "Highlighting y Snippets"
+    },
+    {
+      "type": "decision",
+      "description": "Low-priority missing Docker Compose configurations for different environments.",
+      "id": "Docker Compose Overrides"
+    },
+    {
+      "type": "decision",
+      "description": "Low-priority Dockerfile optimizations for smaller and faster builds.",
+      "id": "Multi-stage Build Optimizations"
+    },
+    {
+      "type": "feature",
+      "description": "A low-priority planned caching mechanism for the BFF, with variables defined but not implemented.",
+      "id": "Redis Caching"
+    },
+    {
+      "type": "module",
+      "description": "A low-priority planned content delivery network for static frontend assets.",
+      "id": "CDN for assets"
+    },
+    {
+      "type": "feature",
+      "description": "A low-priority planned feature for specific administrative action logging.",
+      "id": "Audit Logging"
+    },
+    {
+      "type": "module",
+      "description": "Source file containing the job status endpoint and a TODO for domain access checks.",
+      "id": "api/src/api/ingestion.py"
+    },
+    {
+      "type": "function",
+      "description": "An existing endpoint that provides metrics but lacks a full monitoring stack.",
+      "id": "Endpoint /metrics"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "embeddings"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "Reranking"
+    },
+    {
+      "type": "module",
+      "description": "A global state management module (e.g., Vuex or Pinia store) responsible for handling domain-related data and actions.",
+      "id": "store"
+    },
+    {
+      "type": "function",
+      "description": "A Vue lifecycle hook that runs after the component has been mounted to the DOM.",
+      "id": "onMounted"
+    },
+    {
+      "type": "function",
+      "description": "The correct method name in the 'store' module used to retrieve domain data.",
+      "id": "fetchDomains"
+    },
+    {
+      "type": "function",
+      "description": "An incorrectly named method that was previously called to retrieve domain data, but did not exist in the 'store' module.",
+      "id": "loadDomains"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "TypeError"
+    },
+    {
+      "type": "concept",
+      "description": "The Dockerfile responsible for building the API service's container image.",
+      "id": "api/Dockerfile"
+    },
+    {
+      "type": "concept",
+      "description": "An environment variable used by Python to determine the list of directories where it searches for modules; incorrect setting often leads to `ModuleNotFoundError`.",
+      "id": "PYTHONPATH"
+    },
+    {
+      "type": "concept",
+      "description": "A Python error indicating that an imported module could not be found, specifically occurring when absolute imports fail due to incorrect path configuration.",
+      "id": "ModuleNotFoundError"
+    },
+    {
+      "type": "concept",
+      "description": "Project-specific Python modules (db, api, mcp, core) located within the application's source directory.",
+      "id": "local modules"
+    },
+    {
+      "type": "script",
+      "description": "A Bash script for starting the Knowledge Management API on Linux/macOS using uvicorn with proper module resolution.",
+      "id": "start.sh"
+    },
+    {
+      "type": "script",
+      "description": "A Windows batch script for starting the Knowledge Management API using uvicorn with proper module resolution.",
+      "id": "start.bat"
+    },
+    {
+      "type": "function",
+      "description": "A recommended Python script serving as the entry point to run the API, encapsulating the correct uvicorn command.",
+      "id": "start.py"
+    },
+    {
+      "type": "concept",
+      "description": "The procedure for initiating the Knowledge Management API, now improved with robust `PYTHONPATH` (or `sys.path`) configuration through dedicated startup scripts.",
+      "id": "API startup process"
+    },
+    {
+      "type": "module",
+      "description": "The specific entry point within the API's `src` directory that the uvicorn server is configured to run.",
+      "id": "src.main:app"
+    },
+    {
+      "type": "module",
+      "description": "The root Python package for the Knowledge Management API, containing the main application logic.",
+      "id": "api/src"
+    },
+    {
+      "type": "module",
+      "description": "A Python sub-package within 'api/src' for core utilities and middleware.",
+      "id": "api/src/core"
+    },
+    {
+      "type": "concept",
+      "description": "The entry point for the FastAPI application within the 'src' directory.",
+      "id": "main:app"
+    },
+    {
+      "type": "concept",
+      "description": "A uvicorn command-line flag that specifies 'src' as the application directory for module lookup, crucial for resolving import errors.",
+      "id": "--app-dir src"
+    },
+    {
+      "type": "concept",
+      "description": "A common Python error indicating that a module cannot be found, specifically 'db' in this context, which is resolved by correct package structuring and uvicorn configuration.",
+      "id": "ModuleNotFoundError: No module named 'db'"
+    },
+    {
+      "type": "concept",
+      "description": "The Docker image name for the Knowledge Management API.",
+      "id": "knowledge-api"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "api/src/__init__.py"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "api/src/core/__init__.py"
+    },
+    {
+      "type": "module",
+      "description": "Project configuration file, updated to remove deprecated UV settings and move dev dependencies.",
+      "id": "api/pyproject.toml"
+    },
+    {
+      "type": "concept",
+      "description": "A Python import style (e.g., `from db.database import ...`) that requires the correct package root to be set for modules to be found.",
+      "id": "absolute imports"
+    },
+    {
+      "type": "concept",
+      "description": "A specific command-line argument for uvicorn that designates the `src/` directory as the application's package root, crucial for resolving absolute imports.",
+      "id": "uvicorn --app-dir src"
+    },
+    {
+      "type": "concept",
+      "description": "A section in `pyproject.toml` where development-specific dependencies are now correctly defined.",
+      "id": "[project.optional-dependencies] dev"
+    },
+    {
+      "type": "concept",
+      "description": "A deprecated section in `pyproject.toml` previously used for `uv` script configurations, now removed.",
+      "id": "[tool.uv.scripts]"
+    },
+    {
+      "type": "function",
+      "description": "The command-line entry point defined in `pyproject.toml` for the API.",
+      "id": "knowledge-api (script)"
+    },
+    {
+      "type": "concept",
+      "description": "An incorrect command pattern for running the API that typically leads to `ModuleNotFoundError` due to misconfigured import paths.",
+      "id": "uvicorn src.main:app"
+    },
+    {
+      "type": "module",
+      "description": "The primary source code directory of the API, which needs to be correctly recognized as the package root.",
+      "id": "src/"
+    },
+    {
+      "type": "function",
+      "description": "A function within `logging_config.py` designed to bind request-specific context variables (like request_id, user_id, client_ip) to structlog's contextvars for inclusion in log entries.",
+      "id": "bind_request_context"
+    },
+    {
+      "type": "concept",
+      "description": "A specific type from the structlog library, previously used as the return type annotation for the `bind_request_context` function.",
+      "id": "structlog.contextvars.BoundContextvars"
+    },
+    {
+      "type": "concept",
+      "description": "A Python type hint from the `typing` module indicating that a value can be of any type, adopted as the new return type annotation for `bind_request_context`.",
+      "id": "Any"
+    },
+    {
+      "type": "module",
+      "description": "The new name for the Model Context Protocol (MCP) module located at `api/src/mcp_server`, which provides server functionality for AI Agent Integration.",
+      "id": "mcp_server"
+    },
+    {
+      "type": "module",
+      "description": "The initialization module for the adapters package, now providing factory functions for adapter instantiation.",
+      "id": "adapters/__init__.py"
+    },
+    {
+      "type": "function",
+      "description": "An asynchronous factory function that returns a configured VectorStorePort implementation, currently ChromaDBAdapter, with host and port configurable via arguments or environment variables.",
+      "id": "get_vector_store_adapter"
+    },
+    {
+      "type": "function",
+      "description": "An asynchronous factory function that returns a configured EmbeddingPort implementation, currently GeminiAdapter, with API key and model configurable via arguments or environment variables.",
+      "id": "get_embedding_adapter"
+    },
+    {
+      "type": "concept",
+      "description": "An API endpoint or system process responsible for verifying the operational status and connectivity of services, now utilizing the new factory functions.",
+      "id": "health checks"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "CHROMA_HOST"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "CHROMA_PORT"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "GEMINI_API_KEY"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "GEMINI_EMBEDDING_MODEL"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "ImportError"
+    },
+    {
+      "type": "function",
+      "description": "A private method within GeminiAdapter responsible for constructing and sending a batch of embedding requests to the Gemini API.",
+      "id": "_embed_batch"
+    },
+    {
+      "type": "concept",
+      "description": "The JSON structure sent to the Gemini API's `batchEmbedContents` endpoint, which contains individual embedding requests.",
+      "id": "Gemini API batch embedding request payload"
     }
   ],
   "edges": [
@@ -6836,6 +7541,36 @@
       "target": "pyvis.network"
     },
     {
+      "type": "related_to",
+      "source": "README.md",
+      "target": "start.bat"
+    },
+    {
+      "type": "related_to",
+      "source": "README.md",
+      "target": "start.sh"
+    },
+    {
+      "type": "related_to",
+      "source": "README.md",
+      "target": "uvicorn"
+    },
+    {
+      "type": "related_to",
+      "source": "README.md",
+      "target": "ModuleNotFoundError: No module named 'db'"
+    },
+    {
+      "type": "related_to",
+      "source": "README.md",
+      "target": "uv"
+    },
+    {
+      "type": "related_to",
+      "source": "README.md",
+      "target": "knowledge-api"
+    },
+    {
       "type": "depends_on",
       "source": "package.json",
       "target": "@opencode-ai/plugin"
@@ -7021,7 +7756,7 @@
       "target": "BFF (Backend for Frontend)"
     },
     {
-      "type": "uses",
+      "type": "implements",
       "source": "Frontend Shell",
       "target": "Module Federation"
     },
@@ -7029,6 +7764,91 @@
       "type": "uses",
       "source": "Frontend Shell",
       "target": "Luminous Knowledge Design System"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "Pinia auth store"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "BFF API client"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "Vue Router"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "ShellLayout component"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "Design tokens CSS"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "BaseButton component"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "BaseCard component"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "BaseInput component"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "ToastContainer component"
+    },
+    {
+      "type": "uses",
+      "source": "Frontend Shell",
+      "target": "useBreakpoint composable"
+    },
+    {
+      "type": "depends_on",
+      "source": "Frontend Shell",
+      "target": "adminUi micro-UI"
+    },
+    {
+      "type": "depends_on",
+      "source": "Frontend Shell",
+      "target": "domainsUi micro-UI"
+    },
+    {
+      "type": "depends_on",
+      "source": "Frontend Shell",
+      "target": "ingestionUi micro-UI"
+    },
+    {
+      "type": "depends_on",
+      "source": "Frontend Shell",
+      "target": "searchUi micro-UI"
+    },
+    {
+      "type": "related_to",
+      "source": "Frontend Shell",
+      "target": "FE-01 requirement"
+    },
+    {
+      "type": "related_to",
+      "source": "Frontend Shell",
+      "target": "FE-02 requirement"
+    },
+    {
+      "type": "related_to",
+      "source": "Frontend Shell",
+      "target": "FE-09 requirement"
     },
     {
       "type": "depends_on",
@@ -7094,6 +7914,11 @@
       "type": "uses",
       "source": "OpenTelemetry",
       "target": "Prometheus"
+    },
+    {
+      "type": "related_to",
+      "source": "Prometheus",
+      "target": "Grafana"
     },
     {
       "type": "uses",
@@ -7381,6 +8206,26 @@
       "target": "Module Federation"
     },
     {
+      "type": "related_to",
+      "source": "Phase 7: Core micro UIs",
+      "target": "Search Micro UI"
+    },
+    {
+      "type": "related_to",
+      "source": "Phase 7: Core micro UIs",
+      "target": "Domain Explorer Micro UI"
+    },
+    {
+      "type": "related_to",
+      "source": "Phase 7: Core micro UIs",
+      "target": "Ingestion Status Micro UI"
+    },
+    {
+      "type": "related_to",
+      "source": "Phase 7: Core micro UIs",
+      "target": "Shell Notifications Micro UI"
+    },
+    {
       "type": "depends_on",
       "source": "Phase 8: Admin and API keys",
       "target": "Phase 7: Core micro UIs"
@@ -7406,6 +8251,31 @@
       "target": "API Key"
     },
     {
+      "type": "implements",
+      "source": "Luminous Knowledge design system",
+      "target": "Design tokens CSS"
+    },
+    {
+      "type": "implements",
+      "source": "Luminous Knowledge design system",
+      "target": "BaseButton component"
+    },
+    {
+      "type": "implements",
+      "source": "Luminous Knowledge design system",
+      "target": "BaseCard component"
+    },
+    {
+      "type": "implements",
+      "source": "Luminous Knowledge design system",
+      "target": "BaseInput component"
+    },
+    {
+      "type": "implements",
+      "source": "Luminous Knowledge design system",
+      "target": "ToastContainer component"
+    },
+    {
       "type": "related_to",
       "source": "Pinia",
       "target": "Decision: Vue, Pinia, Vue Router declared singleton:true"
@@ -7429,6 +8299,16 @@
       "type": "uses",
       "source": "Vue Router",
       "target": "Module Federation"
+    },
+    {
+      "type": "uses",
+      "source": "Vue Router",
+      "target": "AuthCallback view"
+    },
+    {
+      "type": "uses",
+      "source": "Vue Router",
+      "target": "LoginRequired view"
     },
     {
       "type": "related_to",
@@ -7711,7 +8591,7 @@
       "target": "EmbeddingPort"
     },
     {
-      "type": "extends",
+      "type": "implements",
       "source": "ChromaDBAdapter",
       "target": "VectorStorePort"
     },
@@ -7729,6 +8609,11 @@
       "type": "implements",
       "source": "QdrantAdapter",
       "target": "VectorStorePort"
+    },
+    {
+      "type": "related_to",
+      "source": "QdrantAdapter",
+      "target": "ChromaDB"
     },
     {
       "type": "implements",
@@ -7796,9 +8681,19 @@
       "target": "Authentication"
     },
     {
+      "type": "uses",
+      "source": "GeminiAdapter",
+      "target": "_embed_batch"
+    },
+    {
       "type": "implements",
       "source": "OpenAIAdapter",
       "target": "EmbeddingPort"
+    },
+    {
+      "type": "related_to",
+      "source": "OpenAIAdapter",
+      "target": "embeddings"
     },
     {
       "type": "related_to",
@@ -7829,6 +8724,11 @@
       "type": "related_to",
       "source": "CI/CD Pipeline",
       "target": "Phase 1 - Bootstrap Infrastructure"
+    },
+    {
+      "type": "uses",
+      "source": "CI/CD Pipeline",
+      "target": "ci-cd.yml"
     },
     {
       "type": "related_to",
@@ -7994,6 +8894,11 @@
       "type": "uses",
       "source": "api/src/adapters/embedding/gemini.py",
       "target": "Google Generative AI API"
+    },
+    {
+      "type": "implements",
+      "source": "api/src/adapters/embedding/gemini.py",
+      "target": "GeminiAdapter"
     },
     {
       "type": "depends_on",
@@ -8661,6 +9566,11 @@
       "target": "require_domain_admin"
     },
     {
+      "type": "related_to",
+      "source": "api/src/core/dependencies.py",
+      "target": "get_current_user_optional"
+    },
+    {
       "type": "implements",
       "source": "api/src/services/domain_service.py",
       "target": "Repository Pattern"
@@ -8999,6 +9909,46 @@
       "type": "calls",
       "source": "main.py",
       "target": "api/api_keys.py"
+    },
+    {
+      "type": "related_to",
+      "source": "main.py",
+      "target": "Structured Logging"
+    },
+    {
+      "type": "uses",
+      "source": "main.py",
+      "target": "GZip compression middleware"
+    },
+    {
+      "type": "uses",
+      "source": "main.py",
+      "target": "Request Logging Middleware"
+    },
+    {
+      "type": "implements",
+      "source": "main.py",
+      "target": "Health Checks"
+    },
+    {
+      "type": "implements",
+      "source": "main.py",
+      "target": "Version Endpoint"
+    },
+    {
+      "type": "uses",
+      "source": "main.py",
+      "target": "mcp_server"
+    },
+    {
+      "type": "calls",
+      "source": "main.py",
+      "target": "get_mcp_app"
+    },
+    {
+      "type": "uses",
+      "source": "main.py",
+      "target": "MCPAuthMiddleware"
     },
     {
       "type": "depends_on",
@@ -10232,8 +11182,38 @@
     },
     {
       "type": "depends_on",
+      "source": "uvicorn",
+      "target": "PYTHONPATH"
+    },
+    {
+      "type": "related_to",
+      "source": "uvicorn",
+      "target": "ModuleNotFoundError"
+    },
+    {
+      "type": "uses",
+      "source": "uvicorn",
+      "target": "src.main:app"
+    },
+    {
+      "type": "uses",
+      "source": "uvicorn",
+      "target": "main:app"
+    },
+    {
+      "type": "uses",
+      "source": "uvicorn",
+      "target": "--app-dir src"
+    },
+    {
+      "type": "depends_on",
       "source": "fastmcp",
       "target": "mcp"
+    },
+    {
+      "type": "related_to",
+      "source": "mcp",
+      "target": "mcp_server"
     },
     {
       "type": "depends_on",
@@ -10679,6 +11659,11 @@
       "type": "implements",
       "source": "OllamaAdapter",
       "target": "EmbeddingPort"
+    },
+    {
+      "type": "related_to",
+      "source": "OllamaAdapter",
+      "target": "embeddings"
     },
     {
       "type": "related_to",
@@ -11689,6 +12674,11 @@
       "type": "related_to",
       "source": "get_current_user_optional",
       "target": "API Key Authentication"
+    },
+    {
+      "type": "implements",
+      "source": "get_current_user_optional",
+      "target": "API key validation"
     },
     {
       "type": "depends_on",
@@ -13702,6 +14692,21 @@
     },
     {
       "type": "calls",
+      "source": "App.vue",
+      "target": "onMounted"
+    },
+    {
+      "type": "depends_on",
+      "source": "App.vue",
+      "target": "store"
+    },
+    {
+      "type": "fixes",
+      "source": "App.vue",
+      "target": "TypeError"
+    },
+    {
+      "type": "calls",
       "source": "dev script",
       "target": "Vite"
     },
@@ -14089,6 +15094,576 @@
       "type": "depends_on",
       "source": "frontend/apps/shell/src/services/bffClient.ts",
       "target": "frontend/apps/shell/src/types/auth.ts"
+    },
+    {
+      "type": "related_to",
+      "source": "Search Micro UI",
+      "target": "frontend/apps/search-ui"
+    },
+    {
+      "type": "implements",
+      "source": "Search Micro UI",
+      "target": "DOM-04"
+    },
+    {
+      "type": "implements",
+      "source": "Search Micro UI",
+      "target": "FE-03"
+    },
+    {
+      "type": "uses",
+      "source": "Ingestion Status Micro UI",
+      "target": "WebSocket"
+    },
+    {
+      "type": "uses",
+      "source": "Shell Notifications Micro UI",
+      "target": "WebSocket"
+    },
+    {
+      "type": "related_to",
+      "source": "07-01-PLAN.md",
+      "target": "Search Micro UI"
+    },
+    {
+      "type": "related_to",
+      "source": "07-02-PLAN.md",
+      "target": "Domain Explorer Micro UI"
+    },
+    {
+      "type": "related_to",
+      "source": "07-03-PLAN.md",
+      "target": "Ingestion Status Micro UI"
+    },
+    {
+      "type": "related_to",
+      "source": "07-04-PLAN.md",
+      "target": "Shell Notifications Micro UI"
+    },
+    {
+      "type": "calls",
+      "source": "frontend/apps/search-ui/src/stores/search.ts",
+      "target": "frontend/apps/search-ui/src/services/searchApi.ts"
+    },
+    {
+      "type": "calls",
+      "source": "frontend/apps/search-ui/src/services/searchApi.ts",
+      "target": "BFF /api/v1/search"
+    },
+    {
+      "type": "uses",
+      "source": "frontend/apps/search-ui/src/components/SearchFilters.vue",
+      "target": "frontend/apps/search-ui/src/stores/search.ts"
+    },
+    {
+      "type": "related_to",
+      "source": "frontend/apps/search-ui/src/types/search.ts",
+      "target": "SearchRequest"
+    },
+    {
+      "type": "related_to",
+      "source": "frontend/apps/search-ui/src/types/search.ts",
+      "target": "SearchResponse"
+    },
+    {
+      "type": "related_to",
+      "source": "frontend/apps/search-ui/src/types/search.ts",
+      "target": "SearchResult"
+    },
+    {
+      "type": "related_to",
+      "source": "BFF /api/v1/search",
+      "target": "Core API /api/v1/search"
+    },
+    {
+      "type": "implements",
+      "source": "FastMCP Server",
+      "target": "AI Agent Integration"
+    },
+    {
+      "type": "related_to",
+      "source": "FastMCP Server",
+      "target": "MCP Tools"
+    },
+    {
+      "type": "related_to",
+      "source": "FastMCP Server",
+      "target": "/mcp/sse"
+    },
+    {
+      "type": "related_to",
+      "source": "FastMCP Server",
+      "target": "/mcp/messages"
+    },
+    {
+      "type": "uses",
+      "source": "FastMCP Server",
+      "target": "SearchService"
+    },
+    {
+      "type": "uses",
+      "source": "FastMCP Server",
+      "target": "DomainService"
+    },
+    {
+      "type": "uses",
+      "source": "FastMCP Server",
+      "target": "IngestionService"
+    },
+    {
+      "type": "related_to",
+      "source": "MCP Tools",
+      "target": "search_knowledge"
+    },
+    {
+      "type": "related_to",
+      "source": "MCP Tools",
+      "target": "list_domains"
+    },
+    {
+      "type": "related_to",
+      "source": "MCP Tools",
+      "target": "get_domain_info"
+    },
+    {
+      "type": "related_to",
+      "source": "MCP Tools",
+      "target": "get_document_status"
+    },
+    {
+      "type": "uses",
+      "source": "MCPAuthMiddleware",
+      "target": "APIKeyService"
+    },
+    {
+      "type": "uses",
+      "source": "MCPAuthMiddleware",
+      "target": "AsyncSessionLocal"
+    },
+    {
+      "type": "modifies",
+      "source": "MCPAuthMiddleware",
+      "target": "Request State"
+    },
+    {
+      "type": "depends_on",
+      "source": "MCPAuthMiddleware",
+      "target": "X-API-Key Header"
+    },
+    {
+      "type": "uses",
+      "source": "require_scope",
+      "target": "Request State"
+    },
+    {
+      "type": "uses",
+      "source": "check_domain_access",
+      "target": "Request State"
+    },
+    {
+      "type": "related_to",
+      "source": "Scopes",
+      "target": "API key authentication"
+    },
+    {
+      "type": "related_to",
+      "source": "Domain Restrictions",
+      "target": "API key authentication"
+    },
+    {
+      "type": "calls",
+      "source": "api/src/main.py",
+      "target": "get_mcp_app"
+    },
+    {
+      "type": "uses",
+      "source": "api/src/main.py",
+      "target": "MCPAuthMiddleware"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src/main.py",
+      "target": "FastMCP Server"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src/mcp/__init__.py",
+      "target": "mcp"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src/mcp/__init__.py",
+      "target": "get_mcp_app"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src/mcp/__init__.py",
+      "target": "MCPAuthMiddleware"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src/mcp/__init__.py",
+      "target": "require_scope"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src/mcp/__init__.py",
+      "target": "check_domain_access"
+    },
+    {
+      "type": "implements",
+      "source": "Production Hardening",
+      "target": "Structured Logging"
+    },
+    {
+      "type": "implements",
+      "source": "Production Hardening",
+      "target": "Health Checks"
+    },
+    {
+      "type": "implements",
+      "source": "Production Hardening",
+      "target": "CI/CD Pipeline"
+    },
+    {
+      "type": "implements",
+      "source": "Production Hardening",
+      "target": "Production Configuration"
+    },
+    {
+      "type": "uses",
+      "source": "Structured Logging",
+      "target": "logging_config.py"
+    },
+    {
+      "type": "uses",
+      "source": "Structured Logging",
+      "target": "logging_middleware.py"
+    },
+    {
+      "type": "modifies",
+      "source": "logging_config.py",
+      "target": "bind_request_context"
+    },
+    {
+      "type": "implements",
+      "source": "Request Logging Middleware",
+      "target": "logging_middleware.py"
+    },
+    {
+      "type": "uses",
+      "source": "Health Checks",
+      "target": "health.py"
+    },
+    {
+      "type": "related_to",
+      "source": "health.py",
+      "target": "Prometheus Metrics"
+    },
+    {
+      "type": "related_to",
+      "source": "ci-cd.yml",
+      "target": "Core API"
+    },
+    {
+      "type": "related_to",
+      "source": "ci-cd.yml",
+      "target": "BFF"
+    },
+    {
+      "type": "related_to",
+      "source": "ci-cd.yml",
+      "target": "Frontend Applications"
+    },
+    {
+      "type": "related_to",
+      "source": "ci-cd.yml",
+      "target": "API Docker Image"
+    },
+    {
+      "type": "uses",
+      "source": "Production Configuration",
+      "target": ".env.production.example"
+    },
+    {
+      "type": "uses",
+      "source": "Rate limiting middleware",
+      "target": "APIKey"
+    },
+    {
+      "type": "uses",
+      "source": "Rate limiting middleware",
+      "target": "Redis"
+    },
+    {
+      "type": "depends_on",
+      "source": "Job status endpoint",
+      "target": "Domain access check"
+    },
+    {
+      "type": "related_to",
+      "source": "MongoDB Integration",
+      "target": "ChromaDB"
+    },
+    {
+      "type": "uses",
+      "source": "Async Workers",
+      "target": "ARQ"
+    },
+    {
+      "type": "uses",
+      "source": "Async Workers",
+      "target": "Dead Letter Queue (DLQ)"
+    },
+    {
+      "type": "related_to",
+      "source": "Kubernetes Manifests",
+      "target": "Helm Charts"
+    },
+    {
+      "type": "related_to",
+      "source": "Redis Caching",
+      "target": "BFF"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src/api/ingestion.py",
+      "target": "Job status endpoint"
+    },
+    {
+      "type": "uses",
+      "source": "Reranking",
+      "target": "Cross-Encoder"
+    },
+    {
+      "type": "calls",
+      "source": "onMounted",
+      "target": "fetchDomains"
+    },
+    {
+      "type": "related_to",
+      "source": "fetchDomains",
+      "target": "loadDomains"
+    },
+    {
+      "type": "modifies",
+      "source": "api/Dockerfile",
+      "target": "PYTHONPATH"
+    },
+    {
+      "type": "related_to",
+      "source": "PYTHONPATH",
+      "target": "ModuleNotFoundError"
+    },
+    {
+      "type": "related_to",
+      "source": "PYTHONPATH",
+      "target": "local modules"
+    },
+    {
+      "type": "implements",
+      "source": "start.sh",
+      "target": "API startup process"
+    },
+    {
+      "type": "modifies",
+      "source": "start.sh",
+      "target": "PYTHONPATH"
+    },
+    {
+      "type": "calls",
+      "source": "start.sh",
+      "target": "uvicorn"
+    },
+    {
+      "type": "implements",
+      "source": "start.bat",
+      "target": "API startup process"
+    },
+    {
+      "type": "modifies",
+      "source": "start.bat",
+      "target": "PYTHONPATH"
+    },
+    {
+      "type": "calls",
+      "source": "start.bat",
+      "target": "uvicorn"
+    },
+    {
+      "type": "implements",
+      "source": "start.py",
+      "target": "API startup process"
+    },
+    {
+      "type": "modifies",
+      "source": "start.py",
+      "target": "PYTHONPATH"
+    },
+    {
+      "type": "calls",
+      "source": "start.py",
+      "target": "uvicorn"
+    },
+    {
+      "type": "uses",
+      "source": "start.py",
+      "target": "src.main:app"
+    },
+    {
+      "type": "implements",
+      "source": "start.py",
+      "target": "uvicorn --app-dir src"
+    },
+    {
+      "type": "fixes",
+      "source": "API startup process",
+      "target": "ModuleNotFoundError"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src",
+      "target": "api/src/core"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src",
+      "target": "api/src/__init__.py"
+    },
+    {
+      "type": "related_to",
+      "source": "api/src/core",
+      "target": "api/src/core/__init__.py"
+    },
+    {
+      "type": "fixes",
+      "source": "--app-dir src",
+      "target": "ModuleNotFoundError: No module named 'db'"
+    },
+    {
+      "type": "related_to",
+      "source": "api/pyproject.toml",
+      "target": "[project.optional-dependencies] dev"
+    },
+    {
+      "type": "modifies",
+      "source": "api/pyproject.toml",
+      "target": "knowledge-api (script)"
+    },
+    {
+      "type": "depends_on",
+      "source": "absolute imports",
+      "target": "uvicorn --app-dir src"
+    },
+    {
+      "type": "fixes",
+      "source": "uvicorn --app-dir src",
+      "target": "ModuleNotFoundError"
+    },
+    {
+      "type": "calls",
+      "source": "knowledge-api (script)",
+      "target": "start.py"
+    },
+    {
+      "type": "related_to",
+      "source": "uvicorn src.main:app",
+      "target": "ModuleNotFoundError"
+    },
+    {
+      "type": "related_to",
+      "source": "src/",
+      "target": "absolute imports"
+    },
+    {
+      "type": "uses",
+      "source": "bind_request_context",
+      "target": "Any"
+    },
+    {
+      "type": "related_to",
+      "source": "bind_request_context",
+      "target": "structlog.contextvars.BoundContextvars"
+    },
+    {
+      "type": "depends_on",
+      "source": "mcp_server",
+      "target": "FastMCP"
+    },
+    {
+      "type": "implements",
+      "source": "mcp_server",
+      "target": "get_mcp_app"
+    },
+    {
+      "type": "implements",
+      "source": "mcp_server",
+      "target": "MCPAuthMiddleware"
+    },
+    {
+      "type": "related_to",
+      "source": "adapters/__init__.py",
+      "target": "get_vector_store_adapter"
+    },
+    {
+      "type": "related_to",
+      "source": "adapters/__init__.py",
+      "target": "get_embedding_adapter"
+    },
+    {
+      "type": "related_to",
+      "source": "get_vector_store_adapter",
+      "target": "ChromaDBAdapter"
+    },
+    {
+      "type": "uses",
+      "source": "get_vector_store_adapter",
+      "target": "CHROMA_HOST"
+    },
+    {
+      "type": "uses",
+      "source": "get_vector_store_adapter",
+      "target": "CHROMA_PORT"
+    },
+    {
+      "type": "fixes",
+      "source": "get_vector_store_adapter",
+      "target": "ImportError"
+    },
+    {
+      "type": "related_to",
+      "source": "get_embedding_adapter",
+      "target": "GeminiAdapter"
+    },
+    {
+      "type": "uses",
+      "source": "get_embedding_adapter",
+      "target": "GEMINI_API_KEY"
+    },
+    {
+      "type": "uses",
+      "source": "get_embedding_adapter",
+      "target": "GEMINI_EMBEDDING_MODEL"
+    },
+    {
+      "type": "fixes",
+      "source": "get_embedding_adapter",
+      "target": "ImportError"
+    },
+    {
+      "type": "calls",
+      "source": "health checks",
+      "target": "get_vector_store_adapter"
+    },
+    {
+      "type": "calls",
+      "source": "health checks",
+      "target": "get_embedding_adapter"
+    },
+    {
+      "type": "modifies",
+      "source": "_embed_batch",
+      "target": "Gemini API batch embedding request payload"
     }
   ]
 }

@@ -59,6 +59,25 @@ export function createProxyMiddleware() {
           proxyReq.setHeader('X-User-Roles', user.roles.join(','));
         }
         
+        // Fix body forwarding: express.json() consumes the body stream before the
+        // proxy can pipe it. Re-serialize and write it to the proxy request.
+        if (req.body && ['POST', 'PUT', 'PATCH'].includes(req.method || '')) {
+          const contentType = req.headers['content-type'] || '';
+          let bodyData: string;
+
+          if (contentType.includes('application/json')) {
+            bodyData = JSON.stringify(req.body);
+          } else if (contentType.includes('application/x-www-form-urlencoded')) {
+            bodyData = new URLSearchParams(req.body).toString();
+          } else {
+            bodyData = JSON.stringify(req.body);
+          }
+
+          proxyReq.setHeader('Content-Type', contentType || 'application/json');
+          proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+          proxyReq.write(bodyData);
+        }
+        
         // Log proxy request (redact Authorization header)
         const targetPath = `${apiUrl}${req.url?.replace('/api', '') || req.path || ''}`;
         logProxyRequest(req as Request, targetPath);

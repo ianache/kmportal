@@ -71,29 +71,45 @@ class UserInToken(BaseModel):
 
 class DomainBase(BaseModel):
     """Base domain schema."""
-    name: str = Field(..., min_length=1, max_length=255, description="Domain name")
-    description: Optional[str] = Field(None, max_length=2000, description="Domain description")
+    name: str = Field(..., min_length=1, max_length=255, description="Domain name (ES)")
+    description: Optional[str] = Field(None, max_length=2000, description="Domain description (ES)")
 
 
 class DomainCreate(DomainBase):
     """Domain creation schema."""
     embedding_model: str = Field("text-embedding-004", description="Embedding model to use")
     embedding_dimension: int = Field(768, ge=1, le=4096, description="Embedding dimension")
+    name_en: Optional[str] = Field(None, max_length=255, description="Domain name in English")
+    description_en: Optional[str] = Field(None, max_length=2000, description="Domain description in English")
+    tags: List[str] = Field(default=[], description="Domain tags")
+    visibility: str = Field("private", pattern="^(public|private)$", description="Domain visibility")
+    cover_image: Optional[str] = Field(None, description="Cover image data URL or URL")
+    ingestion_flow: Optional[str] = Field(None, description="Ingestion workflow name")
 
 
 class DomainUpdate(BaseModel):
     """Domain update schema."""
     name: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = Field(None, max_length=2000)
+    name_en: Optional[str] = Field(None, max_length=255)
+    description_en: Optional[str] = Field(None, max_length=2000)
+    tags: Optional[List[str]] = None
+    visibility: Optional[str] = Field(None, pattern="^(public|private)$")
+    cover_image: Optional[str] = None
 
 
 class DomainResponse(DomainBase):
     """Domain response schema."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     embedding_model: str
     embedding_dimension: int
+    name_en: Optional[str] = None
+    description_en: Optional[str] = None
+    tags: List[str] = []
+    visibility: str = "private"
+    cover_image: Optional[str] = None
     created_by: UUID
     created_at: datetime
     updated_at: datetime
@@ -207,6 +223,7 @@ class SearchRequest(BaseModel):
     """Search request schema."""
     query: str = Field(..., min_length=1, max_length=1000, description="Search query")
     domain_ids: List[UUID] = Field(default=[], description="Domain IDs to search")
+    mode: str = Field("hybrid", pattern="^(semantic|keyword|hybrid)$", description="Search mode")
     top_k: int = Field(10, ge=1, le=100, description="Number of results")
     filters: Optional[Dict[str, Any]] = Field(None, description="Metadata filters")
 

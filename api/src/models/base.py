@@ -16,7 +16,7 @@ from sqlalchemy import (
     Integer,
     Boolean,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
 
 from db.database import Base
@@ -81,8 +81,13 @@ class Domain(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
+    name_en = Column(String(255), nullable=True)
+    description_en = Column(Text, nullable=True)
     embedding_model = Column(String(100), default="text-embedding-004", nullable=False)
     embedding_dimension = Column(Integer, default=768, nullable=False)
+    tags = Column(ARRAY(String), nullable=False, default=list, server_default='{}')
+    visibility = Column(String(10), nullable=False, default='private', server_default='private')
+    cover_image = Column(Text, nullable=True)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

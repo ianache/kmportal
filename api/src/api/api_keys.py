@@ -21,7 +21,7 @@ from services.api_key_service import (
     to_api_key_response
 )
 
-router = APIRouter(prefix="/v1/api-keys", tags=["API Keys"])
+router = APIRouter(prefix="/api-keys", tags=["API Keys"])
 
 
 @router.post(

@@ -47,10 +47,13 @@ class SearchService:
             List of search results sorted by relevance
         """
         # Generate query embedding
+        if not domain_ids:
+            return []
+
         query_embedding = await self.embedding_provider.embed_query(query)
-        
+
         all_results = []
-        
+
         # Search each domain
         for domain_id in domain_ids:
             try:
@@ -126,7 +129,7 @@ class SearchService:
             FROM documents d
             WHERE 
                 d.domain_id = ANY(:domain_ids)
-                AND d.status = 'done'
+                AND d.status::text = 'DONE'
                 AND to_tsvector('english', COALESCE(d.title, '')) 
                     @@ plainto_tsquery('english', :query)
             ORDER BY rank DESC

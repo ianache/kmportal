@@ -1,0 +1,17 @@
+---
+type: module
+name: Design tokens CSS
+created: 2026-05-03T15:30:05Z
+updated: 2026-05-03T15:30:05Z
+confidence: 0.70
+sources: [95382f796214e85c2daa06111a3c90111f9d8fcb]
+related: []
+tier: working
+---
+# Design tokens CSS
+
+A CSS file at `src/styles/design-tokens.css` defining global design variables for colors (Luminous Knowledge), typography (Inter font), spacing, border radius, glassmorphism, shadows, and utility classes.
+
+## References
+
+- [95382f79](../summaries/95382f79.md)

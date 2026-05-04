@@ -55,6 +55,13 @@ class IngestionService:
         Returns:
             Tuple of (Document, IngestionJob)
         """
+        # Validate domain exists
+        domain_check = await self.db.execute(
+            select(Domain.id).where(Domain.id == domain_id)
+        )
+        if domain_check.scalar_one_or_none() is None:
+            raise IngestionError(f"Domain {domain_id} not found")
+
         # Create document record
         document = Document(
             domain_id=domain_id,
@@ -62,7 +69,7 @@ class IngestionService:
             source_type=source_type,
             source_uri=source_uri,
             status=DocumentStatus.PENDING,
-            metadata=metadata or {},
+            metadata_=metadata or {},
             chunk_count=0
         )
         
@@ -218,10 +225,10 @@ class IngestionService:
             
         except UnsupportedFormatError as e:
             await self._fail_job(document, job, f"Unsupported format: {str(e)}")
-            raise
+            raise IngestionError(f"Unsupported format: {str(e)}")
         except TextExtractionError as e:
             await self._fail_job(document, job, f"Text extraction failed: {str(e)}")
-            raise
+            raise IngestionError(f"Text extraction failed: {str(e)}")
         except Exception as e:
             await self._fail_job(document, job, f"Processing error: {str(e)}")
             raise IngestionError(f"Failed to process document: {str(e)}")
