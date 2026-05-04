@@ -1174,8 +1174,8 @@
       "id": "VectorStorePort"
     },
     {
-      "type": "concept",
-      "description": "An interface (port) defining the contract for embedding operations, implemented by concrete adapters like GeminiAdapter.",
+      "type": "class",
+      "description": "An interface defining the contract for embedding adapters, which `OllamaAdapter` implements, requiring methods for general, document, and query specific embeddings.",
       "id": "EmbeddingPort"
     },
     {
@@ -3600,7 +3600,7 @@
     },
     {
       "type": "class",
-      "description": "A new Python adapter class for generating embeddings locally using the Ollama model.",
+      "description": "An implementation of the `EmbeddingPort` interface, utilizing a local Ollama instance to generate text embeddings.",
       "id": "OllamaAdapter"
     },
     {
@@ -6345,12 +6345,12 @@
     },
     {
       "type": "concept",
-      "description": "The system logic responsible for creating and providing the appropriate embedding adapter based on configuration, now prioritizing Ollama.",
+      "description": "A project wiki concept describing the system logic responsible for creating and providing the appropriate embedding adapter based on configuration.",
       "id": "Embedding Factory"
     },
     {
       "type": "concept",
-      "description": "A fallback strategy for embedding generation that creates embeddings based on content hashing when API-based models are unavailable.",
+      "description": "A project wiki concept outlining a fallback strategy for embedding generation that creates embeddings based on content hashing when API-based models are unavailable.",
       "id": "Hash-based Embeddings"
     },
     {
@@ -6364,8 +6364,8 @@
       "id": "Search API"
     },
     {
-      "type": "document",
-      "description": "The project's architectural research document, updated to reflect current baseline, new architectural decisions, and an explicit replacement of the previous general architecture.",
+      "type": "concept",
+      "description": "A project wiki concept document detailing the current architectural research, decisions, and baseline for the project.",
       "id": "ARCHITECTURE.md"
     },
     {
@@ -6374,9 +6374,59 @@
       "id": "OntologyEditor"
     },
     {
-      "type": "decision",
-      "description": "An architectural decision point regarding a UI component for canvas tools, decided to be kept within domains-ui for v1.1 and promoted to a shared npm workspace package later.",
+      "type": "concept",
+      "description": "A project wiki concept documenting an architectural decision regarding a UI component for canvas tools, to be kept within `domains-ui` for v1.1.",
       "id": "CanvasToolbox"
+    },
+    {
+      "type": "function",
+      "description": "A new method in `OllamaAdapter` designed to generate an embedding optimized for documents. It calls the general `embed` method and returns the first embedding vector from the result.",
+      "id": "embed_document"
+    },
+    {
+      "type": "function",
+      "description": "A new method in `OllamaAdapter` designed to generate an embedding optimized for search queries. It calls the general `embed` method with the input text wrapped in a list and returns the full `List[List[float]]` result, despite its type hint `List[float]`.",
+      "id": "embed_query"
+    },
+    {
+      "type": "module",
+      "description": "The module containing the `OllamaAdapter` class and its methods for interacting with the Ollama embedding API.",
+      "id": "api/src/adapters/embedding/ollama.py"
+    },
+    {
+      "type": "module",
+      "description": "A new utility script providing asynchronous functions to check database connectivity, list documents, domains, and all public tables.",
+      "id": "api/check_db.py"
+    },
+    {
+      "type": "function",
+      "description": "An asynchronous function within `api/check_db.py` that performs database inspection by querying for documents, a specific domain, and listing all public tables.",
+      "id": "check"
+    },
+    {
+      "type": "module",
+      "description": "A new utility script for verifying the functionality of the configured embedding adapter by generating a sample embedding.",
+      "id": "api/test_embedding.py"
+    },
+    {
+      "type": "function",
+      "description": "An asynchronous function within `api/test_embedding.py` that initializes an embedding adapter, retrieves its details, and attempts to embed a sample text.",
+      "id": "test"
+    },
+    {
+      "type": "concept",
+      "description": "A project wiki concept related to the integration and use of Ollama for generating embeddings within the system.",
+      "id": "Ollama Embedding"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "OllamaAdapter.embed"
+    },
+    {
+      "type": "unknown",
+      "description": "",
+      "id": "sqlalchemy.text"
     }
   ],
   "edges": [
@@ -11711,6 +11761,16 @@
       "target": "Embedding Factory"
     },
     {
+      "type": "implements",
+      "source": "OllamaAdapter",
+      "target": "embed_document"
+    },
+    {
+      "type": "implements",
+      "source": "OllamaAdapter",
+      "target": "embed_query"
+    },
+    {
       "type": "related_to",
       "source": "Hatchling",
       "target": "Knowledge Management API Project"
@@ -15716,7 +15776,7 @@
       "target": "OLLAMA_EMBEDDING_MODEL"
     },
     {
-      "type": "calls",
+      "type": "uses",
       "source": "Embedding Factory",
       "target": "OllamaAdapter"
     },
@@ -15749,6 +15809,31 @@
       "type": "implements",
       "source": "CanvasToolbox",
       "target": "domains-ui"
+    },
+    {
+      "type": "calls",
+      "source": "embed_document",
+      "target": "OllamaAdapter.embed"
+    },
+    {
+      "type": "calls",
+      "source": "embed_query",
+      "target": "OllamaAdapter.embed"
+    },
+    {
+      "type": "uses",
+      "source": "api/check_db.py",
+      "target": "AsyncSessionLocal"
+    },
+    {
+      "type": "uses",
+      "source": "api/check_db.py",
+      "target": "sqlalchemy.text"
+    },
+    {
+      "type": "uses",
+      "source": "api/test_embedding.py",
+      "target": "get_embedding_adapter"
     }
   ]
 }

@@ -143,6 +143,21 @@ to connect to a separate ChromaDB container without requiring the
         
         return collections
     
+    async def _get_collection_id(self, name: str) -> str:
+        """Get the internal ID for a collection by name."""
+        url = f"{self.base_url}/collections"
+        response = await self.client.get(url)
+        
+        if response.status_code != 200:
+            raise VectorStoreError(f"Failed to list collections: {response.text}")
+        
+        collections = response.json()
+        for coll in collections:
+            if coll.get("name") == name:
+                return coll.get("id")
+        
+        raise CollectionNotFoundError(f"Collection '{name}' not found")
+    
     async def upsert(
         self, 
         collection: str, 
@@ -160,7 +175,10 @@ to connect to a separate ChromaDB container without requiring the
                     "All chunks must have embeddings before upsert."
                 )
         
-        url = f"{self.base_url}/collections/{collection}/upsert"
+        # Get collection ID (ChromaDB uses UUID, not name)
+        collection_id = await self._get_collection_id(collection)
+        
+        url = f"{self.base_url}/collections/{collection_id}/upsert"
         
         payload = {
             "ids": [chunk.id for chunk in chunks],
@@ -186,7 +204,10 @@ to connect to a separate ChromaDB container without requiring the
         filters: Optional[Dict[str, Any]] = None
     ) -> List[SearchResult]:
         """Search ChromaDB collection with vector similarity."""
-        url = f"{self.base_url}/collections/{collection}/query"
+        # Get collection ID (ChromaDB uses UUID, not name)
+        collection_id = await self._get_collection_id(collection)
+        
+        url = f"{self.base_url}/collections/{collection_id}/query"
         
         payload = {
             "query_embeddings": [query_vector],

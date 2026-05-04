@@ -2,17 +2,19 @@
 
 ## Concepts
 
-- [CanvasToolbox](concepts/canvastoolbox.md) — An architectural decision point regarding a UI component for canvas tools, decid
+- [Ollama Embedding](concepts/ollama_embedding.md) — A project wiki concept related to the integration and use of Ollama for generati
+
+- [CanvasToolbox](concepts/canvastoolbox.md) — A project wiki concept documenting an architectural decision regarding a UI comp
 
 - [OntologyEditor](concepts/ontologyeditor.md) — An architectural decision point regarding a UI component for editing ontologies,
 
-- [ARCHITECTURE.md](concepts/architecturemd.md) — The project's architectural research document, updated to reflect current baseli
+- [ARCHITECTURE.md](concepts/architecturemd.md) — A project wiki concept document detailing the current architectural research, de
 
 - [OLLAMA_EMBEDDING_MODEL](concepts/ollama_embedding_model.md) — An environment variable used to specify the preferred Ollama embedding model, wh
 
-- [Hash-based Embeddings](concepts/hash-based_embeddings.md) — A fallback strategy for embedding generation that creates embeddings based on co
+- [Hash-based Embeddings](concepts/hash-based_embeddings.md) — A project wiki concept outlining a fallback strategy for embedding generation th
 
-- [Embedding Factory](concepts/embedding_factory.md) — The system logic responsible for creating and providing the appropriate embeddin
+- [Embedding Factory](concepts/embedding_factory.md) — A project wiki concept describing the system logic responsible for creating and 
 
 - [Gemini API batch embedding request payload](concepts/gemini_api_batch_embedding_request_payload.md) — The JSON structure sent to the Gemini API's `batchEmbedContents` endpoint, which
 
@@ -1438,6 +1440,12 @@
 
 ## Modules
 
+- [api/test_embedding.py](entities/apitest_embeddingpy.md) — A new utility script for verifying the functionality of the configured embedding
+
+- [api/check_db.py](entities/apicheck_dbpy.md) — A new utility script providing asynchronous functions to check database connecti
+
+- [api/src/adapters/embedding/ollama.py](entities/apisrcadaptersembeddingollamapy.md) — The module containing the `OllamaAdapter` class and its methods for interacting 
+
 - [Search API](entities/search_api.md) — The API module responsible for search functionality, now configured to utilize t
 
 - [adapters/__init__.py](entities/adapters__init__py.md) — The initialization module for the adapters package, now providing factory functi
@@ -2192,7 +2200,7 @@
 
 - [EmbeddingError](entities/embeddingerror.md) — The base exception class for all errors that can occur during embedding operatio
 
-- [OllamaAdapter](entities/ollamaadapter.md) — A new Python adapter class for generating embeddings locally using the Ollama mo
+- [OllamaAdapter](entities/ollamaadapter.md) — An implementation of the `EmbeddingPort` interface, utilizing a local Ollama ins
 
 - [OpenAIAdapter](entities/openaiadapter.md) — A medium-priority planned adapter to use OpenAI as an embedding provider.
 
@@ -2272,13 +2280,21 @@
 
 - [Chunk](entities/chunk.md) — A dataclass representing a text chunk, including its unique ID, content, optiona
 
-- [EmbeddingPort](entities/embeddingport.md) — An abstract base class (interface) defining the contract for embedding providers
+- [EmbeddingPort](entities/embeddingport.md) — An interface defining the contract for embedding adapters, which `OllamaAdapter`
 
 - [VectorStorePort](entities/vectorstoreport.md) — An abstract port defining the interface for interacting with any vector database
 
 - [Network](entities/network.md) — A class from the `pyvis.network` module used to build and display interactive ne
 
 ## Functions
+
+- [test](entities/test.md) — An asynchronous function within `api/test_embedding.py` that initializes an embe
+
+- [check](entities/check.md) — An asynchronous function within `api/check_db.py` that performs database inspect
+
+- [embed_query](entities/embed_query.md) — A new method in `OllamaAdapter` designed to generate an embedding optimized for 
+
+- [embed_document](entities/embed_document.md) — A new method in `OllamaAdapter` designed to generate an embedding optimized for 
 
 - [_embed_batch](entities/_embed_batch.md) — A private method within GeminiAdapter responsible for constructing and sending a
 

@@ -15289,5 +15289,115 @@
     "created": "2026-05-04T03:20:42Z",
     "last_reinforced": "2026-05-04T03:20:42Z",
     "contradicted_by": []
+  },
+  "ollamaadapter::the `ollamaadapter` class now includes dedicated `embed_docu": {
+    "statement": "The `OllamaAdapter` class now includes dedicated `embed_document` and `embed_query` methods.",
+    "entity": "OllamaAdapter",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "ollamaadapter::the `embed_document` method in `ollamaadapter` returns a sin": {
+    "statement": "The `embed_document` method in `OllamaAdapter` returns a single embedding vector by extracting the first item from the list returned by `OllamaAdapter.embed`.",
+    "entity": "OllamaAdapter",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "ollamaadapter::the `embed_query` method in `ollamaadapter` returns a list c": {
+    "statement": "The `embed_query` method in `OllamaAdapter` returns a list containing a single embedding vector (e.g., `[[embedding]]`), which is inconsistent with its declared return type hint of `List[float]`.",
+    "entity": "OllamaAdapter",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "api/check_db.py::`api/check_db.py` is a new script introduced to verify datab": {
+    "statement": "`api/check_db.py` is a new script introduced to verify database connectivity and inspect initial data.",
+    "entity": "api/check_db.py",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "api/test_embedding.py::`api/test_embedding.py` is a new script for testing the func": {
+    "statement": "`api/test_embedding.py` is a new script for testing the functionality and output of the configured embedding adapter.",
+    "entity": "api/test_embedding.py",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "embedding factory::the `embedding factory` system logic is configured to priori": {
+    "statement": "The `Embedding Factory` system logic is configured to prioritize Ollama for creating embedding adapters.",
+    "entity": "Embedding Factory",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "hash-based embeddings::`hash-based embeddings` provide a fallback mechanism when ap": {
+    "statement": "`Hash-based Embeddings` provide a fallback mechanism when API-based embedding models are unavailable.",
+    "entity": "Hash-based Embeddings",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "architecture.md::the `architecture.md` wiki document has been created to refl": {
+    "statement": "The `ARCHITECTURE.md` wiki document has been created to reflect current architectural decisions and serve as a baseline.",
+    "entity": "ARCHITECTURE.md",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "canvastoolbox::the `canvastoolbox` wiki document clarifies the decision to ": {
+    "statement": "The `CanvasToolbox` wiki document clarifies the decision to keep the UI component within `domains-ui` for v1.1.",
+    "entity": "CanvasToolbox",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
+  },
+  "ollama embedding::the `ollama embedding` wiki document likely covers the detai": {
+    "statement": "The `Ollama Embedding` wiki document likely covers the details of integrating Ollama as an embedding provider.",
+    "entity": "Ollama Embedding",
+    "confidence": 0.7,
+    "sources": [
+      "06f748994444acb493a188587ba10a43771931c2"
+    ],
+    "created": "2026-05-04T03:25:51Z",
+    "last_reinforced": "2026-05-04T03:25:51Z",
+    "contradicted_by": []
   }
 }
