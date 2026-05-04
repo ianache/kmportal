@@ -2,6 +2,18 @@
 
 ## Concepts
 
+- [CanvasToolbox](concepts/canvastoolbox.md) — An architectural decision point regarding a UI component for canvas tools, decid
+
+- [OntologyEditor](concepts/ontologyeditor.md) — An architectural decision point regarding a UI component for editing ontologies,
+
+- [ARCHITECTURE.md](concepts/architecturemd.md) — The project's architectural research document, updated to reflect current baseli
+
+- [OLLAMA_EMBEDDING_MODEL](concepts/ollama_embedding_model.md) — An environment variable used to specify the preferred Ollama embedding model, wh
+
+- [Hash-based Embeddings](concepts/hash-based_embeddings.md) — A fallback strategy for embedding generation that creates embeddings based on co
+
+- [Embedding Factory](concepts/embedding_factory.md) — The system logic responsible for creating and providing the appropriate embeddin
+
 - [Gemini API batch embedding request payload](concepts/gemini_api_batch_embedding_request_payload.md) — The JSON structure sent to the Gemini API's `batchEmbedContents` endpoint, which
 
 - [health checks](concepts/health_checks.md) — An API endpoint or system process responsible for verifying the operational stat
@@ -1426,6 +1438,8 @@
 
 ## Modules
 
+- [Search API](entities/search_api.md) — The API module responsible for search functionality, now configured to utilize t
+
 - [adapters/__init__.py](entities/adapters__init__py.md) — The initialization module for the adapters package, now providing factory functi
 
 - [mcp_server](entities/mcp_server.md) — The new name for the Model Context Protocol (MCP) module located at `api/src/mcp
@@ -1808,7 +1822,7 @@
 
 - [ingestion-ui](entities/ingestion-ui.md) — A UI component or sub-package within the frontend monorepo, likely related to da
 
-- [domains-ui](entities/domains-ui.md) — The frontend application responsible for the user interface related to knowledge
+- [domains-ui](entities/domains-ui.md) — The frontend micro-UI responsible for managing domains, which will host the Onto
 
 - [MCP Server (FastMCP)](entities/mcp_server_fastmcp.md) — Component exposing knowledge base as MCP-compliant tools for AI agents.
 
@@ -2178,7 +2192,7 @@
 
 - [EmbeddingError](entities/embeddingerror.md) — The base exception class for all errors that can occur during embedding operatio
 
-- [OllamaAdapter](entities/ollamaadapter.md) — A medium-priority planned adapter for local embeddings using Ollama.
+- [OllamaAdapter](entities/ollamaadapter.md) — A new Python adapter class for generating embeddings locally using the Ollama mo
 
 - [OpenAIAdapter](entities/openaiadapter.md) — A medium-priority planned adapter to use OpenAI as an embedding provider.
 
@@ -2242,7 +2256,7 @@
 
 - [DomainModel](entities/domainmodel.md) — SQLAlchemy model representing a knowledge domain with attributes like id, name, 
 
-- [GeminiAdapter](entities/geminiadapter.md) — An adapter class that implements the EmbeddingPort interface, using Google's Gem
+- [GeminiAdapter](entities/geminiadapter.md) — An existing Python adapter class for Gemini embeddings, now updated to include a
 
 - [ChromaDBAdapter](entities/chromadbadapter.md) — A concrete implementation of the VectorStorePort interface, used for interacting
 

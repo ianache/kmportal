@@ -15157,5 +15157,137 @@
     "created": "2026-05-04T01:11:01Z",
     "last_reinforced": "2026-05-04T01:11:01Z",
     "contradicted_by": []
+  },
+  "ollamaadapter::the ollamaadapter is implemented in `api/src/adapters/embedd": {
+    "statement": "The OllamaAdapter is implemented in `api/src/adapters/embedding/ollama.py`.",
+    "entity": "OllamaAdapter",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "embedding factory::the embedding factory logic has been updated to prioritize t": {
+    "statement": "The embedding factory logic has been updated to prioritize the `OLLAMA_EMBEDDING_MODEL` environment variable.",
+    "entity": "Embedding Factory",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "geminiadapter::the geminiadapter (`api/src/adapters/embedding/gemini.py`) n": {
+    "statement": "The GeminiAdapter (`api/src/adapters/embedding/gemini.py`) now includes a fallback to hash-based embeddings when its API is unavailable.",
+    "entity": "GeminiAdapter",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "ollama_embedding_model::the `.env` file is configured to use ollama with the `embedd": {
+    "statement": "The `.env` file is configured to use Ollama with the `embeddinggemma` model.",
+    "entity": "OLLAMA_EMBEDDING_MODEL",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "search api::the search api is configured to use the embedding adapter fa": {
+    "statement": "The search API is configured to use the embedding adapter factory.",
+    "entity": "Search API",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "architecture.md::the `architecture.md` document has been updated for mileston": {
+    "statement": "The `ARCHITECTURE.md` document has been updated for Milestone v1.1 Domain Intelligence, researched on 2026-05-03.",
+    "entity": "ARCHITECTURE.md",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "domains-ui::the `architecture.md` defines the `domains-ui` as a module f": {
+    "statement": "The `ARCHITECTURE.md` defines the `domains-ui` as a Module Federation remote (port 5101) with an internal view state ('explorer' | 'create' | 'detail').",
+    "entity": "domains-ui",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "search api::the backend `put /v1/domains/{domain_id}` route already exis": {
+    "statement": "The backend `PUT /v1/domains/{domain_id}` route already exists and is fully implemented in `api/src/domains.py`.",
+    "entity": "Search API",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "ontologyeditor::no ontology column, model, or route exists yet in the backen": {
+    "statement": "No ontology column, model, or route exists yet in the backend (verified from code).",
+    "entity": "OntologyEditor",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "search api::no alembic setup is found in the backend; the schema is crea": {
+    "statement": "No Alembic setup is found in the backend; the schema is created via `init_db()` using `Base.metadata.create_all`.",
+    "entity": "Search API",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "ontologyeditor::the ontologyeditor is decided to be a full-screen overlay re": {
+    "statement": "The OntologyEditor is decided to be a full-screen overlay rendered inside `domains-ui` and controlled by its internal view state, not a separate shell route.",
+    "entity": "OntologyEditor",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
+  },
+  "canvastoolbox::the canvastoolbox component is decided to be kept inside `do": {
+    "statement": "The CanvasToolbox component is decided to be kept inside `domains-ui` for v1.1 and will be promoted to a shared npm workspace package only when `ingestion-ui` actually needs it, rather than creating a separate Module Federation remote for it.",
+    "entity": "CanvasToolbox",
+    "confidence": 0.7,
+    "sources": [
+      "1b52481192207c7ee055af2facde6586c0461ed5"
+    ],
+    "created": "2026-05-04T03:20:42Z",
+    "last_reinforced": "2026-05-04T03:20:42Z",
+    "contradicted_by": []
   }
 }

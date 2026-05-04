@@ -203,6 +203,24 @@ class OllamaAdapter(EmbeddingPort):
                 raise
             raise EmbeddingError(f"Ollama embedding failed: {str(e)}")
     
+    async def embed_document(self, text: str) -> List[float]:
+        """
+        Generate embedding optimized for documents.
+        
+        For Ollama, this is the same as regular embed.
+        """
+        embeddings = await self.embed([text])
+        return embeddings[0]
+    
+    async def embed_query(self, text: str) -> List[float]:
+        """
+        Generate embedding optimized for search queries.
+        
+        For Ollama, this is the same as regular embed.
+        """
+        embeddings = await self.embed([text])
+        return embeddings[0]
+    
     async def health_check(self) -> bool:
         """
         Check if Ollama is accessible.

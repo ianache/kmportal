@@ -1375,7 +1375,7 @@
     },
     {
       "type": "class",
-      "description": "An adapter class that implements the EmbeddingPort interface, using Google's Gemini API for generating text embeddings.",
+      "description": "An existing Python adapter class for Gemini embeddings, now updated to include a fallback mechanism to hash-based embeddings.",
       "id": "GeminiAdapter"
     },
     {
@@ -2905,7 +2905,7 @@
     },
     {
       "type": "module",
-      "description": "The frontend application responsible for the user interface related to knowledge domains.",
+      "description": "The frontend micro-UI responsible for managing domains, which will host the OntologyEditor as an internal overlay.",
       "id": "domains-ui"
     },
     {
@@ -3600,7 +3600,7 @@
     },
     {
       "type": "class",
-      "description": "A medium-priority planned adapter for local embeddings using Ollama.",
+      "description": "A new Python adapter class for generating embeddings locally using the Ollama model.",
       "id": "OllamaAdapter"
     },
     {
@@ -6342,6 +6342,41 @@
       "type": "concept",
       "description": "The JSON structure sent to the Gemini API's `batchEmbedContents` endpoint, which contains individual embedding requests.",
       "id": "Gemini API batch embedding request payload"
+    },
+    {
+      "type": "concept",
+      "description": "The system logic responsible for creating and providing the appropriate embedding adapter based on configuration, now prioritizing Ollama.",
+      "id": "Embedding Factory"
+    },
+    {
+      "type": "concept",
+      "description": "A fallback strategy for embedding generation that creates embeddings based on content hashing when API-based models are unavailable.",
+      "id": "Hash-based Embeddings"
+    },
+    {
+      "type": "concept",
+      "description": "An environment variable used to specify the preferred Ollama embedding model, which the Embedding Factory now prioritizes.",
+      "id": "OLLAMA_EMBEDDING_MODEL"
+    },
+    {
+      "type": "module",
+      "description": "The API module responsible for search functionality, now configured to utilize the updated Embedding Factory.",
+      "id": "Search API"
+    },
+    {
+      "type": "document",
+      "description": "The project's architectural research document, updated to reflect current baseline, new architectural decisions, and an explicit replacement of the previous general architecture.",
+      "id": "ARCHITECTURE.md"
+    },
+    {
+      "type": "decision",
+      "description": "An architectural decision point regarding a UI component for editing ontologies, decided to be a full-screen overlay within the domains-ui.",
+      "id": "OntologyEditor"
+    },
+    {
+      "type": "decision",
+      "description": "An architectural decision point regarding a UI component for canvas tools, decided to be kept within domains-ui for v1.1 and promoted to a shared npm workspace package later.",
+      "id": "CanvasToolbox"
     }
   ],
   "edges": [
@@ -8684,6 +8719,11 @@
       "type": "uses",
       "source": "GeminiAdapter",
       "target": "_embed_batch"
+    },
+    {
+      "type": "uses",
+      "source": "GeminiAdapter",
+      "target": "Hash-based Embeddings"
     },
     {
       "type": "implements",
@@ -11664,6 +11704,11 @@
       "type": "related_to",
       "source": "OllamaAdapter",
       "target": "embeddings"
+    },
+    {
+      "type": "implements",
+      "source": "OllamaAdapter",
+      "target": "Embedding Factory"
     },
     {
       "type": "related_to",
@@ -15664,6 +15709,46 @@
       "type": "modifies",
       "source": "_embed_batch",
       "target": "Gemini API batch embedding request payload"
+    },
+    {
+      "type": "depends_on",
+      "source": "Embedding Factory",
+      "target": "OLLAMA_EMBEDDING_MODEL"
+    },
+    {
+      "type": "calls",
+      "source": "Embedding Factory",
+      "target": "OllamaAdapter"
+    },
+    {
+      "type": "calls",
+      "source": "Embedding Factory",
+      "target": "GeminiAdapter"
+    },
+    {
+      "type": "uses",
+      "source": "Search API",
+      "target": "Embedding Factory"
+    },
+    {
+      "type": "related_to",
+      "source": "ARCHITECTURE.md",
+      "target": "OntologyEditor"
+    },
+    {
+      "type": "related_to",
+      "source": "ARCHITECTURE.md",
+      "target": "CanvasToolbox"
+    },
+    {
+      "type": "implements",
+      "source": "OntologyEditor",
+      "target": "domains-ui"
+    },
+    {
+      "type": "implements",
+      "source": "CanvasToolbox",
+      "target": "domains-ui"
     }
   ]
 }
