@@ -163,6 +163,7 @@ class GeminiAdapter(EmbeddingPort):
         requests_payload = []
         for text in texts:
             requests_payload.append({
+                "model": f"models/{self._model}",
                 "content": {
                     "parts": [{"text": text}]
                 }
