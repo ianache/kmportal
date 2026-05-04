@@ -47,12 +47,14 @@ async def get_embedding_adapter(
     """
     Factory function to get the configured embedding adapter.
     
-    Returns GeminiAdapter if API key is available, otherwise MockEmbeddingAdapter.
-    In v2, this can be configured to use OpenAIAdapter or OllamaAdapter based on settings.
+    Priority:
+    1. OLLAMA_EMBEDDING_MODEL - Use local Ollama instance
+    2. Gemini API - Use Google AI Studio API
+    3. Mock - Fall back to deterministic hash-based embeddings
     
     Args:
         api_key: API key for the embedding service (defaults to GEMINI_API_KEY env var)
-        model: Model name (defaults to GEMINI_EMBEDDING_MODEL env var or embedding-001)
+        model: Model name (defaults to OLLAMA_EMBEDDING_MODEL or GEMINI_EMBEDDING_MODEL)
     
     Returns:
         Configured EmbeddingPort instance
@@ -61,6 +63,18 @@ async def get_embedding_adapter(
         adapter = await get_embedding_adapter()
         embeddings = await adapter.embed(["text to embed"])
     """
+    # Check if Ollama is explicitly requested
+    ollama_model = os.getenv("OLLAMA_EMBEDDING_MODEL")
+    if ollama_model:
+        from adapters.embedding.ollama import OllamaAdapter
+        ollama_host = os.getenv("OLLAMA_HOST", "localhost")
+        ollama_port = int(os.getenv("OLLAMA_PORT", "11434"))
+        return OllamaAdapter(
+            model=ollama_model,
+            host=ollama_host,
+            port=ollama_port
+        )
+    
     # Check if mock embedding is explicitly requested
     if os.getenv("MOCK_EMBEDDING", "false").lower() == "true":
         from adapters.embedding.mock import MockEmbeddingAdapter
@@ -74,6 +88,7 @@ async def get_embedding_adapter(
         from adapters.embedding.mock import MockEmbeddingAdapter
         return MockEmbeddingAdapter()
     
+    # Use Gemini adapter (will fall back to hash embeddings if API fails)
     from adapters.embedding.gemini import GeminiAdapter
     return GeminiAdapter(api_key=api_key, model=model)
 

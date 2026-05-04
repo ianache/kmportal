@@ -1,0 +1,6 @@
+{
+  "query": "What is machine learning?",
+  "domain_ids": ["ca927bdc-d0be-4fcb-92c9-8c4a04daa423"],
+  "top_k": 3,
+  "mode": "semantic"
+}

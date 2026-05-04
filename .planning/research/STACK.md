@@ -12,6 +12,7 @@
 > copy-paste manifest.
 
 **Researched:** 2026-05-02
+**Updated:** 2026-05-03 (v1.1 milestone additions)
 **Status:** Training-data draft — pending web verification
 
 ---
@@ -128,6 +129,32 @@ from sqlalchemy.orm import sessionmaker
 engine = create_async_engine("postgresql+asyncpg://...", echo=False)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 ```
+
+### Ontology API — Backend (v1.1, NEW)
+
+**No new Python packages required.** The ontology graph is stored as JSONB in PostgreSQL,
+which SQLAlchemy 2.x already supports via `sqlalchemy.dialects.postgresql.JSONB`.
+The existing `asyncpg`, `sqlalchemy[asyncio]`, and `alembic` cover all needs.
+
+What needs to be added to the existing codebase (not new packages):
+
+1. **Alembic migration** — add `ontology_data JSONB NOT NULL DEFAULT '{}'` column to the
+   `domains` table, or create a separate `domain_ontologies` table (see Section 5 for the
+   storage decision).
+
+2. **SQLAlchemy model** — add `ontology_data` column to `Domain` model using `JSONB`:
+   ```python
+   from sqlalchemy.dialects.postgresql import JSONB
+   ontology_data = Column(JSONB, nullable=False, server_default='{"nodes": [], "edges": []}')
+   ```
+
+3. **Pydantic schemas** — add `OntologyGraph`, `OntologyNode`, `OntologyEdge` schemas.
+
+4. **Router** — add two routes to `api/src/api/domains.py`:
+   - `GET /v1/domains/{domain_id}/ontology`
+   - `PUT /v1/domains/{domain_id}/ontology`
+
+5. **Service method** — add `get_ontology` and `update_ontology` to `DomainService`.
 
 ### Document Parsing
 
@@ -263,54 +290,143 @@ Use `openid-client`'s `Issuer.discover()` to auto-fetch endpoints and public key
 
 ## 4. Frontend Ecosystem (Vue Shell + Micro UIs)
 
-### Core Framework
+### Core Framework (Confirmed Installed Versions)
 
-| Package | Version | Purpose | Notes |
-|---------|---------|---------|-------|
-| `vue` | `3.4+` [verify before use] | UI framework — must be singleton across all micro UIs | Declared `singleton: true, eager: true` in shell MF config |
-| `pinia` | `2.1+` [verify before use] | State management — must be singleton | Shared store instance exposed by shell |
-| `vue-router` | `4.3+` [verify before use] | Routing — must be singleton | Shell owns the router instance |
+| Package | Installed Version | Purpose | Notes |
+|---------|------------------|---------|-------|
+| `vue` | `3.5.33` (confirmed) | UI framework — must be singleton across all micro UIs | Declared `singleton: true, eager: true` in shell MF config |
+| `pinia` | `^2.1.0` (package.json) | State management — must be singleton | Shared store instance exposed by shell |
+| `vue-router` | `^4.3.0` (package.json) | Routing — must be singleton | Shell owns the router instance |
 | `@vueuse/core` | `10.x` [verify before use] | Vue 3 composable utilities | Optional but widely used |
 
-### Build Tools
+### Build Tools (Confirmed Installed Versions)
 
-| Package | Version | Purpose | Notes |
-|---------|---------|---------|-------|
-| `vite` | `5.x` [verify before use] | Build tool and dev server for all frontend apps | Fast HMR; ESM-native |
-| `@vitejs/plugin-vue` | `5.x` [verify before use] | Vite plugin for `.vue` files | Match major version with Vite |
-| `typescript` | `5.5+` [verify before use] | TypeScript in frontend | Same version pinned as BFF (workspace constraint) |
+| Package | Installed Version | Purpose | Notes |
+|---------|------------------|---------|-------|
+| `vite` | `5.4.21` (confirmed) | Build tool and dev server for all frontend apps | Fast HMR; ESM-native |
+| `@vitejs/plugin-vue` | `^5.0.0` (package.json) | Vite plugin for `.vue` files | Match major version with Vite |
+| `typescript` | `^5.5.0` (package.json) | TypeScript in frontend | Same version pinned as BFF (workspace constraint) |
 
-### Micro-Frontend
+### Micro-Frontend (Confirmed Installed Version)
 
-| Package | Version | Purpose | Notes |
-|---------|---------|---------|-------|
-| `@originjs/vite-plugin-federation` | `1.3+` [verify before use] | Module Federation for Vite (primary choice for MVP) | Most mature Vue 3 + Vite MF plugin as of 2025 |
-| `@module-federation/vite` | `0.x` [verify before use] | Official Module Federation Vite port (evaluate post-MVP) | Webpack MF team's port; adoption level post-Aug 2025 unverified |
+| Package | Installed Version | Purpose | Notes |
+|---------|------------------|---------|-------|
+| `@originjs/vite-plugin-federation` | `1.4.1` (confirmed) | Module Federation for Vite | Currently installed in both shell and domains-ui |
 
-Singleton config pattern (critical — wrong config breaks everything silently):
+Singleton config already in use (confirmed from `vite.config.ts`):
 ```js
-// shell vite.config.ts
+// shell vite.config.ts — confirmed current configuration
 federation({
   name: 'shell',
-  remotes: { /* ... */ },
+  remotes: {
+    domainsUi: 'http://localhost:5101/assets/remoteEntry.js',
+    searchUi: 'http://localhost:5103/assets/remoteEntry.js',
+    ingestionUi: 'http://localhost:5102/assets/remoteEntry.js',
+    adminUi: 'http://localhost:5104/assets/remoteEntry.js',
+  },
   shared: {
-    vue:        { singleton: true, eager: true, requiredVersion: '^3.4.0' },
-    pinia:      { singleton: true, eager: true, requiredVersion: '^2.1.0' },
+    vue:          { singleton: true, eager: true, requiredVersion: '^3.4.0' },
+    pinia:        { singleton: true, eager: true, requiredVersion: '^2.1.0' },
     'vue-router': { singleton: true, eager: true, requiredVersion: '^4.3.0' },
   }
 })
+```
 
-// remote vite.config.ts (e.g., search-ui)
-federation({
-  name: 'search-ui',
-  filename: 'remoteEntry.js',
-  exposes: { './App': './src/App.vue' },
-  shared: {
-    vue:        { singleton: true, requiredVersion: '^3.4.0' },
-    pinia:      { singleton: true, requiredVersion: '^2.1.0' },
-    'vue-router': { singleton: true, requiredVersion: '^4.3.0' },
-  }
-})
+### Canvas / Graph Library for Ontology Editor (v1.1, NEW)
+
+**Recommendation: `@vue-flow/core`**
+
+| Package | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `@vue-flow/core` | `^1.42.0` [verify before use] | Ontology editor canvas — nodes, edges, drag/connect | Only first-class Vue 3 canvas library; renders via SVG+DOM; exposes `useVueFlow()` composable; no React dependency |
+| `@vue-flow/background` | `^1.3.0` [verify before use] | Dotted/line grid background for canvas | Optional but improves spatial UX |
+| `@vue-flow/controls` | `^1.1.0` [verify before use] | Built-in zoom +/−, fit-to-window buttons | Use as reference implementation; will be superseded by the custom Toolbox component |
+
+**Why `@vue-flow/core` over alternatives:**
+
+- **Cytoscape.js** — headless graph library with imperative DOM manipulation. Not Vue-idiomatic; requires mounting to a raw `<div>` and manual bridging to Vue reactivity. Works well for read-only graph display but poor DX for interactive node editing in Vue SFCs. No built-in drag-to-connect edge creation.
+- **D3.js** — low-level visualization primitives. Powerful but requires building every interaction from scratch (node dragging, edge routing, zoom/pan). Estimated 3-5x more implementation effort than Vue Flow for the same feature set.
+- **React Flow / @xyflow/react** — the upstream library Vue Flow is ported from. Not usable directly in Vue — React runtime would conflict catastrophically with Vue's virtual DOM in the same Module Federation scope.
+- **@vue-flow/core** — purpose-built Vue 3 port of React Flow. Node and edge types are Vue SFCs. Uses Vue reactivity natively. Exposes `useVueFlow()` composable. Actively maintained as of training cutoff. **Most DX-appropriate choice for this stack.**
+
+**Vue Flow integration note for Module Federation:**
+`@vue-flow/core` must be declared in the `shared` config of `domainsUi`'s `vite.config.ts` if the ontology editor lives in `domains-ui`. Do NOT declare it `singleton: true` — it is not a shared runtime like Vue itself, so let each remote bundle its own copy. The concern is only size, not correctness.
+
+```js
+// domains-ui/vite.config.ts — add @vue-flow/core to dependencies only (not shared)
+// No change to shared config needed for @vue-flow/core
+```
+
+**Node data shape for ontology:**
+```typescript
+// OntologyNode — Vue Flow custom node data
+interface OntologyNodeData {
+  label: string;         // concept name
+  type: string;          // e.g. "entity", "concept", "relationship"
+  description: string;
+  color: string;         // hex color for node header
+  icon?: string;         // optional icon identifier
+}
+```
+
+### Shared Canvas Toolbox (v1.1, NEW)
+
+**Recommendation: Build as a Vue SFC lib package, exposed by `domains-ui` via Module Federation.**
+
+The milestone spec places this in `frontend/libs/canvas-toolbox`. The existing monorepo has no
+`frontend/libs` or `frontend/packages` directory yet. Two structural options exist:
+
+**Option A (Recommended): `frontend/libs/canvas-toolbox` as a local workspace package**
+
+Create `frontend/libs/canvas-toolbox/package.json` with `name: "@kmp/canvas-toolbox"`.
+Add to pnpm workspace (or npm workspace). Each consuming remote (`domains-ui`, future
+`ingestion-ui`) adds it as a local dep: `"@kmp/canvas-toolbox": "workspace:*"`.
+
+```
+frontend/
+  libs/
+    canvas-toolbox/          # @kmp/canvas-toolbox
+      package.json           # name: "@kmp/canvas-toolbox", type: "module"
+      src/
+        CanvasToolbox.vue    # Toolbox component
+        index.ts             # exports { CanvasToolbox }
+```
+
+Toolbox component receives its actions via props/emits rather than directly importing
+`@vue-flow/core` — this keeps the toolbox independent of any specific canvas library:
+```typescript
+// CanvasToolbox.vue props
+interface Props {
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onFitView: () => void;
+  onToggleGrid: () => void;
+  snapEnabled: boolean;
+}
+```
+The caller (ontology editor in `domains-ui`) passes `useVueFlow()`'s `zoomIn`, `zoomOut`,
+`fitView` functions as props. The future ingestion flow editor passes its own canvas
+controls. This decoupling means `@kmp/canvas-toolbox` has zero dependencies on
+`@vue-flow/core` — it is pure Vue 3 + CSS.
+
+**Option B (Avoid): Shell-exported shared component via Module Federation**
+
+The shell could expose a `./CanvasToolbox` component in its `exposes` block. This would
+allow any remote to `import CanvasToolbox from 'shell/CanvasToolbox'`.
+
+*Why to avoid:* The shell is a runtime host — adding domain-specific UI components to it
+creates coupling between the shell and feature development. Shell changes require
+coordinated redeployment. A workspace lib package can be developed and versioned
+independently, and is compiled into each consuming remote's bundle (no runtime dependency
+on the shell).
+
+**Installation command:**
+```bash
+# In frontend/libs/canvas-toolbox/
+npm init --scope @kmp  # or create package.json manually
+
+# In domains-ui/ (consuming package)
+pnpm --filter domains-ui add @kmp/canvas-toolbox --workspace
 ```
 
 ### UI Components
@@ -349,22 +465,28 @@ Reconnect pattern: implement exponential backoff reconnect in a `useWebSocket()`
 | `pnpm workspaces` | `9+` [verify before use] | Manage `@kmp/*` shared packages + all micro UIs in one repo | Define workspace in root `pnpm-workspace.yaml` |
 | `turbo` | `2.x` [verify before use] | Monorepo build orchestration (optional) | Useful for parallel builds across micro UIs |
 
-Workspace structure:
+**Current confirmed structure** (no `libs/` or `packages/` yet):
 ```
 frontend/
-  package.json           # root workspace
-  pnpm-workspace.yaml
-  packages/
-    shared-ui/           # @kmp/shared-ui
-    auth/                # @kmp/auth
-    api-client/          # @kmp/api-client
-    types/               # @kmp/types
   apps/
-    shell/               # host app
-    domains-ui/          # remote
-    ingestion-ui/        # remote
-    search-ui/           # remote
-    admin-ui/            # remote
+    shell/           # host app — port 5100
+    domains-ui/      # remote — port 5101
+    search-ui/       # remote — port 5103
+    ingestion-ui/    # remote — port 5102
+    admin-ui/        # remote — port 5104
+```
+
+**Target structure after v1.1** (add `libs/`):
+```
+frontend/
+  libs/
+    canvas-toolbox/  # @kmp/canvas-toolbox (new in v1.1)
+  apps/
+    shell/
+    domains-ui/      # ontology editor lives here
+    search-ui/
+    ingestion-ui/
+    admin-ui/
 ```
 
 ### Code Quality
@@ -380,7 +502,76 @@ frontend/
 
 ## 5. Databases and Storage
 
-### PostgreSQL
+### PostgreSQL — Ontology Storage (v1.1, NEW)
+
+**Recommendation: Single JSONB column `ontology_data` on the `domains` table.**
+
+```sql
+-- Alembic migration (add to existing domains table)
+ALTER TABLE domains ADD COLUMN ontology_data JSONB NOT NULL DEFAULT '{"nodes": [], "edges": []}';
+```
+
+**Why JSONB over separate `ontology_nodes` / `ontology_edges` tables:**
+
+| Concern | JSONB single column | Separate tables |
+|---------|--------------------|-----------------| 
+| Query complexity | Read/write entire graph in one query | JOIN-heavy for full graph retrieval |
+| Schema flexibility | Node/edge shapes evolve freely | Schema migration per shape change |
+| Atomic update | `UPDATE domains SET ontology_data=$1` | Multi-table transaction |
+| Indexing (if needed later) | GIN index on JSONB for node/edge lookup | B-tree indexes per column |
+| SQLAlchemy ORM fit | Trivially mapped to `Column(JSONB)` | Requires new model classes + relationships |
+| Use pattern here | Always read/write full graph (editor loads all, saves all) | Needed only for partial updates at scale |
+
+The deciding factor is the access pattern: the ontology editor always loads the full graph
+and saves the full graph as a unit. There is no query requirement like "find all domains
+where a node named X exists" (that would favor separate tables or a GIN index). A JSONB
+blob is the correct fit.
+
+**When to reconsider:** If the ontology grows beyond ~500 nodes per domain AND you need
+server-side filtering of nodes, switch to separate tables. A migration from JSONB → tables
+is straightforward via Alembic. This is a Neo4J migration target already in the roadmap
+(PROJECT.md line 49), so the JSONB representation is intentionally transient.
+
+**SQLAlchemy model change (no new packages):**
+```python
+from sqlalchemy.dialects.postgresql import JSONB
+
+class Domain(Base):
+    # ... existing columns ...
+    ontology_data = Column(
+        JSONB,
+        nullable=False,
+        server_default='{"nodes": [], "edges": []}',
+    )
+```
+
+**Pydantic schema:**
+```python
+class OntologyNode(BaseModel):
+    id: str                    # client-generated UUID
+    position_x: float
+    position_y: float
+    data: OntologyNodeData
+
+class OntologyEdge(BaseModel):
+    id: str
+    source: str                # node id
+    target: str                # node id
+    label: str | None = None
+
+class OntologyNodeData(BaseModel):
+    label: str
+    type: str
+    description: str
+    color: str
+    icon: str | None = None
+
+class OntologyGraph(BaseModel):
+    nodes: list[OntologyNode] = []
+    edges: list[OntologyEdge] = []
+```
+
+### PostgreSQL (General)
 
 | Item | Value | Notes |
 |------|-------|-------|
@@ -392,11 +583,13 @@ frontend/
 
 Key schema tables (see ARCHITECTURE.md for full schema):
 - `domains`, `documents`, `ingestion_jobs`, `api_keys`, `users`
+- **`domains.ontology_data`** (new in v1.1)
 
 Index recommendations:
 - `documents(domain_id, status)` — for filtered queries during ingestion
 - `ingestion_jobs(status, started_at)` — for job queue processing
 - `api_keys(key_hash)` — unique index; every API call lookups here
+- GIN index on `domains.ontology_data` — only if server-side node filtering is required (likely not in v1.1)
 
 ### MongoDB
 
@@ -665,8 +858,6 @@ services:
   minio:         # Port 9000 (S3 API), 9001 (console) — local S3 substitute
 ```
 
-All service addresses configured via environment variables. Docker Compose sets them via `environment:` block referencing the service names above.
-
 ### Kubernetes (Production Target)
 
 | Item | Value | Notes |
@@ -796,7 +987,7 @@ async def test_health():
 
 ## 12. Version Compatibility Matrix
 
-> All versions below are `[verify before use]`. This matrix summarizes the critical cross-component version constraints.
+> All versions below are `[verify before use]` unless marked "confirmed". This matrix summarizes the critical cross-component version constraints.
 
 | Layer | Package | Pinned/Min Version | Reason for Constraint |
 |-------|---------|-------------------|----------------------|
@@ -808,12 +999,13 @@ async def test_health():
 | Python | `sqlalchemy` | `2.x` | Async session API; v1 incompatible |
 | Node.js | `node` | `20 LTS` | Minimum; 22 LTS recommended |
 | Node.js | `openid-client` | `5.x` | v6 has breaking changes [verify] |
-| Frontend | `vue` | `3.4+` | Singleton in MF; version must match across ALL apps |
-| Frontend | `pinia` | `2.1+` | Singleton in MF; version must match across ALL apps |
-| Frontend | `vite` | `5.x` | Required by `@originjs/vite-plugin-federation` 1.3+ |
-| Frontend | `@originjs/vite-plugin-federation` | `1.3+` | Module Federation support for Vite 5 |
-| Frontend | `typescript` | `5.5+` | Same version everywhere (monorepo constraint) |
-| Storage | `postgres` | `16` | Uses `gen_random_uuid()` (no extension); `tsvector` built-in |
+| Frontend | `vue` | `3.5.33` (confirmed installed) | Singleton in MF; version must match across ALL apps |
+| Frontend | `pinia` | `^2.1.0` (confirmed package.json) | Singleton in MF; version must match across ALL apps |
+| Frontend | `vite` | `5.4.21` (confirmed installed) | Required by `@originjs/vite-plugin-federation` 1.4.1 |
+| Frontend | `@originjs/vite-plugin-federation` | `1.4.1` (confirmed installed) | Module Federation support for Vite 5 |
+| Frontend | `typescript` | `^5.5.0` (confirmed package.json) | Same version everywhere (monorepo constraint) |
+| Frontend | `@vue-flow/core` | `^1.42.0` (NEW, verify) | Ontology editor canvas; not singleton |
+| Storage | `postgres` | `16` | Uses `gen_random_uuid()` (no extension); `tsvector` built-in; JSONB for ontology |
 | Storage | `mongodb` | `7.x` | Motor 3.x compatibility |
 | Storage | `redis` | `7.x` | ACL, streams (for potential pub/sub upgrade) |
 | Infra | `docker compose` | `v2` | `docker compose` plugin syntax (not `docker-compose`) |
@@ -878,8 +1070,11 @@ pnpm --filter './apps/*' dev
 # Build all apps
 pnpm --filter './apps/*' build
 
-# Add a shared UI dep to @kmp/shared-ui
-pnpm --filter @kmp/shared-ui add @headlessui/vue
+# Add @vue-flow/core to domains-ui (ontology editor)
+pnpm --filter domains-ui add @vue-flow/core @vue-flow/background @vue-flow/controls
+
+# Add canvas-toolbox lib as local workspace dep to domains-ui
+pnpm --filter domains-ui add @kmp/canvas-toolbox --workspace
 ```
 
 ---
@@ -902,6 +1097,22 @@ pnpm --filter @kmp/shared-ui add @headlessui/vue
 5. Switch `VECTOR_STORE=qdrant` environment variable
 6. Verify search quality on a sample query set before switching traffic
 7. Remove ChromaDB service and `chromadb` package
+
+### PostgreSQL JSONB → Separate Ontology Tables (v2+)
+
+If server-side node/edge filtering becomes necessary:
+1. Add Alembic migration: create `ontology_nodes` and `ontology_edges` tables
+2. Write a one-time data migration script to unpack `domains.ontology_data` JSONB into rows
+3. Update `DomainService.get_ontology` and `update_ontology` to JOIN instead of column read
+4. Remove `ontology_data` column after migration is validated
+
+### PostgreSQL Ontology → Neo4J (roadmap target per PROJECT.md)
+
+The JSONB representation is intentionally the same graph shape that Neo4J would ingest:
+nodes (with id, label, properties) and edges (with source, target, label). When migrating:
+1. Neo4J import can consume the JSONB data directly via `apoc.load.json`
+2. The `OntologyGraph` Pydantic schema translates to Cypher `CREATE` statements 1:1
+3. The API endpoints (`GET/PUT /v1/domains/:id/ontology`) do not change shape
 
 ### FastMCP Version Upgrades
 
@@ -930,5 +1141,6 @@ The existing Keycloak instance (`26+`) is not controlled by this project. When t
 
 ---
 
-*Last updated: 2026-05-02*
-*All version claims are training-data estimates (cutoff August 2025). Marked `[verify before use]` throughout. Web verification was unavailable when this document was written.*
+*Last updated: 2026-05-03 — v1.1 additions: ontology editor canvas library, canvas toolbox structure, JSONB storage decision*
+*Confirmed versions sourced directly from installed node_modules and package.json files in this repository.*
+*Training-data estimates marked `[verify before use]` throughout.*

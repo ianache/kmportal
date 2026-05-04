@@ -46,7 +46,10 @@
       "Bash(mkdir -p \"/c/Users/ilver/AppData/Local/Temp\")",
       "Bash(cat)",
       "Bash(npx tsc *)",
-      "Bash(npx vite *)"
+      "Bash(npx vite *)",
+      "PowerShell(docker exec km_postgres *)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs commit 'docs: start milestone v1.1 Domain Intelligence' --files .planning/PROJECT.md .planning/STATE.md)",
+      "Bash(node __TRACKED_VAR__/.claude/get-shit-done/bin/gsd-tools.cjs agent-skills gsd-roadmapper)"
     ]
   }
 }

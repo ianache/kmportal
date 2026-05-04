@@ -70,6 +70,20 @@ class MockEmbeddingAdapter(EmbeddingPort):
         
         return embeddings
     
+    async def embed_query(self, text: str) -> List[float]:
+        """Generate mock embedding for a search query."""
+        results = await self.embed([text])
+        return results[0]
+    
+    async def embed_document(self, text: str) -> List[float]:
+        """Generate mock embedding for a document."""
+        results = await self.embed([text])
+        return results[0]
+    
+    async def health_check(self) -> bool:
+        """Mock adapter is always healthy."""
+        return True
+    
     async def close(self) -> None:
         """No-op for mock adapter."""
         pass

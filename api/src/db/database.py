@@ -1,22 +1,19 @@
 """Database configuration and session management."""
 
-import os
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.pool import NullPool
 
-# Get database URL from environment
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://knowledge:change_me@localhost:5432/knowledge_db"
-)
+from core.config import settings
+
+DATABASE_URL = settings.database_url
 
 # Create async engine
 engine = create_async_engine(
     DATABASE_URL,
-    echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+    echo=settings.sql_echo,
     pool_size=20,
     max_overflow=0,
     pool_pre_ping=True,
