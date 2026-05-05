@@ -24,8 +24,19 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Getters
   const isAuthenticated = computed(() => !!user.value)
-  const isAdmin = computed(() => user.value?.roles.includes('km-admin') ?? false)
-  const isReader = computed(() => user.value?.roles.includes('km-reader') ?? false)
+
+  /** KM_ADMIN — full platform access including Admin panel. */
+  const isAdmin = computed(() =>
+    user.value?.roles.includes('KM_ADMIN') ?? false
+  )
+  /** KM_MANAGER or KM_ADMIN — access to Domains and Ingestion. */
+  const isManager = computed(() =>
+    user.value?.roles.some(r => r === 'KM_MANAGER' || r === 'KM_ADMIN') ?? false
+  )
+  /** Any authenticated role — access to Search. */
+  const isViewer = computed(() =>
+    user.value?.roles.some(r => r === 'KM_VIEWER' || r === 'KM_MANAGER' || r === 'KM_ADMIN') ?? false
+  )
 
   // Actions
   async function fetchSession(): Promise<boolean> {
@@ -79,6 +90,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Clear local session state without triggering BFF/Keycloak logout. */
+  function clearSession(): void {
+    user.value = null
+    error.value = null
+  }
+
   function clearError(): void {
     error.value = null
   }
@@ -91,11 +108,13 @@ export const useAuthStore = defineStore('auth', () => {
     // Getters
     isAuthenticated,
     isAdmin,
-    isReader,
+    isManager,
+    isViewer,
     // Actions
     fetchSession,
     login,
     logout,
+    clearSession,
     handleAuthCallback,
     clearError,
   }

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import federation from '@originjs/vite-plugin-federation'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
@@ -8,9 +9,6 @@ export default defineConfig({
     federation({
       name: 'ingestionUi',
       filename: 'remoteEntry.js',
-      remotes: {
-        shell: 'http://localhost:5100/assets/remoteEntry.js',
-      },
       exposes: { './App': './src/App.vue' },
       shared: {
         vue: { singleton: true, requiredVersion: '^3.4.0' },
@@ -19,6 +17,15 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    alias: {
+      'shell/bffClient': resolve(__dirname, '../shell/src/services/bffClient.ts'),
+      'shell/WebSocketService': resolve(__dirname, '../shell/src/services/websocket.ts'),
+      'shell/BaseButton': resolve(__dirname, '../shell/src/components/ui/BaseButton.vue'),
+      'shell/BaseCard': resolve(__dirname, '../shell/src/components/ui/BaseCard.vue'),
+      'shell/BaseInput': resolve(__dirname, '../shell/src/components/ui/BaseInput.vue'),
+    }
+  },
   server: {
     port: 5102,
     strictPort: true,
@@ -28,5 +35,10 @@ export default defineConfig({
     port: 5102,
     strictPort: true,
   },
-  build: { target: 'esnext' }
+  build: { 
+    target: 'esnext',
+    assetsDir: '',
+    minify: false,
+    cssCodeSplit: false
+  }
 })

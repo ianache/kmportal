@@ -34,37 +34,40 @@ const routes = [
         path: '/search',
         name: 'Search',
         component: () => import('searchUi/App'),
-        meta: { 
+        meta: {
           title: 'Search',
           icon: 'search',
+          roles: ['KM_VIEWER', 'KM_MANAGER', 'KM_ADMIN'],
         },
       },
       {
         path: '/domains',
         name: 'Domains',
         component: () => import('domainsUi/App'),
-        meta: { 
+        meta: {
           title: 'Domains',
           icon: 'domains',
+          roles: ['KM_MANAGER', 'KM_ADMIN'],
         },
       },
       {
         path: '/ingestion',
         name: 'Ingestion',
         component: () => import('ingestionUi/App'),
-        meta: { 
+        meta: {
           title: 'Ingestion',
           icon: 'ingestion',
+          roles: ['KM_MANAGER', 'KM_ADMIN'],
         },
       },
       {
         path: '/admin',
         name: 'Admin',
         component: () => import('adminUi/App'),
-        meta: { 
+        meta: {
           title: 'Admin',
           icon: 'admin',
-          requiresAdmin: true,
+          roles: ['KM_ADMIN'],
         },
       },
     ],
@@ -97,7 +100,7 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  // Check if user is authenticated
+  // Ensure we have a session
   if (!authStore.isAuthenticated) {
     try {
       const hasSession = await authStore.fetchSession()
@@ -112,10 +115,16 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // Check admin requirement
-  if (to.meta.requiresAdmin && !authStore.isAdmin) {
-    next({ name: 'Search' })
-    return
+  // Role-based access control
+  const requiredRoles = to.meta.roles as string[] | undefined
+  if (requiredRoles && requiredRoles.length > 0 && authStore.user) {
+    const userRoles = authStore.user.roles
+    const allowed = requiredRoles.some(r => userRoles.includes(r))
+    if (!allowed) {
+      // Redirect to the highest-privilege route the user CAN access
+      next({ name: 'Search' })
+      return
+    }
   }
 
   next()

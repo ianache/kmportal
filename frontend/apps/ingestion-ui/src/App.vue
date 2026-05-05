@@ -28,22 +28,40 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { inject, onMounted, onUnmounted } from 'vue'
 import { useIngestionStore } from './stores/ingestion'
-import { useWebSocket } from './services/websocket'
+import { WebSocketKey, wsClient as localWsClient } from './services/websocket'
+import type { WebSocketService } from 'shell/WebSocketService'
 import JobList from './components/JobList.vue'
 import FileUpload from './components/FileUpload.vue'
 
 const ingestionStore = useIngestionStore()
-const { status: wsStatus } = useWebSocket()
+
+// Use the shell's shared connection when embedded; fall back to a local
+// connection when running in standalone dev mode (no shell to inject from).
+const shellWs = inject<WebSocketService>(WebSocketKey)
+const ws = shellWs ?? localWsClient
+const wsStatus = ws.status
 
 onMounted(() => {
   ingestionStore.loadJobs()
-  ingestionStore.setupWebSocket()
+
+  if (shellWs) {
+    // Subscribe to ingestion room on the already-open shell connection.
+    shellWs.emit('subscribe', { room: 'ingestion' })
+  } else {
+    // Standalone mode: open our own connection.
+    localWsClient.connect()
+  }
+
+  ingestionStore.setupWebSocket(ws)
 })
 
 onUnmounted(() => {
-  ingestionStore.teardownWebSocket()
+  ingestionStore.teardownWebSocket(ws)
+  if (!shellWs) {
+    localWsClient.disconnect()
+  }
 })
 </script>
 

@@ -1,6 +1,6 @@
 """Domain API endpoints."""
 
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
@@ -13,6 +13,7 @@ from core.dependencies import (
     require_domain_admin,
     require_domain_access
 )
+from models import DocumentStatus
 from schemas import (
     DomainCreate,
     DomainUpdate,
@@ -21,11 +22,13 @@ from schemas import (
     DomainAccessGrant,
     DomainAccessRevoke,
     DomainAccessResponse,
+    DocumentListResponse,
     PaginationParams,
     UserInToken,
 )
 from services.domain_service import (
     DomainService,
+    to_document_response,
     to_domain_response,
     to_domain_access_response
 )
@@ -64,7 +67,7 @@ async def list_domains(
 ):
     """List domains."""
     service = DomainService(db)
-    is_admin = "km-admin" in user.roles
+    is_admin = "KM_ADMIN" in user.roles
     
     domains, total = await service.list_domains(
         user_id=user.id,
@@ -155,6 +158,46 @@ async def delete_domain(
         )
     
     return None
+
+
+# ==================== Domain Documents ====================
+
+@router.get(
+    "/{domain_id}/documents",
+    response_model=DocumentListResponse,
+    summary="List domain documents",
+    description="List all documents in a domain. Requires domain access."
+)
+async def list_domain_documents(
+    domain_id: UUID,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    status: Optional[DocumentStatus] = Query(None, description="Filter by document status"),
+    type: Optional[str] = Query(None, description="Filter by source type (upload, api, etc.)"),
+    q: Optional[str] = Query(None, description="Search by title"),
+    user: UserInToken = Depends(require_domain_access),
+    db: AsyncSession = Depends(get_db)
+):
+    """List documents in a domain."""
+    service = DomainService(db)
+    documents, total = await service.list_documents(
+        domain_id=domain_id,
+        page=page,
+        page_size=page_size,
+        status=status,
+        source_type=type,
+        query=q,
+    )
+
+    pages = max(1, (total + page_size - 1) // page_size)
+
+    return DocumentListResponse(
+        items=[to_document_response(d) for d in documents],
+        total=total,
+        page=page,
+        page_size=page_size,
+        pages=pages,
+    )
 
 
 # ==================== Domain Access Management ====================

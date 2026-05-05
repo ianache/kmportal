@@ -1,8 +1,12 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { ingestionApi } from '../services/ingestionApi'
-import { wsClient } from '../services/websocket'
 import type { IngestionJob, JobFilters, WebSocketEvent } from '../types/ingestion'
+
+interface WsEventSource {
+  on(event: string, cb: (data: any) => void): void
+  off(event: string, cb: (data: any) => void): void
+}
 
 export const useIngestionStore = defineStore('ingestion', () => {
   // State
@@ -42,54 +46,55 @@ export const useIngestionStore = defineStore('ingestion', () => {
     }
   }
 
-  function setupWebSocket() {
-    wsClient.connect()
-    
-    wsClient.on('job:created', (event: WebSocketEvent) => {
-      console.log('WS job:created', event)
-      const newJob: IngestionJob = {
-        id: event.jobId,
-        document_id: event.documentId || '',
-        domain_id: event.domainId || '',
-        status: event.status || 'pending',
-        progress: 0,
-        created_at: new Date().toISOString()
-      }
-      jobs.value.unshift(newJob)
-    })
-
-    wsClient.on('job:updated', (event: WebSocketEvent) => {
-      console.log('WS job:updated', event)
-      const index = jobs.value.findIndex(j => j.id === event.jobId)
-      if (index !== -1) {
-        if (event.status) jobs.value[index].status = event.status
-        if (event.progress !== undefined) jobs.value[index].progress = event.progress
-        if (event.message) jobs.value[index].error_message = event.message
-      }
-    })
-
-    wsClient.on('job:completed', (event: WebSocketEvent) => {
-      console.log('WS job:completed', event)
-      const index = jobs.value.findIndex(j => j.id === event.jobId)
-      if (index !== -1) {
-        jobs.value[index].status = 'done'
-        jobs.value[index].progress = 100
-        jobs.value[index].completed_at = new Date().toISOString()
-      }
-    })
-
-    wsClient.on('job:failed', (event: WebSocketEvent) => {
-      console.log('WS job:failed', event)
-      const index = jobs.value.findIndex(j => j.id === event.jobId)
-      if (index !== -1) {
-        jobs.value[index].status = 'failed'
-        jobs.value[index].error_message = event.error || event.message || 'Unknown error'
-      }
+  function _onJobCreated(event: WebSocketEvent) {
+    jobs.value.unshift({
+      id: event.jobId,
+      document_id: event.documentId || '',
+      domain_id: event.domainId || '',
+      status: event.status || 'pending',
+      progress: 0,
+      created_at: new Date().toISOString()
     })
   }
 
-  function teardownWebSocket() {
-    wsClient.disconnect()
+  function _onJobUpdated(event: WebSocketEvent) {
+    const index = jobs.value.findIndex(j => j.id === event.jobId)
+    if (index !== -1) {
+      if (event.status) jobs.value[index].status = event.status
+      if (event.progress !== undefined) jobs.value[index].progress = event.progress
+      if (event.message) jobs.value[index].error_message = event.message
+    }
+  }
+
+  function _onJobCompleted(event: WebSocketEvent) {
+    const index = jobs.value.findIndex(j => j.id === event.jobId)
+    if (index !== -1) {
+      jobs.value[index].status = 'done'
+      jobs.value[index].progress = 100
+      jobs.value[index].completed_at = new Date().toISOString()
+    }
+  }
+
+  function _onJobFailed(event: WebSocketEvent) {
+    const index = jobs.value.findIndex(j => j.id === event.jobId)
+    if (index !== -1) {
+      jobs.value[index].status = 'failed'
+      jobs.value[index].error_message = event.error || event.message || 'Unknown error'
+    }
+  }
+
+  function setupWebSocket(ws: WsEventSource) {
+    ws.on('job:created', _onJobCreated)
+    ws.on('job:updated', _onJobUpdated)
+    ws.on('job:completed', _onJobCompleted)
+    ws.on('job:failed', _onJobFailed)
+  }
+
+  function teardownWebSocket(ws: WsEventSource) {
+    ws.off('job:created', _onJobCreated)
+    ws.off('job:updated', _onJobUpdated)
+    ws.off('job:completed', _onJobCompleted)
+    ws.off('job:failed', _onJobFailed)
   }
 
   async function retryJob(jobId: string) {

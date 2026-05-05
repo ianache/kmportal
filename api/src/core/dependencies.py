@@ -43,7 +43,7 @@ async def _get_or_create_dev_user_id(db: AsyncSession) -> UUID:
                 keycloak_id=_DEV_KEYCLOAK_ID,
                 email="dev@localhost",
                 full_name="Dev Bypass User",
-                roles=["km-admin", "km-reader"],
+                roles=["KM_ADMIN"],
                 is_active=True,
             )
             write_session.add(dev_user)
@@ -73,7 +73,7 @@ async def get_current_user_optional(
             id=user_id,
             keycloak_id=_DEV_KEYCLOAK_ID,
             email="dev@localhost",
-            roles=["km-admin", "km-reader"],
+            roles=["KM_ADMIN"],
         )
 
     # Try API Key auth first (from X-API-Key header)
@@ -146,11 +146,11 @@ async def require_admin(
     user: UserInToken = Depends(get_current_user)
 ) -> UserInToken:
     """
-    Require km-admin role.
-    
+    Require KM_ADMIN role.
+
     Raises 403 if user is not admin.
     """
-    if "km-admin" not in user.roles:
+    if "KM_ADMIN" not in user.roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
@@ -162,11 +162,11 @@ async def require_reader(
     user: UserInToken = Depends(get_current_user)
 ) -> UserInToken:
     """
-    Require km-reader or km-admin role.
-    
-    Raises 403 if user has neither role.
+    Require KM_VIEWER, KM_MANAGER, or KM_ADMIN role.
+
+    Raises 403 if user has none of these roles.
     """
-    if "km-admin" not in user.roles and "km-reader" not in user.roles:
+    if not any(r in user.roles for r in ("KM_VIEWER", "KM_MANAGER", "KM_ADMIN")):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Reader access required"
@@ -193,7 +193,7 @@ class DomainAccessChecker:
         a domain_id (from path or query) that they have access to.
         """
         # Global admins always have access
-        if "km-admin" in user.roles:
+        if "KM_ADMIN" in user.roles:
             return user
 
         if not domain_id:

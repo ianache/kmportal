@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import federation from '@originjs/vite-plugin-federation'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
@@ -8,9 +9,6 @@ export default defineConfig({
     federation({
       name: 'searchUi',
       filename: 'remoteEntry.js',
-      remotes: {
-        shell: 'http://localhost:5100/assets/remoteEntry.js',
-      },
       exposes: { './App': './src/App.vue' },
       shared: {
         vue: { singleton: true, requiredVersion: '^3.4.0' },
@@ -19,6 +17,14 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    alias: {
+      'shell/bffClient': resolve(__dirname, '../shell/src/services/bffClient.ts'),
+      'shell/BaseButton': resolve(__dirname, '../shell/src/components/ui/BaseButton.vue'),
+      'shell/BaseCard': resolve(__dirname, '../shell/src/components/ui/BaseCard.vue'),
+      'shell/BaseInput': resolve(__dirname, '../shell/src/components/ui/BaseInput.vue'),
+    }
+  },
   server: {
     port: 5103,
     strictPort: true,
@@ -28,5 +34,10 @@ export default defineConfig({
     port: 5103,
     strictPort: true,
   },
-  build: { target: 'esnext' }
+  build: { 
+    target: 'esnext',
+    assetsDir: '',
+    minify: false,
+    cssCodeSplit: false
+  }
 })

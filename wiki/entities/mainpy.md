@@ -6,7 +6,7 @@ updated: 2026-05-03T18:43:00Z
 confidence: 0.85
 sources: [snapshot-20260503-134042, 628b33660c75e4b4763107bd57db8b9a63570c62, 2b5b42cee5d76e6b2ac0b334a61337ea08652375]
 related: []
-tier: working
+tier: episodic
 ---
 # main.py
 

@@ -19,7 +19,7 @@
         @dragover.prevent="isDragging = true"
         @dragleave.prevent="isDragging = false"
         @drop.prevent="handleDrop"
-        @click="$refs.fileInput.click()"
+        @click="triggerFileInput"
       >
         <input 
           type="file" 
@@ -102,6 +102,10 @@ onMounted(async () => {
 function handleFileSelect(event: Event) {
   const files = (event.target as HTMLInputElement).files
   if (files) addFiles(Array.from(files))
+}
+
+function triggerFileInput() {
+  fileInput.value?.click()
 }
 
 function handleDrop(event: DragEvent) {

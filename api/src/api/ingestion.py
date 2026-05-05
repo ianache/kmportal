@@ -3,21 +3,23 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.database import get_db
 from core.dependencies import get_current_user, require_domain_access
+from models import DocumentStatus
 from schemas import (
     IngestionResponse,
     IngestionStatusResponse,
+    IngestionJobListResponse,
     UserInToken,
 )
 from services.ingestion_service import (
     IngestionService,
     to_ingestion_response,
     to_ingestion_status_response,
-    IngestionError
+    IngestionError,
 )
 
 router = APIRouter(prefix="/ingest", tags=["Ingestion"])
@@ -48,10 +50,16 @@ async def ingest_document(
     Returns a job ID for tracking processing status.
     """
     service = IngestionService(db)
-    
-    # Use filename as title if not provided
-    document_title = title or file.filename
-    
+
+    safe_filename = file.filename or "upload"
+    document_title = title or safe_filename
+
+    if not document_title.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Document title or filename is required"
+        )
+
     try:
         # Create document and job
         document, job = await service.create_ingestion_job(
@@ -60,21 +68,20 @@ async def ingest_document(
             source_type="upload",
             file_type=file.content_type,
             metadata={
-                "original_filename": file.filename,
+                "original_filename": safe_filename,
                 "content_type": file.content_type,
                 "uploaded_by": str(user.id)
             }
         )
-        
+
         # Read file content
         content = await file.read()
-        
-        # Process document (in production, this should be queued)
-        # For now, process synchronously
+
+        # Process document synchronously (queue in production)
         await service.process_document(
             document_id=document.id,
             file_content=content,
-            filename=file.filename
+            filename=safe_filename,
         )
         
         return to_ingestion_response(document, job)
@@ -144,6 +151,58 @@ async def ingest_text(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+
+
+@router.post(
+    "/{job_id}/retry",
+    response_model=IngestionStatusResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Retry failed ingestion job",
+    description="Reset a failed ingestion job to pending so it can be reprocessed."
+)
+async def retry_ingestion_job(
+    job_id: UUID,
+    user: UserInToken = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Retry a failed ingestion job."""
+    service = IngestionService(db)
+    try:
+        job = await service.retry_job(job_id)
+        return to_ingestion_status_response(job)
+    except IngestionError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
+
+
+@router.get(
+    "/jobs",
+    response_model=IngestionJobListResponse,
+    summary="List ingestion jobs",
+    description="List ingestion jobs with optional filters."
+)
+async def list_ingestion_jobs(
+    domain_id: Optional[UUID] = Query(None, description="Filter by domain ID"),
+    status: Optional[DocumentStatus] = Query(None, description="Filter by status"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    user: UserInToken = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """List ingestion jobs."""
+    service = IngestionService(db)
+    jobs, total = await service.list_jobs(
+        domain_id=domain_id,
+        status=status,
+        page=page,
+        page_size=page_size,
+    )
+    return IngestionJobListResponse(
+        items=[to_ingestion_status_response(j) for j in jobs],
+        total=total,
+    )
 
 
 @router.get(

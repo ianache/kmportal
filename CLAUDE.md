@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Memory Rules
+
+- **Session start** — at the beginning of every session, check if `memory\MEMORY.md` exists and read it along with all files it references. If it does not exist, analyze the codebase (git log, key source files, `.planning/STATE.md`, `ROADMAP.md`) and synthesize an understanding of the repository before proceeding and create `memory\MEMORY.md`.
+- **Session end** — when the user signals the session is ending (e.g., "bye", "done", "closing", "hasta luego") or explicitly asks to save memory, update the memory files under `memory\` to reflect any decisions made, code changes introduced, new patterns observed, or project state changes that occurred during the session. Keep MEMORY.md index concise (one line per entry).
+
 ## Working Rules
 
 - **Research and plan before coding** — always explore the codebase, gather context, and produce a clear plan before writing any code. Get approval on the plan first.

@@ -6,7 +6,7 @@ import { logger, logSecurity } from '../utils/logger';
 const DEV_USER: UserSession = {
   id: 'dev-user-00000000-0000-0000-0000-000000000000',
   email: 'dev@localhost',
-  roles: ['km-admin', 'km-reader'],
+  roles: ['KM_ADMIN'],
   accessToken: 'dev-bypass-token',
   refreshToken: 'dev-bypass-refresh',
 };

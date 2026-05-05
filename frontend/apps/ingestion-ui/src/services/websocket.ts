@@ -1,6 +1,20 @@
 import { io, Socket } from 'socket.io-client'
-import { ref } from 'vue'
+import { ref, type InjectionKey } from 'vue'
 import type { WebSocketEvent } from '../types/ingestion'
+
+// Re-export the injection key so App.vue can use it for inject() even when
+// the shell alias resolves to this file in standalone dev mode.
+export interface WebSocketService {
+  status: ReturnType<typeof ref<string>>
+  isConnected?: ReturnType<typeof ref<boolean>>
+  authFailed?: ReturnType<typeof ref<boolean>>
+  connect(url?: string): void
+  disconnect(): void
+  on(event: string, callback: (data: any) => void): void
+  off(event: string, callback: (data: any) => void): void
+  emit(event: string, data: any): void
+}
+export const WebSocketKey: InjectionKey<WebSocketService> = Symbol('WebSocket')
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000'
 
@@ -48,6 +62,10 @@ class WebSocketClient {
 
   off(event: string, callback: (data: any) => void) {
     this.socket?.off(event, callback)
+  }
+
+  emit(event: string, data: any) {
+    this.socket?.emit(event, data)
   }
 }
 

@@ -5,29 +5,30 @@
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Any authenticated user can find relevant knowledge within authorized domains in seconds, using semantic or hybrid search over indexed documents
-**Current focus:** Phase 6 — Frontend Shell
+**Current focus:** Phase 8 — Admin and API keys
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-05-04 — Milestone v1.1 started (Domain Intelligence)
+Phase: Phase 8
+Plan: 08-01
+Status: Starting Phase 8
+Last activity: 2026-05-04 — Phase 7 (Core micro UIs) COMPLETED
 
-### Phase 6 Progress
+### Phase 7 Progress
 
 | Plan | Status | Notes |
 |------|--------|-------|
-| Plan 06-01: Auth State Management + BFF Integration | ✅ Complete | Pinia store, BFF client, auth guards, views |
-| Plan 06-02: Design System + Global Layout | ✅ Complete | Design tokens, UI components, ShellLayout |
-| Plan 06-03: Module Federation Integration | ✅ Complete | Singleton config, all micro-UIs connected |
+| Plan 07-01: Search Micro UI | ✅ Complete | Real API integration, highlighting, filters |
+| Plan 07-02: Domain Explorer Micro UI | ✅ Complete | Domain list, document browsing, metadata |
+| Plan 07-03: Ingestion Status Micro UI | ✅ Complete | WebSocket-powered real-time job updates |
+| Plan 07-04: Shell Notifications | ✅ Complete | Global toast and bell notifications via WS |
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
+- Total plans completed: 7
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -35,11 +36,12 @@ Progress: [██████████] 100%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 06 | 3 | 3 | - |
+| 07 | 4 | 4 | - |
 
 **Recent Trend:**
-- Last 5 plans: -
-- Trend: -
+- Last 5 plans: 07-04, 07-03, 07-02, 07-01, 06-03
+- Trend: Stable
 
 *Updated after each plan completion*
 
@@ -54,6 +56,8 @@ Recent decisions affecting current work:
 - Init: FastMCP mounts as ASGI sub-app on Core API — no separate process
 - Init: BFF uses HttpOnly session cookies — JWT never exposed to browser JS
 - Init: Vue, Pinia, Vue Router declared singleton:true across all Module Federation apps
+- Phase 7: bffClient and UI components exposed from shell to all micro-UIs via Module Federation
+- Phase 7: Shared WebSocket singleton in shell for all notifications and real-time updates
 
 ### Pending Todos
 
@@ -70,14 +74,15 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-05-03
-Stopped at: Phase 6 COMPLETE - Frontend Shell with auth, design system, Module Federation
-Resume file: .planning/phases/06-frontend-shell/06-SUMMARY.md
+Last session: 2026-05-04
+Stopped at: Phase 7 COMPLETE - Search, Domain Explorer, Ingestion Status, Notifications
+Resume file: .planning/phases/07-micro-uis/07-04-SUMMARY.md
 
-### Phase 6 Plans
+### Phase 7 Plans
 
 | Plan | Description | Status |
 |------|-------------|--------|
-| 06-01 | Auth State Management + BFF Integration | ✅ COMPLETE |
-| 06-02 | Design System + Global Layout | ✅ COMPLETE |
-| 06-03 | Module Federation Integration | ✅ COMPLETE |
+| 07-01 | Search Micro UI | ✅ COMPLETE |
+| 07-02 | Domain Explorer Micro UI | ✅ COMPLETE |
+| 07-03 | Ingestion Status Micro UI | ✅ COMPLETE |
+| 07-04 | Shell Notifications | ✅ COMPLETE |

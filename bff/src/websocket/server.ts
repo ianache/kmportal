@@ -52,6 +52,16 @@ export function initializeWebSocket(httpServer: HttpServer): SocketIOServer {
  */
 async function socketAuthMiddleware(socket: Socket, next: (err?: Error) => void): Promise<void> {
   try {
+    // Dev bypass — mirror the same bypass logic used by HTTP middleware
+    if (process.env.BYPASS_AUTH === 'true') {
+      socket.data.user = {
+        id: 'dev-user-00000000-0000-0000-0000-000000000000',
+        email: 'dev@localhost',
+        roles: ['KM_ADMIN'],
+      } as UserSession;
+      return next();
+    }
+
     // Get session ID from cookie
     const cookie = socket.handshake.headers.cookie;
     if (!cookie) {

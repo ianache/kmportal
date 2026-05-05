@@ -8,6 +8,36 @@ export interface TokenResponse {
   refreshToken: string;
   idToken?: string;
   expiresAt: number;
+  userInfo: {
+    sub: string;
+    email: string;
+    roles: string[];
+  };
+}
+
+/**
+ * Decode a JWT payload without re-verifying the signature.
+ * Safe to use here because the token was received directly from Keycloak
+ * via a server-to-server grant call.
+ */
+function decodeJwtPayload(token: string): Record<string, any> {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Extract application roles from the Keycloak access token.
+ * Merges realm-level roles with client-level roles.
+ */
+function extractRoles(accessToken: string, clientId: string): string[] {
+  const payload = decodeJwtPayload(accessToken);
+  const realmRoles: string[] = payload?.realm_access?.roles ?? [];
+  const clientRoles: string[] = payload?.resource_access?.[clientId]?.roles ?? [];
+  return [...new Set([...realmRoles, ...clientRoles])];
 }
 
 export async function initializeKeycloakClient(): Promise<Client> {
@@ -37,7 +67,7 @@ export async function initializeKeycloakClient(): Promise<Client> {
 
 export async function exchangeCodeForTokens(code: string): Promise<TokenResponse> {
   const client = await initializeKeycloakClient();
-  
+
   try {
     const tokenSet = await client.grant({
       grant_type: 'authorization_code',
@@ -45,11 +75,19 @@ export async function exchangeCodeForTokens(code: string): Promise<TokenResponse
       redirect_uri: `http://localhost:${config.port}/auth/callback`,
     });
 
+    const idClaims = tokenSet.claims();
+    const accessToken = tokenSet.access_token || '';
+
     return {
-      accessToken: tokenSet.access_token || '',
+      accessToken,
       refreshToken: tokenSet.refresh_token || '',
       idToken: tokenSet.id_token,
-      expiresAt: tokenSet.expires_at || Date.now() + 300000, // 5 min default
+      expiresAt: tokenSet.expires_at || Date.now() + 300000,
+      userInfo: {
+        sub: idClaims.sub ?? '',
+        email: (idClaims.email as string) ?? '',
+        roles: extractRoles(accessToken, config.keycloak.clientId),
+      },
     };
   } catch (error) {
     console.error('Token exchange failed:', error);

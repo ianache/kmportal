@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node *)",
+      "Bash(git -C \"D:/02-PERSONAL/01-PROJECTS/25-KnowledgeManagement\" status)",
+      "Bash(git -C \"D:/02-PERSONAL/01-PROJECTS/25-KnowledgeManagement\" log --oneline -5)",
+      "Bash(git *)"
+    ]
+  }
+}

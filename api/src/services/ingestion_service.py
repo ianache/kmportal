@@ -6,7 +6,7 @@ from typing import Optional, List, BinaryIO
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from models import Document, IngestionJob, DocumentStatus, Domain
 from schemas import IngestionResponse, IngestionStatusResponse
@@ -249,6 +249,66 @@ class IngestionService:
         
         await self.db.commit()
     
+    async def retry_job(self, job_id: UUID) -> IngestionJob:
+        """
+        Reset a failed job to pending so it can be reprocessed.
+
+        Raises IngestionError if the job is not found or not in FAILED state.
+        """
+        job = await self.get_job_status(job_id)
+        if not job:
+            raise IngestionError(f"Job {job_id} not found")
+        if job.status != DocumentStatus.FAILED:
+            raise IngestionError(f"Job is not in failed state (current: {job.status.value})")
+
+        # Reset job
+        job.status = DocumentStatus.PENDING
+        job.progress = 0
+        job.error_message = None
+        job.started_at = None
+        job.completed_at = None
+
+        # Reset the linked document
+        result = await self.db.execute(
+            select(Document).where(Document.id == job.document_id)
+        )
+        document = result.scalar_one_or_none()
+        if document:
+            document.status = DocumentStatus.PENDING
+            document.error_message = None
+
+        await self.db.commit()
+        await self.db.refresh(job)
+        return job
+
+    async def list_jobs(
+        self,
+        domain_id: Optional[UUID] = None,
+        status: Optional[DocumentStatus] = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[List[IngestionJob], int]:
+        """List ingestion jobs with optional filters."""
+        conditions = []
+        if domain_id is not None:
+            conditions.append(IngestionJob.domain_id == domain_id)
+        if status is not None:
+            conditions.append(IngestionJob.status == status)
+
+        count_q = select(func.count(IngestionJob.id))
+        jobs_q = select(IngestionJob)
+        if conditions:
+            count_q = count_q.where(*conditions)
+            jobs_q = jobs_q.where(*conditions)
+
+        total = (await self.db.execute(count_q)).scalar() or 0
+        result = await self.db.execute(
+            jobs_q.order_by(IngestionJob.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        return list(result.scalars().all()), total
+
     async def get_job_status(self, job_id: UUID) -> Optional[IngestionJob]:
         """Get ingestion job status."""
         result = await self.db.execute(

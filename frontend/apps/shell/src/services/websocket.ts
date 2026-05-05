@@ -1,199 +1,115 @@
-import { ref, reactive } from 'vue'
 import { io, Socket } from 'socket.io-client'
-import type { InjectionKey } from 'vue'
+import { ref, type InjectionKey, type Ref } from 'vue'
 
-export interface IngestionEvent {
-  type: 'ingestion.pending' | 'ingestion.processing' | 'ingestion.done' | 'ingestion.failed'
-  job_id: string
-  document_id: string
-  domain_id: string
-  status: 'pending' | 'processing' | 'done' | 'failed'
-  progress: number
-  message: string
-  timestamp: string
-  error?: string
+const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000'
+
+export interface WebSocketService {
+  isConnected: Ref<boolean>
+  status: Ref<'connecting' | 'connected' | 'disconnected' | 'error'>
+  authFailed: Ref<boolean>
+  connect(url?: string): void
+  disconnect(): void
+  on(event: string, callback: (data: any) => void): void
+  off(event: string, callback: (data: any) => void): void
+  emit(event: string, data: any): void
 }
 
-export interface Notification {
-  id: string
-  type: 'success' | 'error' | 'warning' | 'info'
-  title: string
-  message: string
-  timestamp: Date
-  read: boolean
-}
+export const WebSocketKey: InjectionKey<WebSocketService> = Symbol('WebSocket')
 
-class WebSocketService {
+class ShellWebSocketClient implements WebSocketService {
   private socket: Socket | null = null
-  private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
-  
+  private connectUrl: string | undefined = undefined
+  private invalidSessionRetries = 0
+  public status = ref<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected')
   public isConnected = ref(false)
-  public isConnecting = ref(false)
-  public notifications = reactive<Notification[]>([])
-  public unreadCount = ref(0)
-  
-  private listeners: Map<string, Set<(data: any) => void>> = new Map()
+  public authFailed = ref(false)
 
-  connect(url: string = 'http://localhost:3000') {
-    if (this.socket?.connected) {
-      console.log('WebSocket already connected')
-      return
-    }
-    
-    if (this.isConnecting.value) {
-      console.log('WebSocket already connecting')
-      return
-    }
-    
-    this.isConnecting.value = true
-    
-    this.socket = io(url, {
+  connect(url?: string) {
+    if (this.socket?.connected) return
+
+    this.connectUrl = url
+    this.authFailed.value = false
+    this.invalidSessionRetries = 0
+    this.status.value = 'connecting'
+    this._createSocket(url)
+  }
+
+  private _createSocket(url?: string, forceNew = false) {
+    this.socket = io(url || WS_URL, {
       path: '/ws',
-      transports: ['websocket', 'polling'],
       withCredentials: true,
-      autoConnect: true,
+      transports: ['websocket', 'polling'],
+      reconnection: false, // we handle reconnection manually
+      forceNew,
     })
 
     this.socket.on('connect', () => {
-      console.log('WebSocket connected')
+      this.invalidSessionRetries = 0
+      this.status.value = 'connected'
       this.isConnected.value = true
-      this.isConnecting.value = false
-      this.reconnectAttempts = 0
+      console.log('Shell WS Connected')
+      this.socket?.emit('subscribe', { room: 'notifications' })
     })
 
-    this.socket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason)
+    this.socket.on('disconnect', () => {
+      this.status.value = 'disconnected'
       this.isConnected.value = false
-      this.isConnecting.value = false
+      console.log('Shell WS Disconnected')
     })
 
     this.socket.on('connect_error', (error) => {
-      this.isConnecting.value = false
-      this.reconnectAttempts++
+      this.status.value = 'error'
+      this.isConnected.value = false
 
-      const authErrors = ['Authentication required', 'Not authenticated', 'Invalid session', 'Authentication failed']
-      if (authErrors.includes(error.message)) {
-        // Expected in dev when BYPASS_AUTH=true — stop retrying
+      if (error.message === 'Invalid session') {
         this.socket?.disconnect()
+        this.socket = null
+
+        // Retry once with a fresh socket to cover the server-restart case where
+        // the Socket.IO session is stale but the HTTP session cookie is still valid.
+        // A second failure means the HTTP session itself is expired → stop and
+        // signal the app so it can redirect to login.
+        if (this.invalidSessionRetries === 0) {
+          this.invalidSessionRetries++
+          this._createSocket(this.connectUrl, true)
+        } else {
+          this.authFailed.value = true
+          console.warn('Shell WS: session expired — re-authentication required')
+        }
         return
       }
 
-      console.warn('WebSocket connection error:', error.message)
-      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        this.socket?.disconnect()
-      }
-    })
-
-    // Listen for ingestion events
-    this.socket.on('ingestion:update', (event: IngestionEvent) => {
-      this.handleIngestionEvent(event)
-      this.emit('ingestion:update', event)
-    })
-
-    this.socket.on('ingestion:complete', (event: IngestionEvent) => {
-      this.addNotification({
-        id: `ingestion-${event.job_id}`,
-        type: 'success',
-        title: 'Ingestion Complete',
-        message: `Document "${event.document_id}" has been successfully ingested`,
-        timestamp: new Date(),
-        read: false,
-      })
-      this.emit('ingestion:complete', event)
-    })
-
-    this.socket.on('ingestion:error', (event: IngestionEvent) => {
-      this.addNotification({
-        id: `ingestion-${event.job_id}`,
-        type: 'error',
-        title: 'Ingestion Failed',
-        message: event.error || `Failed to ingest document "${event.document_id}"`,
-        timestamp: new Date(),
-        read: false,
-      })
-      this.emit('ingestion:error', event)
+      console.error('Shell WS Connection Error:', error)
     })
   }
 
   disconnect() {
-    if (this.socket) {
-      this.socket.disconnect()
-      this.socket = null
-      this.isConnected.value = false
-      this.isConnecting.value = false
-    }
+    this.socket?.disconnect()
+    this.socket = null
+    this.status.value = 'disconnected'
+    this.isConnected.value = false
   }
 
-  subscribe(event: string, callback: (data: any) => void) {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, new Set())
-    }
-    this.listeners.get(event)?.add(callback)
-    
-    // Return unsubscribe function
-    return () => {
-      this.listeners.get(event)?.delete(callback)
-    }
+  on(event: string, callback: (data: any) => void) {
+    this.socket?.on(event, callback)
   }
 
-  private emit(event: string, data: any) {
-    this.listeners.get(event)?.forEach(callback => {
-      try {
-        callback(data)
-      } catch (error) {
-        console.error(`Error in ${event} listener:`, error)
-      }
-    })
+  off(event: string, callback: (data: any) => void) {
+    this.socket?.off(event, callback)
   }
 
-  private handleIngestionEvent(event: IngestionEvent) {
-    // Could add progress indicators here
-    console.log('Ingestion event:', event)
-  }
-
-  private addNotification(notification: Notification) {
-    this.notifications.unshift(notification)
-    this.unreadCount.value++
-    
-    // Keep only last 50 notifications
-    if (this.notifications.length > 50) {
-      this.notifications.pop()
-    }
-  }
-
-  markAllAsRead() {
-    this.notifications.forEach(n => n.read = true)
-    this.unreadCount.value = 0
-  }
-
-  markAsRead(notificationId: string) {
-    const notification = this.notifications.find(n => n.id === notificationId)
-    if (notification && !notification.read) {
-      notification.read = true
-      this.unreadCount.value = Math.max(0, this.unreadCount.value - 1)
-    }
-  }
-
-  clearNotifications() {
-    this.notifications.length = 0
-    this.unreadCount.value = 0
-  }
-
-  // Subscribe to a specific domain room
-  subscribeToDomain(domainId: string) {
-    if (this.socket?.connected) {
-      this.socket.emit('subscribe', { room: `domain:${domainId}` })
-    }
-  }
-
-  unsubscribeFromDomain(domainId: string) {
-    if (this.socket?.connected) {
-      this.socket.emit('unsubscribe', { room: `domain:${domainId}` })
-    }
+  emit(event: string, data: any) {
+    this.socket?.emit(event, data)
   }
 }
 
-export const wsService = new WebSocketService()
-export const WebSocketKey: InjectionKey<WebSocketService> = Symbol('websocket')
-export default wsService
+export const wsService = new ShellWebSocketClient()
+
+export function useShellWebSocket() {
+  return {
+    wsService,
+    status: wsService.status,
+    isConnected: wsService.isConnected,
+    authFailed: wsService.authFailed,
+  }
+}

@@ -7,18 +7,11 @@ export default defineConfig({
     vue(),
     federation({
       name: 'shell',
-      filename: 'remoteEntry.js',
-      exposes: {
-        './bffClient': './src/services/bffClient.ts',
-        './BaseButton': './src/components/ui/BaseButton.vue',
-        './BaseCard': './src/components/ui/BaseCard.vue',
-        './BaseInput': './src/components/ui/BaseInput.vue',
-      },
       remotes: {
-        domainsUi: 'http://localhost:5101/assets/remoteEntry.js',
-        searchUi: 'http://localhost:5103/assets/remoteEntry.js',
-        ingestionUi: 'http://localhost:5102/assets/remoteEntry.js',
-        adminUi: 'http://localhost:5104/assets/remoteEntry.js',
+        domainsUi: 'http://localhost:5101/remoteEntry.js',
+        searchUi: 'http://localhost:5103/remoteEntry.js',
+        ingestionUi: 'http://localhost:5102/remoteEntry.js',
+        adminUi: 'http://localhost:5104/remoteEntry.js',
       },
       shared: {
         vue: { singleton: true, eager: true, requiredVersion: '^3.4.0' },
@@ -30,12 +23,20 @@ export default defineConfig({
   server: {
     port: 5100,
     strictPort: true,
+    origin: 'http://localhost:5100',
     proxy: {
       '/api': 'http://localhost:3000',
       '/auth': 'http://localhost:3000',
     },
   },
+  preview: {
+    port: 5100,
+    strictPort: true,
+  },
   build: {
-    target: 'esnext'
+    target: 'esnext',
+    assetsDir: '',
+    minify: false,
+    cssCodeSplit: false
   }
 })

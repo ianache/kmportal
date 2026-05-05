@@ -7,13 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
-from models import Domain, DomainAccess, DomainAccessRole, User
+from models import Domain, DomainAccess, DomainAccessRole, Document, DocumentStatus, User
 from schemas import (
     DomainCreate,
     DomainUpdate,
     DomainResponse,
     DomainAccessGrant,
     DomainAccessResponse,
+    DocumentResponse,
     UserResponse,
 )
 
@@ -207,6 +208,40 @@ class DomainService:
         
         return True
     
+    async def list_documents(
+        self,
+        domain_id: UUID,
+        page: int = 1,
+        page_size: int = 20,
+        status: Optional[DocumentStatus] = None,
+        source_type: Optional[str] = None,
+        query: Optional[str] = None,
+    ) -> tuple[List[Document], int]:
+        """List documents in a domain with optional filters."""
+        base_filter = [Document.domain_id == domain_id]
+
+        if status is not None:
+            base_filter.append(Document.status == status)
+        if source_type:
+            base_filter.append(Document.source_type == source_type)
+        if query:
+            base_filter.append(Document.title.ilike(f"%{query}%"))
+
+        count_result = await self.db.execute(
+            select(func.count(Document.id)).where(*base_filter)
+        )
+        total = count_result.scalar() or 0
+
+        offset = (page - 1) * page_size
+        result = await self.db.execute(
+            select(Document)
+            .where(*base_filter)
+            .order_by(Document.created_at.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
+        return list(result.scalars().all()), total
+
     async def list_access_grants(
         self,
         domain_id: UUID
@@ -237,6 +272,23 @@ def to_domain_response(domain: Domain) -> DomainResponse:
         created_at=domain.created_at,
         updated_at=domain.updated_at,
         document_count=len(domain.documents) if domain.documents else 0
+    )
+
+
+def to_document_response(doc: Document) -> DocumentResponse:
+    """Convert Document model to DocumentResponse schema."""
+    return DocumentResponse(
+        id=doc.id,
+        domain_id=doc.domain_id,
+        title=doc.title,
+        metadata=doc.metadata_ or {},
+        source_type=doc.source_type,
+        source_uri=doc.source_uri,
+        status=doc.status.value if doc.status else "pending",
+        chunk_count=doc.chunk_count or 0,
+        error_message=doc.error_message,
+        created_at=doc.created_at,
+        updated_at=doc.updated_at,
     )
 
 

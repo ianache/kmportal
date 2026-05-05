@@ -281,6 +281,12 @@ class IngestionStatusResponse(BaseModel):
     created_at: datetime
 
 
+class IngestionJobListResponse(BaseModel):
+    """Paginated list of ingestion jobs."""
+    items: List[IngestionStatusResponse]
+    total: int
+
+
 # ==================== Health ====================
 
 class HealthResponse(BaseModel):

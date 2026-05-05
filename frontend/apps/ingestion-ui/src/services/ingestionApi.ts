@@ -48,8 +48,10 @@ class IngestionApiClient {
     })
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Upload failed' }))
-      throw new Error(error.message || 'Upload failed')
+      // FastAPI error shape: { detail: string } — fall back to generic message
+      const body = await response.json().catch(() => ({}))
+      const msg = body.detail || body.message || `Upload failed (${response.status})`
+      throw new Error(msg)
     }
 
     return response.json()

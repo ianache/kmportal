@@ -69,22 +69,32 @@ app.get('/health', async (_req: Request, res: Response) => {
 
 // Auth routes
 app.get('/auth/login', async (req: Request, res: Response) => {
+  const trace_id = (req as any).trace_id || 'unknown';
   try {
     const client = await initializeKeycloakClient();
     const state = uuidv4();
-    
-    // Store state in session for CSRF protection
+
     (req.session as any).oauthState = state;
-    
+
     const authorizationUrl = client.authorizationUrl({
       scope: 'openid email profile',
       state,
     });
-    
-    logger.info('Redirecting to Keycloak', { trace_id: (req as any).trace_id, state });
-    res.redirect(authorizationUrl);
+
+    // Flush the session to Redis BEFORE redirecting.
+    // Without save(), the async write may not complete before the browser
+    // follows the redirect and the callback arrives with no oauthState.
+    req.session.save((err) => {
+      if (err) {
+        logger.error('Session save failed before login redirect', { trace_id, error: err.message });
+        res.status(500).json({ error: 'Session initialization failed' });
+        return;
+      }
+      logger.info('Redirecting to Keycloak', { trace_id, state });
+      res.redirect(authorizationUrl);
+    });
   } catch (error) {
-    logger.error('Login error', { trace_id: (req as any).trace_id, error: (error as Error).message });
+    logger.error('Login error', { trace_id, error: (error as Error).message });
     res.status(500).json({ error: 'Authentication initialization failed' });
   }
 });
@@ -114,19 +124,30 @@ app.get('/auth/callback', async (req: Request, res: Response) => {
     // Clear state from session
     delete (req.session as any).oauthState;
     
-    // Store user session (tokens are server-side, never exposed to browser)
+    // Store user session — all fields come from the verified Keycloak token
     (req.session as any).user = {
-      id: uuidv4(), // Will be replaced with actual user ID from token
-      email: 'user@example.com', // Will be extracted from ID token
-      roles: ['km-reader'], // Will be extracted from access token
+      id: tokens.userInfo.sub,
+      email: tokens.userInfo.email,
+      roles: tokens.userInfo.roles,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
-    
-    logger.info('User authenticated successfully', { trace_id });
-    
-    // Redirect to frontend
-    res.redirect(`${config.frontendUrl}/auth/callback?success=true`);
+
+    logger.info('User authenticated successfully', {
+      trace_id,
+      email: tokens.userInfo.email,
+      roles: tokens.userInfo.roles,
+    });
+
+    // Flush session before redirecting for the same reason as /auth/login
+    req.session.save((err) => {
+      if (err) {
+        logger.error('Session save failed after token exchange', { trace_id, error: err.message });
+        res.redirect(`${config.frontendUrl}/auth/callback?error=session_save_failed`);
+        return;
+      }
+      res.redirect(`${config.frontendUrl}/auth/callback?success=true`);
+    });
   } catch (error) {
     logger.error('Callback error', { trace_id, error: (error as Error).message });
     res.redirect(`${config.frontendUrl}/auth/callback?error=authentication_failed`);
@@ -163,7 +184,7 @@ app.get('/auth/session', (req: Request, res: Response) => {
       user: {
         id: 'dev-user-00000000-0000-0000-0000-000000000000',
         email: 'dev@localhost',
-        roles: ['km-admin', 'km-reader'],
+        roles: ['KM_ADMIN'],
       },
     });
     return;
