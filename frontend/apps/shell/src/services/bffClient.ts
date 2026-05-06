@@ -1,3 +1,5 @@
+import type { InjectionKey } from 'vue'
+
 const BFF_URL = import.meta.env.VITE_BFF_URL || 'http://localhost:3000'
 
 export interface ApiError {
@@ -16,7 +18,8 @@ class BffClient {
   private baseUrl: string
 
   constructor() {
-    this.baseUrl = BFF_URL
+    // ALWAYS use relative URLs - requests go through shell's proxy
+    this.baseUrl = ''
   }
 
   private async request<T>(
@@ -27,14 +30,14 @@ class BffClient {
     const url = `${this.baseUrl}${path}`
     
     const config: RequestInit = {
+      ...options,
       method,
-      credentials: 'include',
+      credentials: 'include', // CRITICAL: sends cookies
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         ...options.headers,
       },
-      ...options,
     }
 
     try {
@@ -42,11 +45,19 @@ class BffClient {
       
       // Handle 401 Unauthorized
       if (response.status === 401) {
+        // If we get a 401, it means the session is invalid or expired
+        const errorMsg = 'Please log in to continue'
+        
+        // Notify via custom event so the shell can respond (e.g. redirect to login)
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('bff:unauthorized', { detail: { path } }))
+        }
+
         return {
           status: 401,
           error: {
             error: 'Unauthorized',
-            message: 'Please log in to continue',
+            message: errorMsg,
           },
         }
       }
@@ -117,5 +128,20 @@ class BffClient {
   }
 }
 
+// Export the class type for TypeScript
+export type { BffClient }
+
+// Injection key for provide/inject pattern
+export const BffClientKey: InjectionKey<BffClient> = Symbol('BffClient')
+
 export const bffClient = new BffClient()
 export default bffClient
+
+// Expose to window for micro-frontends
+if (typeof window !== 'undefined') {
+  (window as any).__SHELL_BFF_CLIENT__ = bffClient
+  console.log('[Shell] BffClient exposed to window.__SHELL_BFF_CLIENT__')
+}
+
+// Also export for micro-frontend initialization
+export { createLazyApiClient } from './microFrontendApi'

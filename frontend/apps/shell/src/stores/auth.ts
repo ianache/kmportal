@@ -44,8 +44,9 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      const response = await fetch(`${BFF_URL}/auth/session`, {
-        credentials: 'include',
+      // Use relative URL to go through shell's proxy - CRITICAL for cookies
+      const response = await fetch('/auth/session', {
+        credentials: 'include', // CRITICAL: sends cookies
         headers: {
           'Accept': 'application/json',
         },
@@ -71,7 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function login(): void {
-    // Redirect to BFF login endpoint
+    // Redirect to BFF login endpoint - uses full URL
     window.location.href = `${BFF_URL}/auth/login`
   }
 
@@ -98,6 +99,20 @@ export const useAuthStore = defineStore('auth', () => {
 
   function clearError(): void {
     error.value = null
+  }
+
+  // Handle global unauthorized events from bffClient (e.g. session expired)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('bff:unauthorized', () => {
+      if (user.value) {
+        user.value = null
+        // Force redirect to login if we are not already there
+        if (!window.location.pathname.includes('/login') && 
+            !window.location.pathname.includes('/auth/callback')) {
+          window.location.href = '/login?expired=true'
+        }
+      }
+    })
   }
 
   return {

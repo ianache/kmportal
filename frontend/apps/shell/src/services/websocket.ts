@@ -1,7 +1,8 @@
 import { io, Socket } from 'socket.io-client'
 import { ref, type InjectionKey, type Ref } from 'vue'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000'
+// Use relative URL - WebSocket goes through shell's proxy
+const WS_URL = ''
 
 export interface WebSocketService {
   isConnected: Ref<boolean>
@@ -37,7 +38,7 @@ class ShellWebSocketClient implements WebSocketService {
   private _createSocket(url?: string, forceNew = false) {
     this.socket = io(url || WS_URL, {
       path: '/ws',
-      withCredentials: true,
+      withCredentials: true, // CRITICAL: sends cookies
       transports: ['websocket', 'polling'],
       reconnection: false, // we handle reconnection manually
       forceNew,
@@ -65,10 +66,7 @@ class ShellWebSocketClient implements WebSocketService {
         this.socket?.disconnect()
         this.socket = null
 
-        // Retry once with a fresh socket to cover the server-restart case where
-        // the Socket.IO session is stale but the HTTP session cookie is still valid.
-        // A second failure means the HTTP session itself is expired → stop and
-        // signal the app so it can redirect to login.
+        // Retry once with a fresh socket
         if (this.invalidSessionRetries === 0) {
           this.invalidSessionRetries++
           this._createSocket(this.connectUrl, true)

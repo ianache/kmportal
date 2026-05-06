@@ -26,12 +26,30 @@ app.use(helmet({
   contentSecurityPolicy: false, // Disable for development, enable in production
 }));
 
-// CORS configuration
+// CORS configuration - Allow all localhost ports for micro-frontends
+const allowedOrigins = [
+  'http://localhost:5100',  // Shell
+  'http://localhost:5101',  // Domains UI
+  'http://localhost:5102',  // Ingestion UI  
+  'http://localhost:5103',  // Search UI
+  'http://localhost:5104',  // Admin UI
+  ...(config.corsOrigins || [])
+];
+
 app.use(cors({
-  origin: config.corsOrigins.length > 0 ? config.corsOrigins : true,
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || config.nodeEnv === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Trace-Id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Trace-Id', 'Cookie'],
   exposedHeaders: ['X-Trace-Id'],
 }));
 

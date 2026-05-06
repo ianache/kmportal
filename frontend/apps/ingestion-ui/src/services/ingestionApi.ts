@@ -1,10 +1,13 @@
-import { bffClient } from 'shell/bffClient'
 import type { 
   IngestionJob, 
   JobListResponse, 
   IngestionResponse,
   JobFilters 
 } from '../types/ingestion'
+import { createLazyApiClient } from 'shell/microFrontendApi'
+
+// Cliente API lazy - espera a que el shell esté listo
+const apiClient = createLazyApiClient()
 
 class IngestionApiClient {
   async getJobs(filters: JobFilters = {}): Promise<JobListResponse> {
@@ -12,7 +15,7 @@ class IngestionApiClient {
     if (filters.domain_id) params.append('domain_id', filters.domain_id)
     if (filters.status) params.append('status', filters.status)
 
-    const response = await bffClient.get<JobListResponse>(`/v1/ingest/jobs?${params.toString()}`)
+    const response = await apiClient.get<JobListResponse>(`/v1/ingest/jobs?${params.toString()}`)
     
     if (response.error) {
       throw new Error(response.error.message)
@@ -22,7 +25,7 @@ class IngestionApiClient {
   }
 
   async getJob(jobId: string): Promise<IngestionJob> {
-    const response = await bffClient.get<IngestionJob>(`/v1/ingest/${jobId}`)
+    const response = await apiClient.get<IngestionJob>(`/v1/ingest/${jobId}`)
     
     if (response.error) {
       throw new Error(response.error.message)
@@ -40,15 +43,13 @@ class IngestionApiClient {
     formData.append('file', file)
     formData.append('domain_id', domainId)
 
-    // Using fetch directly because bffClient.post stringifies body
-    const response = await fetch(`${import.meta.env.VITE_BFF_URL || 'http://localhost:3000'}/api/v1/ingest`, {
+    const response = await fetch('/api/v1/ingest', {
       method: 'POST',
       body: formData,
       credentials: 'include'
     })
 
     if (!response.ok) {
-      // FastAPI error shape: { detail: string } — fall back to generic message
       const body = await response.json().catch(() => ({}))
       const msg = body.detail || body.message || `Upload failed (${response.status})`
       throw new Error(msg)
@@ -58,14 +59,14 @@ class IngestionApiClient {
   }
 
   async retryJob(jobId: string): Promise<void> {
-    const response = await bffClient.post<void>(`/v1/ingest/${jobId}/retry`, {})
+    const response = await apiClient.post<void>(`/v1/ingest/${jobId}/retry`, {})
     if (response.error) {
       throw new Error(response.error.message)
     }
   }
 
   async getDomains(): Promise<any[]> {
-    const response = await bffClient.get<any>('/v1/domains')
+    const response = await apiClient.get<any>('/v1/domains')
     if (response.error) {
       throw new Error(response.error.message)
     }

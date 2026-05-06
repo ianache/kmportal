@@ -80,7 +80,21 @@ async function socketAuthMiddleware(socket: Socket, next: (err?: Error) => void)
       return next(new Error('Authentication required'));
     }
 
-    const sessionId = sessionMatch[1];
+    const encodedSessionId = sessionMatch[1];
+    // URL-decode the session ID (express-session encodes special characters)
+    const decodedSessionId = decodeURIComponent(encodedSessionId);
+    
+    // Parse signed cookie format: s:<sessionId>.<signature>
+    // We only need the sessionId part (after 's:' and before the signature)
+    let sessionId: string;
+    if (decodedSessionId.startsWith('s:')) {
+      // Remove 's:' prefix and signature (everything after the first dot)
+      const withoutPrefix = decodedSessionId.slice(2);
+      const dotIndex = withoutPrefix.indexOf('.');
+      sessionId = dotIndex > 0 ? withoutPrefix.slice(0, dotIndex) : withoutPrefix;
+    } else {
+      sessionId = decodedSessionId;
+    }
     
     // Get session from Redis
     const sessionKey = `bff:session:${sessionId}`;

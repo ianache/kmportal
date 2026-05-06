@@ -1,14 +1,17 @@
-import { bffClient } from 'shell/bffClient'
 import type { 
   Domain, 
   DomainListResponse, 
   DocumentListResponse, 
   DocumentFilters 
 } from '../types/domains'
+import { createLazyApiClient } from 'shell/microFrontendApi'
+
+// Cliente API lazy - espera a que el shell esté listo
+const apiClient = createLazyApiClient()
 
 class DomainsApiClient {
   async getDomains(page = 1, pageSize = 20): Promise<DomainListResponse> {
-    const response = await bffClient.get<DomainListResponse>(
+    const response = await apiClient.get<DomainListResponse>(
       `/v1/domains?page=${page}&page_size=${pageSize}`
     )
     
@@ -24,7 +27,7 @@ class DomainsApiClient {
   }
 
   async getDomain(id: string): Promise<Domain> {
-    const response = await bffClient.get<Domain>(`/v1/domains/${id}`)
+    const response = await apiClient.get<Domain>(`/v1/domains/${id}`)
     
     if (response.error) {
       throw new Error(response.error.message)
@@ -52,7 +55,7 @@ class DomainsApiClient {
     if (filters.type) params.append('type', filters.type)
     if (filters.query) params.append('q', filters.query)
 
-    const response = await bffClient.get<DocumentListResponse>(
+    const response = await apiClient.get<DocumentListResponse>(
       `/v1/domains/${domainId}/documents?${params.toString()}`
     )
     

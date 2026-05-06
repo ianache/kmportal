@@ -94,7 +94,7 @@ export function createProxyMiddleware() {
       },
       
       // Handle response from Core API
-      proxyRes: (proxyRes, incomingReq: IncomingMessage, _res) => {
+      proxyRes: async (proxyRes, incomingReq: IncomingMessage, _res) => {
         const req = incomingReq as any;
         const trace_id = req.trace_id || 'unknown';
         const startTime = requestStartTimes.get(trace_id);
@@ -108,6 +108,11 @@ export function createProxyMiddleware() {
         
         // Copy trace ID to response headers
         _res.setHeader('X-Trace-Id', trace_id);
+
+        // Handle token refresh if Core API returns 401
+        if (proxyRes.statusCode === 401) {
+          await handleProxyResponse(proxyRes, req, _res as Response, () => {});
+        }
         
         logger.debug('Proxy response', {
           trace_id,

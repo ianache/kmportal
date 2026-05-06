@@ -1,25 +1,15 @@
-declare module 'shell/bffClient' {
-  export interface ApiError {
-    error: string
-    message: string
-    trace_id?: string
-  }
+// Shell services are provided via global window object in Module Federation
+// window.__SHELL_BFF_CLIENT__ - BFF API client
 
-  export interface ApiResponse<T> {
-    data?: T
-    error?: ApiError
-    status: number
+declare global {
+  interface Window {
+    __SHELL_BFF_CLIENT__?: {
+      get<T>(path: string): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
+      post<T>(path: string, body: any): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
+      put<T>(path: string, body: any): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
+      delete<T>(path: string): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
+    }
   }
-
-  export interface BffClient {
-    get<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>>
-    post<T>(path: string, body: any, options?: RequestInit): Promise<ApiResponse<T>>
-    put<T>(path: string, body: any, options?: RequestInit): Promise<ApiResponse<T>>
-    delete<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>>
-  }
-
-  export const bffClient: BffClient
-  export default bffClient
 }
 
 declare module 'shell/BaseButton' {

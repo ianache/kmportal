@@ -21,7 +21,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      'shell/bffClient': resolve(__dirname, '../shell/src/services/bffClient.ts'),
+      'shell/microFrontendApi': resolve(__dirname, '../shell/src/services/microFrontendApi.ts'),
       'shell/BaseButton': resolve(__dirname, '../shell/src/components/ui/BaseButton.vue'),
       'shell/BaseCard': resolve(__dirname, '../shell/src/components/ui/BaseCard.vue'),
       'shell/BaseInput': resolve(__dirname, '../shell/src/components/ui/BaseInput.vue'),
@@ -31,6 +31,20 @@ export default defineConfig({
     port: 5101,
     strictPort: true,
     origin: 'http://localhost:5101',
+    cors: {
+      origin: ['http://localhost:5100', 'http://127.0.0.1:5100'],
+      credentials: true,
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5100',
+        changeOrigin: true,
+      },
+      '/auth': {
+        target: 'http://localhost:5100',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port: 5101,

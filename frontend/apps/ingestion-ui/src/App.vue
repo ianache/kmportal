@@ -30,8 +30,7 @@
 <script setup lang="ts">
 import { inject, onMounted, onUnmounted } from 'vue'
 import { useIngestionStore } from './stores/ingestion'
-import { WebSocketKey, wsClient as localWsClient } from './services/websocket'
-import type { WebSocketService } from 'shell/WebSocketService'
+import { WebSocketKey, wsClient as localWsClient, type WebSocketService } from './services/websocket'
 import JobList from './components/JobList.vue'
 import FileUpload from './components/FileUpload.vue'
 
@@ -39,7 +38,7 @@ const ingestionStore = useIngestionStore()
 
 // Use the shell's shared connection when embedded; fall back to a local
 // connection when running in standalone dev mode (no shell to inject from).
-const shellWs = inject<WebSocketService>(WebSocketKey)
+const shellWs = inject<WebSocketService | undefined>(WebSocketKey, undefined)
 const ws = shellWs ?? localWsClient
 const wsStatus = ws.status
 

@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import { wsService, WebSocketKey } from './services/websocket'
+import { bffClient, BffClientKey } from './services/bffClient'
 
 // Import design tokens first
 import './styles/design-tokens.css'
@@ -10,8 +11,9 @@ import './styles/design-tokens.css'
 const pinia = createPinia()
 const app = createApp(App)
 
-// Provide WebSocket service
+// Provide services
 app.provide(WebSocketKey, wsService)
+app.provide(BffClientKey, bffClient)
 
 app.use(pinia)
 app.use(router)
@@ -20,8 +22,8 @@ app.use(router)
 router.afterEach((to) => {
   // Connect WebSocket for authenticated routes
   if (to.meta.requiresAuth && !wsService.isConnected.value) {
-    const BFF_URL = import.meta.env.VITE_BFF_URL || 'http://localhost:3000'
-    wsService.connect(BFF_URL)
+    // Use empty string for relative URL - goes through shell's proxy
+    wsService.connect('')
   }
 })
 

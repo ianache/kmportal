@@ -16,7 +16,8 @@ export interface WebSocketService {
 }
 export const WebSocketKey: InjectionKey<WebSocketService> = Symbol('WebSocket')
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:3000'
+// Use relative URL to go through shell's proxy
+const WS_URL = ''
 
 class WebSocketClient {
   private socket: Socket | null = null

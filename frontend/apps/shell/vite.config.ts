@@ -25,8 +25,28 @@ export default defineConfig({
     strictPort: true,
     origin: 'http://localhost:5100',
     proxy: {
-      '/api': 'http://localhost:3000',
-      '/auth': 'http://localhost:3000',
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/auth/login': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/auth/logout': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/auth/session': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: 'http://localhost:3000',
+        ws: true,
+        changeOrigin: true,
+      },
+
     },
   },
   preview: {

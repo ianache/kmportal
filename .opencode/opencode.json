@@ -1,4 +1,5 @@
 {
+  "$schema": "https://opencode.ai/config.json",
   "permission": {
     "read": {
       "D:/02-PERSONAL/01-PROJECTS/25-KnowledgeManagement/.opencode/get-shit-done/*": "allow"

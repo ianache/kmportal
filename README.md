@@ -176,6 +176,57 @@ MIT
 - Issues: GitHub Issues
 - Roadmap: Ver [ROADMAP.md](.planning/ROADMAP.md)
 
+## Configurar Keycloak
+
+🔧 Configurar Audience en Keycloak 26+
+Paso 1: Ir a Client Scopes
+1. Abre Keycloak Admin Console: https://oauth2.qa.comsatel.com.pe/admin
+2. Selecciona el realm: Apps
+3. En el menú lateral, haz clic en: Clients → Client Scopes (o ve directo a "Client Scopes")
+Paso 2: Crear un Client Scope para Audience
+1. Haz clic en Create client scope
+2. Name: kmplatform-audience
+3. Type: Default
+4. Protocol: openid-connect
+5. Click Save
+Paso 3: Agregar el Audience Mapper
+1. Entra al client scope que acabas de crear (kmplatform-audience)
+2. Ve a la pestaña: Mappers
+3. Click Configure a new mapper
+4. Selecciona: Audience
+5. Completa:
+   - Name: kmplatform-audience-mapper
+   - Included Client Audience: kmplatform (o el client_id de tu aplicación)
+   - Add to ID token: ON
+   - Add to access token: ON
+6. Click Save
+Paso 4: Asignar el Client Scope al Cliente
+1. Ve a Clients → Busca kmplatform
+2. Entra al cliente → pestaña Client Scopes
+3. En Available Client Scopes, busca: kmplatform-audience
+4. Selecciónalo y click Add selected (o arrástralo a Assigned)
+5. Asegúrate que esté en Default (no Optional)
+Paso 5: Verificar el Token
+Después de reiniciar sesión, el token JWT debería tener:
+{
+  "aud": "kmplatform",
+  ...
+}
+🔄 Después de configurar
+1. Vuelve a desactivar BYPASS_AUTH en bff/.env:
+      BYPASS_AUTH=false
+   
+2. Reinicia el BFF:
+      cd bff
+   npm run dev
+   
+3. Prueba login nuevamente
+---
+📍 Si no ves "Client Scopes"
+En Keycloak 26+, a veces está en:
+- Clients → tu-cliente → Client Scopes (pestaña)
+- O en el menú principal: Client Scopes (entre "Clients" y "Roles")
+
 ---
 
 **Estado Actual**: Phase 1 - Bootstrap infrastructure (In Progress)

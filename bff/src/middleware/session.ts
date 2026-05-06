@@ -22,6 +22,7 @@ const redisStore = new RedisStore({
 });
 
 // Session middleware configuration
+// CRITICAL: For cross-port development on localhost
 export const sessionMiddleware = session({
   store: redisStore,
   secret: config.session.secret,
@@ -29,11 +30,11 @@ export const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: config.cookie.secure,
-    httpOnly: true, // Critical: JWT never exposed to JavaScript
+    secure: false, // HTTP development
+    httpOnly: true,
     maxAge: config.session.maxAge,
-    domain: config.cookie.domain,
-    sameSite: 'lax',
+    domain: undefined, // Let browser handle - works for localhost:*
+    sameSite: 'lax', // lax works with secure:false
   },
 });
 

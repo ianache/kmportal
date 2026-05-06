@@ -5,9 +5,14 @@
   "scripts": {
     "dev": "npm run --prefix apps/shell dev",
     "build:remotes": "npm run --prefix apps/domains-ui build && npm run --prefix apps/search-ui build && npm run --prefix apps/ingestion-ui build && npm run --prefix apps/admin-ui build",
-    "dev:all": "npm run build:remotes && concurrently --kill-others-on-fail -n domains,search,ingestion,admin,shell \"npm run --prefix apps/domains-ui preview\" \"npm run --prefix apps/search-ui preview\" \"npm run --prefix apps/ingestion-ui preview\" \"npm run --prefix apps/admin-ui preview\" \"npm run --prefix apps/shell dev\""
+    "dev:all": "concurrently --kill-others-on-fail -n domains,search,ingestion,admin,shell \"npm run --prefix apps/domains-ui dev\" \"npm run --prefix apps/search-ui dev\" \"npm run --prefix apps/ingestion-ui dev\" \"npm run --prefix apps/admin-ui dev\" \"npm run --prefix apps/shell dev\"",
+    "dev:all:preview": "npm run build:remotes && concurrently --kill-others-on-fail -n domains,search,ingestion,admin,shell \"npm run --prefix apps/domains-ui preview\" \"npm run --prefix apps/search-ui preview\" \"npm run --prefix apps/ingestion-ui preview\" \"npm run --prefix apps/admin-ui preview\" \"npm run --prefix apps/shell dev\"",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "concurrently": "^8.2.0",
+    "@playwright/test": "^1.41.0"
   }
 }

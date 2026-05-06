@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import federation from '@originjs/vite-plugin-federation'
+import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [
@@ -16,10 +17,29 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    alias: {
+      'shell/microFrontendApi': resolve(__dirname, '../shell/src/services/microFrontendApi.ts'),
+    }
+  },
   server: {
     port: 5104,
     strictPort: true,
     origin: 'http://localhost:5104',
+    cors: {
+      origin: ['http://localhost:5100', 'http://127.0.0.1:5100'],
+      credentials: true,
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5100',
+        changeOrigin: true,
+      },
+      '/auth': {
+        target: 'http://localhost:5100',
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port: 5104,
