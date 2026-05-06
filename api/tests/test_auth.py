@@ -65,7 +65,7 @@ class TestUserExtraction:
         assert isinstance(user, UserInToken)
         assert user.keycloak_id == "test-keycloak-id"
         assert user.email == "test@example.com"
-        assert "km-reader" in user.roles
+        assert "KM_VIEWER" in user.roles
     
     def test_extract_user_with_client_roles(self):
         """Should extract user with client-specific roles."""
@@ -73,7 +73,7 @@ class TestUserExtraction:
             "sub": "user-123",
             "email": "user@test.com",
             "realm_access": {
-                "roles": ["km-admin"]
+                "roles": ["KM_ADMIN"]
             },
             "resource_access": {
                 "kmplatform": {
@@ -84,7 +84,7 @@ class TestUserExtraction:
         
         user = extract_user_from_token(payload)
         
-        assert "km-admin" in user.roles
+        assert "KM_ADMIN" in user.roles
         assert "custom-role" in user.roles
     
     def test_extract_user_without_realm_access(self):

@@ -1,9 +1,9 @@
 <template>
   <div class="search-app">
     <!-- Search Bar Section -->
-    <header class="search-header" :class="{ 'search-header--compact': searchStore.hasResults }">
+    <header class="search-header" :class="{ 'search-header--compact': searchStore.isSearchActive }">
       <div class="search-container">
-        <template v-if="!searchStore.hasResults">
+        <template v-if="!searchStore.isSearchActive">
           <h1 class="display-lg">Semantic Search</h1>
           <p class="body-base subtitle">Ask anything across your knowledge base.</p>
         </template>
@@ -36,7 +36,7 @@
           </BaseButton>
         </div>
 
-        <div v-if="!searchStore.hasResults && !searchStore.isLoading" class="search-suggestions">
+        <div v-if="!searchStore.isSearchActive && !searchStore.isLoading" class="search-suggestions">
           <span class="label-caps">Try searching for:</span>
           <div class="suggestion-chips">
             <button 
@@ -53,12 +53,12 @@
     </header>
 
     <!-- Main Content -->
-    <main v-if="searchStore.hasResults || searchStore.isLoading" class="search-main">
+    <main v-if="searchStore.isSearchActive || searchStore.isLoading" class="search-main">
       <div class="content-layout">
-        <!-- Sidebar Filters -->
-        <aside class="search-sidebar">
+        <!-- Horizontal Filters Bar -->
+        <div class="search-filters-bar">
           <SearchFilters />
-        </aside>
+        </div>
 
         <!-- Results Area -->
         <section class="results-area">
@@ -148,11 +148,13 @@ onMounted(() => {
 })
 
 function handleSearch() {
+  searchStore.isSearchActive = true
   searchStore.performSearch()
 }
 
 function searchWithSuggestion(suggestion: string) {
   searchStore.query = suggestion
+  searchStore.isSearchActive = true
   handleSearch()
 }
 
@@ -173,15 +175,15 @@ function handleOpenDocument(id: string) {
 /* Header */
 .search-header {
   padding: 80px 24px 40px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
   display: flex;
   justify-content: center;
 }
 
 .search-header--compact {
-  padding: 32px 24px 24px;
+  padding: 16px 24px 16px;
   border-bottom: 1px solid var(--outline-variant, #E5E5E7);
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: saturate(180%) blur(20px);
   position: sticky;
   top: 0;
@@ -194,7 +196,12 @@ function handleOpenDocument(id: string) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
+  transition: gap 0.3s;
+}
+
+.search-header--compact .search-container {
+  gap: 0;
 }
 
 .display-lg {
@@ -203,18 +210,33 @@ function handleOpenDocument(id: string) {
   letter-spacing: -0.02em;
   margin: 0;
   text-align: center;
+  transition: all 0.3s;
+}
+
+.search-header--compact .display-lg {
+  font-size: 0;
+  opacity: 0;
+  margin: 0;
 }
 
 .subtitle {
   color: var(--on-surface-variant, #86868B);
   margin: -8px 0 0;
   text-align: center;
+  transition: all 0.3s;
+}
+
+.search-header--compact .subtitle {
+  font-size: 0;
+  opacity: 0;
+  margin: 0;
 }
 
 .search-input-group {
   display: flex;
   width: 100%;
   gap: 12px;
+  padding: 8px 0;
 }
 
 .search-input-wrapper {
@@ -312,15 +334,13 @@ function handleOpenDocument(id: string) {
 }
 
 .content-layout {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
-.search-sidebar {
-  position: sticky;
-  top: 120px;
-  height: fit-content;
+.search-filters-bar {
+  width: 100%;
 }
 
 /* Results Area */

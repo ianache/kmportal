@@ -1,77 +1,40 @@
 <template>
-  <div class="search-filters">
-    <div class="filters-header">
-      <h3 class="filters-title">Filters</h3>
-      <button 
-        v-if="searchStore.activeFiltersCount > 0" 
-        class="clear-all-btn"
-        @click="searchStore.clearFilters()"
-      >
-        Clear All
-      </button>
-    </div>
+  <div class="search-filters-horizontal">
+    <div class="filters-container">
+      <!-- Domain Multi-select Combobox -->
+      <DomainSelector />
 
-    <div class="filter-sections">
-      <!-- Domain Filter -->
-      <div class="filter-section">
-        <DomainSelector />
-      </div>
-
-      <!-- Type Filter -->
-      <div v-if="searchStore.availableTypes.length > 0" class="filter-section">
-        <label class="filter-label">Document Type</label>
-        <div class="chip-grid">
-          <button 
-            v-for="type in searchStore.availableTypes" 
-            :key="type"
-            class="filter-chip"
-            :class="{ 'filter-chip--active': searchStore.filters.types?.includes(type) }"
-            @click="toggleType(type)"
+      <!-- Date Range Filter -->
+      <div class="date-filter-group">
+        <div class="date-input-container">
+          <label class="date-label">From</label>
+          <input 
+            type="date" 
+            class="date-input"
+            :value="searchStore.filters.date_from"
+            @change="updateDateFrom($event)"
           >
-            {{ type }}
-          </button>
         </div>
-      </div>
-
-      <!-- Source Filter -->
-      <div v-if="searchStore.availableSources.length > 0" class="filter-section">
-        <label class="filter-label">Source</label>
-        <div class="chip-grid">
-          <button 
-            v-for="source in searchStore.availableSources" 
-            :key="source"
-            class="filter-chip"
-            :class="{ 'filter-chip--active': searchStore.filters.sources?.includes(source) }"
-            @click="toggleSource(source)"
+        <div class="date-input-container">
+          <label class="date-label">To</label>
+          <input 
+            type="date" 
+            class="date-input"
+            :value="searchStore.filters.date_to"
+            @change="updateDateTo($event)"
           >
-            {{ source }}
-          </button>
         </div>
       </div>
 
-      <!-- Date Filter -->
-      <div class="filter-section">
-        <label class="filter-label">Date Range</label>
-        <div class="date-range">
-          <div class="date-input-wrap">
-            <span class="date-hint">From</span>
-            <input 
-              type="date" 
-              class="date-input"
-              :value="searchStore.filters.date_from"
-              @change="updateDateFrom($event)"
-            >
-          </div>
-          <div class="date-input-wrap">
-            <span class="date-hint">To</span>
-            <input 
-              type="date" 
-              class="date-input"
-              :value="searchStore.filters.date_to"
-              @change="updateDateTo($event)"
-            >
-          </div>
-        </div>
+      <!-- Action Buttons -->
+      <div class="filter-actions">
+        <button 
+          v-if="searchStore.activeFiltersCount > 0" 
+          class="clear-all-btn"
+          @click="searchStore.clearFilters()"
+        >
+          Clear All
+        </button>
       </div>
     </div>
   </div>
@@ -82,32 +45,6 @@ import { useSearchStore } from '../stores/search'
 import DomainSelector from './DomainSelector.vue'
 
 const searchStore = useSearchStore()
-
-function toggleType(type: string) {
-  const currentTypes = [...(searchStore.filters.types || [])]
-  const index = currentTypes.indexOf(type)
-  
-  if (index === -1) {
-    currentTypes.push(type)
-  } else {
-    currentTypes.splice(index, 1)
-  }
-  
-  searchStore.setFilter('types', currentTypes)
-}
-
-function toggleSource(source: string) {
-  const currentSources = [...(searchStore.filters.sources || [])]
-  const index = currentSources.indexOf(source)
-  
-  if (index === -1) {
-    currentSources.push(source)
-  } else {
-    currentSources.splice(index, 1)
-  }
-  
-  searchStore.setFilter('sources', currentSources)
-}
 
 function updateDateFrom(event: Event) {
   const value = (event.target as HTMLInputElement).value
@@ -121,152 +58,100 @@ function updateDateTo(event: Event) {
 </script>
 
 <style scoped>
-.search-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 24px;
+.search-filters-horizontal {
+  width: 100%;
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: saturate(180%) blur(20px);
   border-radius: 16px;
   border: 1px solid var(--outline-variant, #E5E5E7);
+  padding: 12px 16px;
 }
 
-.filters-header {
+.filters-container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-.filters-title {
-  font-size: 14px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--on-surface-variant, #86868B);
-}
-
-.clear-all-btn {
-  font-size: 13px;
-  color: var(--primary, #007AFF);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.clear-all-btn:hover {
-  text-decoration: underline;
-}
-
-.filter-sections {
-  display: flex;
-  flex-direction: column;
   gap: 24px;
 }
 
-.filter-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.filter-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--on-surface, #1D1D1F);
-}
-
-.domain-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.filter-checkbox {
+.date-filter-group {
   display: flex;
   align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  font-size: 14px;
-  color: var(--on-surface-variant, #414755);
-  padding: 4px 0;
+  gap: 16px;
+  padding: 0 16px;
+  border-left: 1px solid var(--outline-variant, #E5E5E7);
+  border-right: 1px solid var(--outline-variant, #E5E5E7);
 }
 
-.filter-checkbox:hover .checkbox-label {
-  color: var(--on-surface, #1D1D1F);
-}
-
-.checkbox-label {
-  flex: 1;
-  transition: color 0.15s;
-}
-
-.count {
-  font-size: 11px;
-  color: var(--on-surface-variant, #86868B);
-  background: var(--surface-container, #ecedf9);
-  padding: 2px 6px;
-  border-radius: 999px;
-}
-
-.chip-grid {
+.date-input-container {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
 }
 
-.filter-chip {
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  background: var(--surface-container-low, #f1f3fe);
-  border: 1px solid transparent;
-  color: var(--on-surface-variant, #414755);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.filter-chip:hover {
-  background: var(--surface-container, #ecedf9);
-  color: var(--on-surface, #1D1D1F);
-}
-
-.filter-chip--active {
-  background: var(--primary-container, #0070eb);
-  color: var(--on-primary, #ffffff);
-}
-
-.date-range {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.date-input-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.date-hint {
-  font-size: 11px;
+.date-label {
+  font-size: 12px;
+  font-weight: 600;
   color: var(--on-surface-variant, #86868B);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .date-input {
-  width: 100%;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--outline-variant, #E5E5E7);
   background: var(--surface-container-lowest, #ffffff);
   font-size: 13px;
   color: var(--on-surface, #1D1D1F);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .date-input:focus {
   outline: none;
   border-color: var(--primary, #007AFF);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.filter-actions {
+  margin-left: auto;
+}
+
+.clear-all-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary, #007AFF);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.clear-all-btn:hover {
+  background: var(--primary-soft, rgba(0, 122, 255, 0.05));
+  text-decoration: underline;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .filters-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .date-filter-group {
+    border: none;
+    padding: 0;
+    flex-wrap: wrap;
+  }
+  
+  .filter-actions {
+    margin-left: 0;
+    text-align: right;
+  }
 }
 </style>

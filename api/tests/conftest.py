@@ -85,7 +85,7 @@ async def test_user(db_session):
         keycloak_id="test-keycloak-id",
         email="test@example.com",
         full_name="Test User",
-        roles=["km-reader"],
+        roles=["KM_VIEWER"],
         is_active=True
     )
     db_session.add(user)
@@ -101,7 +101,7 @@ async def test_admin(db_session):
         keycloak_id="admin-keycloak-id",
         email="admin@example.com",
         full_name="Admin User",
-        roles=["km-admin"],
+        roles=["KM_ADMIN"],
         is_active=True
     )
     db_session.add(user)
@@ -139,7 +139,7 @@ def mock_user_payload():
         "sub": "test-keycloak-id",
         "email": "test@example.com",
         "realm_access": {
-            "roles": ["km-reader"]
+            "roles": ["KM_VIEWER"]
         }
     }
 
@@ -151,6 +151,6 @@ def mock_admin_payload():
         "sub": "admin-keycloak-id",
         "email": "admin@example.com",
         "realm_access": {
-            "roles": ["km-admin"]
+            "roles": ["KM_ADMIN"]
         }
     }

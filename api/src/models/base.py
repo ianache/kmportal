@@ -67,7 +67,7 @@ class User(Base):
     
     def is_admin(self) -> bool:
         """Check if user has admin role."""
-        return self.has_role("km-admin")
+        return self.has_role("KM_ADMIN")
     
     def __repr__(self) -> str:
         return f"<User(id={self.id}, email={self.email})>"

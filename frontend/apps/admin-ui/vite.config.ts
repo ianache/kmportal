@@ -45,5 +45,10 @@ export default defineConfig({
     port: 5104,
     strictPort: true,
   },
-  build: { target: 'esnext' }
+  build: { 
+    target: 'esnext',
+    assetsDir: '',
+    minify: false,
+    cssCodeSplit: false
+  }
 })

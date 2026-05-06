@@ -81,7 +81,7 @@ async def search_documents(
     from models import DomainAccess, DomainAccessRole
     from sqlalchemy import select
     
-    is_admin = "km-admin" in user.roles
+    is_admin = "KM_ADMIN" in user.roles
     
     if not is_admin:
         # Check domain access
@@ -155,7 +155,7 @@ async def search_documents_post(
     from models import DomainAccess
     from sqlalchemy import select
     
-    is_admin = "km-admin" in user.roles
+    is_admin = "KM_ADMIN" in user.roles
     
     if not is_admin:
         for domain_id in request.domain_ids:

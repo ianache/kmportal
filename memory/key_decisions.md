@@ -16,3 +16,4 @@ type: project
 | Shared WebSocket singleton lives in shell | One persistent WS connection; all micro-UIs subscribe to it for real-time events |
 | Ollama used for embeddings (with Gemini adapter as fallback) | Local-first embeddings; Gemini for production |
 | Collection ID (not collection name) used for ChromaDB operations | Avoids stale-name bugs after collection updates |
+| Role Casing: Uppercase `KM_ADMIN`, `KM_MANAGER`, `KM_VIEWER` standardized across all tiers | Prevents authorization failures (403 Forbidden) due to case-sensitivity in RBAC checks |

@@ -12,6 +12,7 @@ export const useSearchStore = defineStore('search', () => {
   const pageSize = ref(20)
   const searchTimeMs = ref(0)
   const isLoading = ref(false)
+  const isSearchActive = ref(false)
   const error = ref<string | null>(null)
   const availableDomains = ref<Domain[]>([])
   const selectedDomains = ref<string[]>([])
@@ -82,10 +83,12 @@ export const useSearchStore = defineStore('search', () => {
     if (!query.value.trim()) {
       results.value = []
       total.value = 0
+      isSearchActive.value = false
       return
     }
     
     isLoading.value = true
+    isSearchActive.value = true
     error.value = null
     
     try {
@@ -162,6 +165,7 @@ export const useSearchStore = defineStore('search', () => {
     query.value = ''
     results.value = []
     total.value = 0
+    isSearchActive.value = false
     error.value = null
     searchTimeMs.value = 0
   }
@@ -189,6 +193,7 @@ export const useSearchStore = defineStore('search', () => {
     pageSize,
     searchTimeMs,
     isLoading,
+    isSearchActive,
     error,
     availableDomains,
     selectedDomains,
