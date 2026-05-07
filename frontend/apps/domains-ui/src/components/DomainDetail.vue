@@ -39,22 +39,53 @@
 
     <main class="domain-content">
       <div class="tabs">
-        <button class="tab-item active">Documents</button>
-        <button class="tab-item" disabled>Settings (Admin only)</button>
+        <button 
+          class="tab-item" 
+          :class="{ active: activeTab === 'documents' }"
+          @click="activeTab = 'documents'"
+        >
+          Documents
+        </button>
+        <button 
+          class="tab-item" 
+          :class="{ active: activeTab === 'settings' }"
+          :disabled="!authStore.isAdmin"
+          :title="!authStore.isAdmin ? 'Admin access required' : ''"
+          @click="activeTab = 'settings'"
+        >
+          Settings (Admin only)
+        </button>
       </div>
 
       <div class="tab-content">
-        <DocumentList v-if="domainsStore.selectedDomain" :domainId="domainsStore.selectedDomain.id" />
+        <div v-if="activeTab === 'documents'">
+          <DocumentList v-if="domainsStore.selectedDomain" :domainId="domainsStore.selectedDomain.id" />
+        </div>
+        <div v-else-if="activeTab === 'settings'" class="settings-placeholder">
+          <BaseCard class="placeholder-card">
+            <h3 class="headline-sm">Domain Settings</h3>
+            <p class="body-base">Administration tools for <strong>{{ domainsStore.selectedDomain?.name }}</strong> will be available here.</p>
+            <div class="coming-soon">
+              <span class="badge">Coming Soon</span>
+            </div>
+          </BaseCard>
+        </div>
       </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useDomainsStore } from '../stores/domains'
+import { useAuthStore } from 'shell/authStore'
 import DocumentList from './DocumentList.vue'
+import BaseCard from 'shell/BaseCard'
 
 const domainsStore = useDomainsStore()
+const authStore = useAuthStore()
+
+const activeTab = ref<'documents' | 'settings'>('documents')
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return 'N/A'
@@ -231,6 +262,37 @@ function formatDate(dateStr?: string) {
 .tab-item:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.settings-placeholder {
+  padding: 40px 0;
+}
+
+.placeholder-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  padding: 60px;
+  background: var(--surface-container-low, #f1f3fe);
+  border: 1px dashed var(--outline-variant, #E5E5E7);
+}
+
+.coming-soon {
+  margin-top: 8px;
+}
+
+.badge {
+  background: var(--secondary-container, #e1e2ec);
+  color: var(--on-secondary-container, #191b23);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 @media (max-width: 768px) {

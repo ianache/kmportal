@@ -22,6 +22,7 @@ export default defineConfig({
   resolve: {
     alias: {
       'shell/microFrontendApi': resolve(__dirname, '../shell/src/services/microFrontendApi.ts'),
+      'shell/authStore': resolve(__dirname, '../shell/src/stores/auth.ts'),
       'shell/BaseButton': resolve(__dirname, '../shell/src/components/ui/BaseButton.vue'),
       'shell/BaseCard': resolve(__dirname, '../shell/src/components/ui/BaseCard.vue'),
       'shell/BaseInput': resolve(__dirname, '../shell/src/components/ui/BaseInput.vue'),
