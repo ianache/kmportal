@@ -56,7 +56,9 @@
       "Bash(Test-Path D:\\\\02-PERSONAL\\\\01-PROJECTS\\\\25-KnowledgeManagement\\\\frontend\\\\apps\\\\domains-ui\\\\node_modules\\\\@vue-flow *)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('exports:', list\\(d.get\\('exports',{}\\).keys\\(\\)\\)[:5]\\); print\\('main:', d.get\\('main'\\)\\); print\\('module:', d.get\\('module'\\)\\); print\\('version:', d.get\\('version'\\)\\)\")",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('exports', {}\\), indent=2\\)\\)\")",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('version:', d['version']\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('version:', d['version']\\)\")",
+      "WebFetch(domain:contribution.usercontent.google.com)",
+      "WebFetch(domain:lh3.googleusercontent.com)"
     ]
   }
 }

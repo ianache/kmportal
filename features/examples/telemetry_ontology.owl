@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="https://kmportal.ai/ontology/telemetry#"
+     xml:base="https://kmportal.ai/ontology/telemetry"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    
+    <owl:Ontology rdf:about="https://kmportal.ai/ontology/telemetry">
+        <rdfs:comment>Ontología base para el rastreo satelital y telemetría de activos en KMPortal.</rdfs:comment>
+    </owl:Ontology>
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <owl:Class rdf:about="https://kmportal.ai/ontology/telemetry#Asset">
+        <rdfs:label>Activo</rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="https://kmportal.ai/ontology/telemetry#Vehicle">
+        <rdfs:subClassOf rdf:resource="https://kmportal.ai/ontology/telemetry#Asset"/>
+        <rdfs:label>Vehículo</rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="https://kmportal.ai/ontology/telemetry#Device">
+        <rdfs:label>Dispositivo GPS</rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="https://kmportal.ai/ontology/telemetry#Observation">
+        <rdfs:label>Punto de Telemetría</rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="https://kmportal.ai/ontology/telemetry#Alert">
+        <rdfs:label>Alerta de Seguridad</rdfs:label>
+    </owl:Class>
+
+    <owl:Class rdf:about="https://kmportal.ai/ontology/telemetry#JammingAlert">
+        <rdfs:subClassOf rdf:resource="https://kmportal.ai/ontology/telemetry#Alert"/>
+        <rdfs:label>Alerta de Jamming</rdfs:label>
+    </owl:Class>
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties (Relaciones)
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <owl:ObjectProperty rdf:about="https://kmportal.ai/ontology/telemetry#isInstalledOn">
+        <rdfs:domain rdf:resource="https://kmportal.ai/ontology/telemetry#Device"/>
+        <rdfs:range rdf:resource="https://kmportal.ai/ontology/telemetry#Asset"/>
+        <rdfs:label>instalado en</rdfs:label>
+    </owl:ObjectProperty>
+
+    <owl:ObjectProperty rdf:about="https://kmportal.ai/ontology/telemetry#generatesObservation">
+        <rdfs:domain rdf:resource="https://kmportal.ai/ontology/telemetry#Device"/>
+        <rdfs:range rdf:resource="https://kmportal.ai/ontology/telemetry#Observation"/>
+        <rdfs:label>genera observación</rdfs:label>
+    </owl:ObjectProperty>
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data Properties (Atributos)
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <owl:DatatypeProperty rdf:about="https://kmportal.ai/ontology/telemetry#hasIMEI">
+        <rdfs:domain rdf:resource="https://kmportal.ai/ontology/telemetry#Device"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <rdfs:label>IMEI</rdfs:label>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="https://kmportal.ai/ontology/telemetry#hasSpeed">
+        <rdfs:domain rdf:resource="https://kmportal.ai/ontology/telemetry#Observation"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <rdfs:label>velocidad</rdfs:label>
+    </owl:DatatypeProperty>
+
+    <owl:DatatypeProperty rdf:about="https://kmportal.ai/ontology/telemetry#isEngineOn">
+        <rdfs:domain rdf:resource="https://kmportal.ai/ontology/telemetry#Observation"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <rdfs:label>motor encendido</rdfs:label>
+    </owl:DatatypeProperty>
+
+</rdf:RDF>
