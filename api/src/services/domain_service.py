@@ -1,30 +1,29 @@
 """Domain service layer."""
 
-from typing import List, Optional
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
-from models import Domain, DomainAccess, DomainAccessRole, Document, DocumentStatus, User
+from models import Document, DocumentStatus, Domain, DomainAccess, DomainAccessRole
 from schemas import (
-    DomainCreate,
-    DomainUpdate,
-    DomainResponse,
+    DocumentResponse,
     DomainAccessGrant,
     DomainAccessResponse,
-    DocumentResponse,
+    DomainCreate,
+    DomainResponse,
+    DomainUpdate,
     UserResponse,
 )
 
 
 class DomainService:
     """Service for domain operations."""
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
     async def create_domain(
         self,
         domain_data: DomainCreate,
@@ -43,11 +42,11 @@ class DomainService:
             cover_image=domain_data.cover_image,
             created_by=created_by
         )
-        
+
         self.db.add(domain)
         await self.db.commit()
         await self.db.refresh(domain)
-        
+
         # Grant admin access to creator
         access = DomainAccess(
             user_id=created_by,
@@ -59,8 +58,8 @@ class DomainService:
         await self.db.commit()
 
         return await self.get_domain(domain.id)
-    
-    async def get_domain(self, domain_id: UUID) -> Optional[Domain]:
+
+    async def get_domain(self, domain_id: UUID) -> Domain | None:
         """Get domain by ID."""
         result = await self.db.execute(
             select(Domain)
@@ -68,14 +67,14 @@ class DomainService:
             .options(selectinload(Domain.documents))
         )
         return result.scalar_one_or_none()
-    
+
     async def list_domains(
         self,
         user_id: UUID,
         is_admin: bool,
         page: int = 1,
         page_size: int = 20
-    ) -> tuple[List[Domain], int]:
+    ) -> tuple[list[Domain], int]:
         """List domains accessible to user."""
         # Build query
         if is_admin:
@@ -95,30 +94,30 @@ class DomainService:
                 .join(DomainAccess)
                 .where(DomainAccess.user_id == user_id)
             )
-        
+
         # Get total count
         count_result = await self.db.execute(count_query)
         total = count_result.scalar()
-        
+
         # Get paginated results
         offset = (page - 1) * page_size
         query = query.offset(offset).limit(page_size)
-        
+
         result = await self.db.execute(query)
         domains = result.scalars().all()
-        
+
         return list(domains), total
-    
+
     async def update_domain(
         self,
         domain_id: UUID,
         domain_data: DomainUpdate
-    ) -> Optional[Domain]:
+    ) -> Domain | None:
         """Update domain."""
         domain = await self.get_domain(domain_id)
         if not domain:
             return None
-        
+
         if domain_data.name is not None:
             domain.name = domain_data.name
         if domain_data.description is not None:
@@ -133,22 +132,22 @@ class DomainService:
             domain.visibility = domain_data.visibility
         if domain_data.cover_image is not None:
             domain.cover_image = domain_data.cover_image
-        
+
         await self.db.commit()
 
         return await self.get_domain(domain_id)
-    
+
     async def delete_domain(self, domain_id: UUID) -> bool:
         """Delete domain."""
         domain = await self.get_domain(domain_id)
         if not domain:
             return False
-        
+
         await self.db.delete(domain)
         await self.db.commit()
-        
+
         return True
-    
+
     async def grant_access(
         self,
         domain_id: UUID,
@@ -164,14 +163,14 @@ class DomainService:
             )
         )
         existing = result.scalar_one_or_none()
-        
+
         if existing:
             # Update existing access
             existing.role = DomainAccessRole(grant_data.role)
             await self.db.commit()
             await self.db.refresh(existing)
             return existing
-        
+
         # Create new access
         access = DomainAccess(
             user_id=grant_data.user_id,
@@ -179,13 +178,13 @@ class DomainService:
             role=DomainAccessRole(grant_data.role),
             granted_by=granted_by
         )
-        
+
         self.db.add(access)
         await self.db.commit()
         await self.db.refresh(access)
-        
+
         return access
-    
+
     async def revoke_access(
         self,
         domain_id: UUID,
@@ -199,24 +198,24 @@ class DomainService:
             )
         )
         access = result.scalar_one_or_none()
-        
+
         if not access:
             return False
-        
+
         await self.db.delete(access)
         await self.db.commit()
-        
+
         return True
-    
+
     async def list_documents(
         self,
         domain_id: UUID,
         page: int = 1,
         page_size: int = 20,
-        status: Optional[DocumentStatus] = None,
-        source_type: Optional[str] = None,
-        query: Optional[str] = None,
-    ) -> tuple[List[Document], int]:
+        status: DocumentStatus | None = None,
+        source_type: str | None = None,
+        query: str | None = None,
+    ) -> tuple[list[Document], int]:
         """List documents in a domain with optional filters."""
         base_filter = [Document.domain_id == domain_id]
 
@@ -245,7 +244,7 @@ class DomainService:
     async def list_access_grants(
         self,
         domain_id: UUID
-    ) -> List[DomainAccess]:
+    ) -> list[DomainAccess]:
         """List all access grants for domain."""
         result = await self.db.execute(
             select(DomainAccess)

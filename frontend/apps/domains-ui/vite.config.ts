@@ -20,13 +20,22 @@ export default defineConfig({
     })
   ],
   resolve: {
-    alias: {
-      'shell/microFrontendApi': resolve(__dirname, '../shell/src/services/microFrontendApi.ts'),
-      'shell/authStore': resolve(__dirname, '../shell/src/stores/auth.ts'),
-      'shell/BaseButton': resolve(__dirname, '../shell/src/components/ui/BaseButton.vue'),
-      'shell/BaseCard': resolve(__dirname, '../shell/src/components/ui/BaseCard.vue'),
-      'shell/BaseInput': resolve(__dirname, '../shell/src/components/ui/BaseInput.vue'),
-    }
+    alias: [
+      // Exact-match alias: bypass exports-field resolution for vite-plugin-federation compat.
+      // Regex ensures @vue-flow/core/dist/style.css subpaths are NOT affected.
+      {
+        find: /^@vue-flow\/core$/,
+        replacement: resolve(__dirname, 'node_modules/@vue-flow/core/dist/vue-flow-core.mjs'),
+      },
+      { find: 'shell/microFrontendApi', replacement: resolve(__dirname, '../shell/src/services/microFrontendApi.ts') },
+      { find: 'shell/authStore',        replacement: resolve(__dirname, '../shell/src/stores/auth.ts') },
+      { find: 'shell/BaseButton',       replacement: resolve(__dirname, '../shell/src/components/ui/BaseButton.vue') },
+      { find: 'shell/BaseCard',         replacement: resolve(__dirname, '../shell/src/components/ui/BaseCard.vue') },
+      { find: 'shell/BaseInput',        replacement: resolve(__dirname, '../shell/src/components/ui/BaseInput.vue') },
+    ]
+  },
+  optimizeDeps: {
+    include: ['@vue-flow/core'],
   },
   server: {
     port: 5101,
@@ -55,6 +64,6 @@ export default defineConfig({
     target: 'esnext',
     assetsDir: '',
     minify: false,
-    cssCodeSplit: false
+    cssCodeSplit: false,
   }
 })

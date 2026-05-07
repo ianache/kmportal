@@ -3,48 +3,28 @@
  * Connects to Core API via BFF proxy
  */
 
+import { createLazyApiClient } from 'shell/microFrontendApi'
 import type { APIKey, APIKeyCreate, APIKeyCreateResponse, APIKeyListResponse } from '../types'
 
-const API_BASE = '/api/v1'
-
-export class ApiKeyError extends Error {
-  constructor(
-    message: string,
-    public statusCode?: number,
-    public response?: Response
-  ) {
-    super(message)
-    this.name = 'ApiKeyError'
-  }
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
-    throw new ApiKeyError(
-      errorData.detail || `HTTP ${response.status}`,
-      response.status,
-      response
-    )
-  }
-  return response.json()
-}
+// Lazy API client - waits for shell to be ready
+const apiClient = createLazyApiClient()
 
 export const apiKeysApi = {
   /**
    * Create a new API key
    */
   async createApiKey(data: APIKeyCreate): Promise<APIKeyCreateResponse> {
-    const response = await fetch(`${API_BASE}/api-keys`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(data),
-    })
-
-    return handleResponse<APIKeyCreateResponse>(response)
+    const response = await apiClient.post<APIKeyCreateResponse>('/v1/api-keys', data)
+    
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+    
+    if (!response.data) {
+      throw new Error('No data received from API Key creation')
+    }
+    
+    return response.data
   },
 
   /**
@@ -56,42 +36,44 @@ export const apiKeysApi = {
       page_size: pageSize.toString(),
     })
 
-    const response = await fetch(`${API_BASE}/api-keys?${params}`, {
-      method: 'GET',
-      credentials: 'include',
-    })
-
-    return handleResponse<APIKeyListResponse>(response)
+    const response = await apiClient.get<APIKeyListResponse>(`/v1/api-keys?${params}`)
+    
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+    
+    if (!response.data) {
+      throw new Error('No data received from API Key list')
+    }
+    
+    return response.data
   },
 
   /**
    * Get a specific API key
    */
   async getApiKey(id: string): Promise<APIKey> {
-    const response = await fetch(`${API_BASE}/api-keys/${id}`, {
-      method: 'GET',
-      credentials: 'include',
-    })
-
-    return handleResponse<APIKey>(response)
+    const response = await apiClient.get<APIKey>(`/v1/api-keys/${id}`)
+    
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+    
+    if (!response.data) {
+      throw new Error('No data received from API Key details')
+    }
+    
+    return response.data
   },
 
   /**
    * Revoke (delete) an API key
    */
   async revokeApiKey(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api-keys/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
-      throw new ApiKeyError(
-        errorData.detail || `HTTP ${response.status}`,
-        response.status,
-        response
-      )
+    const response = await apiClient.delete<void>(`/v1/api-keys/${id}`)
+    
+    if (response.error) {
+      throw new Error(response.error.message)
     }
   },
 }

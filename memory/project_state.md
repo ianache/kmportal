@@ -28,15 +28,16 @@ type: project
 | 7-02 | Domain Explorer Micro UI | ✅ Done |
 | 7-03 | Ingestion Status Micro UI | ✅ Done |
 | 7-04 | Shell Notifications | ✅ Done |
+| 8-01 | Admin UI & API Keys | ✅ Done |
 
 ## Remaining Phases
 
 | Phase | Description |
 |-------|-------------|
-| 8 | Admin and API keys — IN PROGRESS |
-| 9 | MCP integration (FastMCP server for AI agents) |
+| 8 | Admin and API keys | ✅ COMPLETE |
+| 9 | MCP integration | ✅ COMPLETE |
 | 10 | Production hardening |
 
 ## Active Blockers / Pre-conditions
 
-- [Pre-Phase 9] Pin FastMCP exact version; verify ASGI mount API and SSE vs Streamable HTTP transport against current docs.
+- None. Phase 9 implemented and secured.

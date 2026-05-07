@@ -1,12 +1,12 @@
 """Database package."""
 
 from db.database import (
-    engine,
     AsyncSessionLocal,
     Base,
+    close_db,
+    engine,
     get_db,
     init_db,
-    close_db,
 )
 
 __all__ = [

@@ -1,14 +1,15 @@
 """Database models package."""
 
 from models.base import (
-    User,
-    Domain,
-    Document,
-    DomainAccess,
     APIKey,
-    IngestionJob,
+    Document,
     DocumentStatus,
+    Domain,
+    DomainAccess,
     DomainAccessRole,
+    IngestionJob,
+    OntologyDiagram,
+    User,
 )
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "DomainAccess",
     "APIKey",
     "IngestionJob",
+    "OntologyDiagram",
     "DocumentStatus",
     "DomainAccessRole",
 ]

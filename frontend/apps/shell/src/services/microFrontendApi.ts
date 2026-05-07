@@ -5,7 +5,7 @@ interface BffClient {
   get<T>(path: string): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
   post<T>(path: string, body: any): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
   put<T>(path: string, body: any): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
-  delete<T>(path: string): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
+  delete<T>(path: string, body?: any): Promise<{ status: number; data?: T; error?: { error: string; message: string } }>
 }
 
 // Esperar a que el shell exponga el bffClient
@@ -65,9 +65,9 @@ export function createLazyApiClient() {
       const client = await getClient()
       return client.put(path, body)
     },
-    async delete<T>(path: string): Promise<{ status: number; data?: T; error?: { error: string; message: string } }> {
+    async delete<T>(path: string, body?: any): Promise<{ status: number; data?: T; error?: { error: string; message: string } }> {
       const client = await getClient()
-      return client.delete(path)
+      return client.delete(path, body)
     }
   }
 }

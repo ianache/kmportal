@@ -1,17 +1,16 @@
 """Authentication and authorization core module."""
 
-import os
-from datetime import datetime
-from typing import Optional, Dict, Any
 import hashlib
+import os
 import secrets
+from datetime import datetime
+from typing import Any
 
 import httpx
 from jose import JWTError, jwt
 from jose.exceptions import JWTClaimsError
 
 from schemas import UserInToken
-
 
 # Configuration
 KEYCLOAK_URL = os.getenv("KEYCLOAK_URL", "https://oauth2.qa.comsatel.com.pe")
@@ -20,20 +19,20 @@ KEYCLOAK_CLIENT_ID = os.getenv("KEYCLOAK_CLIENT_ID", "kmplatform")
 ALGORITHM = "RS256"
 
 # Cache for JWKS
-_jwks_cache: Optional[Dict[str, Any]] = None
-_jwks_last_fetch: Optional[datetime] = None
+_jwks_cache: dict[str, Any] | None = None
+_jwks_last_fetch: datetime | None = None
 
 
-async def fetch_jwks() -> Dict[str, Any]:
+async def fetch_jwks() -> dict[str, Any]:
     """Fetch JWKS from Keycloak."""
     global _jwks_cache, _jwks_last_fetch
-    
+
     # Return cached JWKS if available
     if _jwks_cache is not None:
         return _jwks_cache
-    
+
     jwks_url = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
-    
+
     async with httpx.AsyncClient() as client:
         response = await client.get(jwks_url)
         response.raise_for_status()
@@ -42,7 +41,7 @@ async def fetch_jwks() -> Dict[str, Any]:
         return _jwks_cache
 
 
-def get_signing_key(jwks: Dict[str, Any], kid: str) -> Optional[Dict[str, Any]]:
+def get_signing_key(jwks: dict[str, Any], kid: str) -> dict[str, Any] | None:
     """Get signing key from JWKS by key ID."""
     for key in jwks.get("keys", []):
         if key.get("kid") == kid:
@@ -50,20 +49,20 @@ def get_signing_key(jwks: Dict[str, Any], kid: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def rsa_key_to_pem(rsa_key: Dict[str, Any]) -> str:
+def rsa_key_to_pem(rsa_key: dict[str, Any]) -> str:
     """Convert RSA key from JWK format to PEM."""
     # This is a simplified version - in production use a proper JWK to PEM library
     # For now, we'll use the key as-is with python-jose which supports JWK
     return rsa_key
 
 
-async def verify_jwt_token(token: str) -> Optional[Dict[str, Any]]:
+async def verify_jwt_token(token: str) -> dict[str, Any] | None:
     """
     Verify and decode JWT token from Keycloak.
-    
+
     Args:
         token: JWT token string
-        
+
     Returns:
         Decoded token payload or None if invalid
     """
@@ -71,17 +70,17 @@ async def verify_jwt_token(token: str) -> Optional[Dict[str, Any]]:
         # Get unverified header to extract key ID
         header = jwt.get_unverified_header(token)
         kid = header.get("kid")
-        
+
         if not kid:
             return None
-        
+
         # Fetch JWKS
         jwks = await fetch_jwks()
         signing_key = get_signing_key(jwks, kid)
-        
+
         if not signing_key:
             return None
-        
+
         # Verify token
         payload = jwt.decode(
             token,
@@ -90,9 +89,9 @@ async def verify_jwt_token(token: str) -> Optional[Dict[str, Any]]:
             audience=KEYCLOAK_CLIENT_ID,
             issuer=f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}"
         )
-        
+
         return payload
-        
+
     except (JWTError, JWTClaimsError) as e:
         import logging
         logging.error(f"JWT Verification failed: {e}")
@@ -103,25 +102,25 @@ async def verify_jwt_token(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def extract_user_from_token(token_payload: Dict[str, Any]) -> UserInToken:
+def extract_user_from_token(token_payload: dict[str, Any]) -> UserInToken:
     """
     Extract user information from JWT token payload.
-    
+
     Args:
         token_payload: Decoded JWT payload
-        
+
     Returns:
         UserInToken with user information
     """
     # Extract realm roles
     realm_access = token_payload.get("realm_access", {})
     roles = realm_access.get("roles", [])
-    
+
     # Extract client roles if present
     resource_access = token_payload.get("resource_access", {})
     client_roles = resource_access.get(KEYCLOAK_CLIENT_ID, {}).get("roles", [])
     roles.extend(client_roles)
-    
+
     return UserInToken(
         keycloak_id=token_payload.get("sub", ""),
         email=token_payload.get("email", ""),

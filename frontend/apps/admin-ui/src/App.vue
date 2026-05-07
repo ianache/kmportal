@@ -80,7 +80,7 @@
         </div>
 
         <!-- Error state -->
-        <div v-else-if="store.error" class="api-keys-error">
+        <div v-else-if="store.error && activeSection === 'api'" class="api-keys-error">
           <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="#FF3B30" stroke-width="1.5">
             <circle cx="10" cy="10" r="8"/>
             <path d="M7 7l6 6M13 7l-6 6"/>
@@ -119,19 +119,19 @@
           </div>
 
           <!-- Pagination -->
-          <div v-if="store.totalPages > 1" class="pagination">
+          <div v-if="store.apiKeysTotalPages > 1" class="pagination">
             <button 
               class="btn-ghost-sm" 
-              :disabled="store.currentPage === 1"
-              @click="store.loadApiKeys(store.currentPage - 1)"
+              :disabled="store.apiKeysPage === 1"
+              @click="store.loadApiKeys(store.apiKeysPage - 1)"
             >
               ← Previous
             </button>
-            <span class="page-info">Page {{ store.currentPage }} of {{ store.totalPages }}</span>
+            <span class="page-info">Page {{ store.apiKeysPage }} of {{ store.apiKeysTotalPages }}</span>
             <button 
               class="btn-ghost-sm" 
-              :disabled="store.currentPage === store.totalPages"
-              @click="store.loadApiKeys(store.currentPage + 1)"
+              :disabled="store.apiKeysPage === store.apiKeysTotalPages"
+              @click="store.loadApiKeys(store.apiKeysPage + 1)"
             >
               Next →
             </button>
@@ -146,6 +146,93 @@
           </svg>
           <h3>No API keys yet</h3>
           <p>Create your first API key to enable external integrations</p>
+        </div>
+      </template>
+
+      <!-- Domains Panel -->
+      <template v-else-if="activeSection === 'domains'">
+        <div class="panel-header">
+          <div>
+            <h2 class="panel-title">Domains</h2>
+            <p class="panel-subtitle">Manage knowledge domains and document scopes</p>
+          </div>
+          <div class="panel-actions-header">
+            <button class="btn-primary" @click="showCreateDomainModal = true">
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10 4v12M4 10h12"/>
+              </svg>
+              New Domain
+            </button>
+            <button class="btn-ghost-sm" @click="activeSection = null">Close</button>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div v-if="store.isLoading" class="api-keys-loading">
+          <div v-for="n in 3" :key="n" class="api-key-row skeleton">
+            <div class="skeleton-line" style="width: 30%;"></div>
+            <div class="skeleton-line" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <!-- Error state -->
+        <div v-else-if="store.error && activeSection === 'domains'" class="api-keys-error">
+          <svg width="40" height="40" viewBox="0 0 20 20" fill="none" stroke="#FF3B30" stroke-width="1.5">
+            <circle cx="10" cy="10" r="8"/>
+            <path d="M7 7l6 6M13 7l-6 6"/>
+          </svg>
+          <p>{{ store.error }}</p>
+          <button class="btn-ghost" @click="store.loadDomains()">Retry</button>
+        </div>
+
+        <!-- Domains list -->
+        <div v-else-if="store.domains.length > 0" class="api-keys-list">
+          <div v-for="domain in store.domains" :key="domain.id" class="api-key-row">
+            <div class="api-key-info">
+              <div class="api-key-header">
+                <span class="api-key-name">{{ domain.name }}</span>
+                <span class="sc-badge">{{ domain.document_count || 0 }} docs</span>
+              </div>
+              <p class="sc-desc" style="margin: 0; font-size: 12px;">{{ domain.description || 'No description' }}</p>
+              <div class="api-key-meta">
+                <span>Created: {{ formatDate(domain.created_at) }}</span>
+              </div>
+            </div>
+            <div class="panel-actions-header">
+              <button class="btn-ghost-sm" @click="manageAccess(domain)">Members</button>
+              <button class="btn-ghost-sm" @click="editDomain(domain)">Edit</button>
+              <button class="btn-revoke" @click="confirmDeleteDomain(domain)">Delete</button>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <div v-if="store.domainsTotalPages > 1" class="pagination">
+            <button 
+              class="btn-ghost-sm" 
+              :disabled="store.domainsPage === 1"
+              @click="store.loadDomains(store.domainsPage - 1)"
+            >
+              ← Previous
+            </button>
+            <span class="page-info">Page {{ store.domainsPage }} of {{ store.domainsTotalPages }}</span>
+            <button 
+              class="btn-ghost-sm" 
+              :disabled="store.domainsPage === store.domainsTotalPages"
+              @click="store.loadDomains(store.domainsPage + 1)"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else class="api-keys-empty">
+          <svg width="48" height="48" viewBox="0 0 20 20" fill="none" stroke="#86868B" stroke-width="1.5">
+            <rect x="3" y="3" width="14" height="14" rx="2"/>
+            <path d="M3 8h14M8 3v14"/>
+          </svg>
+          <h3>No domains found</h3>
+          <p>Create your first domain to start indexing knowledge</p>
         </div>
       </template>
 
@@ -295,13 +382,145 @@
       </div>
     </div>
 
+    <!-- Create/Edit Domain Modal -->
+    <div v-if="showCreateDomainModal" class="modal-overlay" @click.self="closeDomainModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>{{ domainToEdit ? 'Edit Domain' : 'Create Domain' }}</h3>
+          <button class="modal-close" @click="closeDomainModal">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSaveDomain" class="modal-form">
+          <label class="field">
+            <span class="field-label">Domain Name <span class="required">*</span></span>
+            <input 
+              v-model="domainForm.name" 
+              class="field-input" 
+              placeholder="e.g., Engineering Docs"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Description</span>
+            <textarea 
+              v-model="domainForm.description" 
+              class="field-input" 
+              placeholder="Describe the scope of this domain..."
+              rows="3"
+              style="resize: vertical; min-height: 80px;"
+            ></textarea>
+          </label>
+
+          <div v-if="store.error && activeSection === 'domains'" class="form-error">
+            {{ store.error }}
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-ghost" @click="closeDomainModal">Cancel</button>
+            <button type="submit" class="btn-primary" :disabled="store.isLoading || !domainForm.name.trim()">
+              {{ store.isLoading ? 'Saving...' : (domainToEdit ? 'Update Domain' : 'Create Domain') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Delete Domain Confirmation Modal -->
+    <div v-if="showDeleteDomainModal" class="modal-overlay" @click.self="showDeleteDomainModal = false">
+      <div class="modal modal-confirm">
+        <div class="modal-header">
+          <h3>Delete Domain</h3>
+        </div>
+        <p class="confirm-text">
+          Are you sure you want to delete "<strong>{{ domainToDelete?.name }}</strong>"? 
+          This will permanently remove all associated documents and embeddings. This action cannot be undone.
+        </p>
+        <div class="modal-actions">
+          <button class="btn-ghost" @click="showDeleteDomainModal = false">Cancel</button>
+          <button class="btn-danger" :disabled="store.isLoading" @click="handleDeleteDomain">
+            {{ store.isLoading ? 'Deleting...' : 'Delete Domain' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Domain Access Modal -->
+    <div v-if="showAccessModal" class="modal-overlay" @click.self="showAccessModal = false">
+      <div class="modal" style="max-width: 600px;">
+        <div class="modal-header">
+          <h3>Manage Access: {{ currentDomainForAccess?.name }}</h3>
+          <button class="modal-close" @click="showAccessModal = false">✕</button>
+        </div>
+
+        <div class="modal-form" style="padding-bottom: 0;">
+          <h4 class="field-label">Grant Access</h4>
+          <div style="display: flex; gap: 10px; align-items: flex-end;">
+            <label class="field" style="flex: 1;">
+              <span class="field-label">User ID / Email</span>
+              <input 
+                v-model="newAccessForm.user_id" 
+                class="field-input" 
+                placeholder="UUID or email"
+              />
+            </label>
+            <label class="field">
+              <span class="field-label">Role</span>
+              <select v-model="newAccessForm.role" class="field-input" style="min-width: 120px;">
+                <option value="reader">Reader</option>
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+            <button 
+              class="btn-primary" 
+              style="height: 38px; margin-bottom: 2px;"
+              :disabled="store.isLoading || !newAccessForm.user_id"
+              @click="handleGrantAccess"
+            >
+              Add
+            </button>
+          </div>
+          <div v-if="store.error && activeSection === 'domains'" class="form-error" style="margin-top: 10px;">
+            {{ store.error }}
+          </div>
+        </div>
+
+        <div style="padding: 24px;">
+          <h4 class="field-label" style="margin-bottom: 12px;">Current Members</h4>
+          <div class="api-keys-list" style="max-height: 300px; overflow-y: auto;">
+            <div v-for="grant in accessGrants" :key="grant.id" class="api-key-row" style="padding: 10px 14px;">
+              <div class="api-key-info">
+                <span class="api-key-name">{{ grant.user?.email || grant.user_id }}</span>
+                <span class="api-key-meta">Role: {{ grant.role }} • Granted: {{ formatDate(grant.granted_at) }}</span>
+              </div>
+              <button 
+                class="btn-revoke" 
+                style="padding: 4px 10px;"
+                :disabled="store.isLoading"
+                @click="handleRevokeAccess(grant.user_id)"
+              >
+                Revoke
+              </button>
+            </div>
+            <div v-if="accessGrants.length === 0" class="api-keys-empty" style="padding: 20px;">
+              <p>No extra members assigned.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn-ghost" @click="showAccessModal = false">Done</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAdminStore } from './stores/admin'
-import type { APIKey, SettingSection } from './types'
+import type { APIKey, SettingSection, Domain, DomainAccessResponse } from './types'
 
 const store = useAdminStore()
 const activeSection = ref<string | null>(null)
@@ -312,12 +531,31 @@ const showRevokeModal = ref(false)
 const keyToRevoke = ref<APIKey | null>(null)
 const copied = ref(false)
 
+const showCreateDomainModal = ref(false)
+const showDeleteDomainModal = ref(false)
+const domainToEdit = ref<Domain | null>(null)
+const domainToDelete = ref<Domain | null>(null)
+
+const showAccessModal = ref(false)
+const currentDomainForAccess = ref<Domain | null>(null)
+const accessGrants = ref<DomainAccessResponse[]>([])
+const newAccessForm = ref({
+  user_id: '',
+  role: 'reader' as 'admin' | 'reader'
+})
+
 // New key form
 const newKeyForm = ref({
   name: '',
   scopes: ['read'],
   rate_limit: 1000,
   expires_at: '',
+})
+
+// New domain form
+const domainForm = ref({
+  name: '',
+  description: '',
 })
 
 // Stats
@@ -329,10 +567,10 @@ const stats = computed(() => [
     iconPath: '<path d="M15 11a3 3 0 11-5.7-1.3L3 6V3h3l1 1 1-1h2l.7 5z"/><path d="M9 13l3-3"/>' 
   },
   { 
-    label: 'Total Keys', 
-    value: store.totalApiKeys.toString(), 
+    label: 'Total Domains', 
+    value: store.totalDomains.toString(), 
     color: '#007AFF', 
-    iconPath: '<path d="M13 6a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M5 16a6 6 0 0110 0"/>' 
+    iconPath: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 8h14M8 3v14"/>' 
   },
   { 
     label: 'Storage Used', 
@@ -358,6 +596,16 @@ const settingSections = ref<SettingSection[]>([
     items: 4,
     badge: computed(() => store.activeApiKeys.length > 0 ? `${store.activeApiKeys.length} active` : null) as unknown as string | null,
     iconPath: '<path d="M15 11a3 3 0 11-5.7-1.3L3 6V3h3l1 1 1-1h2l.7 5z"/><path d="M9 13l3-3"/>',
+    settingItems: [],
+  },
+  {
+    id: 'domains',
+    title: 'Domains',
+    description: 'Manage knowledge domains and access control.',
+    color: '#007AFF',
+    items: 5,
+    badge: computed(() => store.totalDomains > 0 ? `${store.totalDomains} domains` : null) as unknown as string | null,
+    iconPath: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 8h14M8 3v14"/>',
     settingItems: [],
   },
   {
@@ -405,23 +653,24 @@ const activeSectionData = computed(() =>
   activeSection.value ? settingSections.value.find(s => s.id === activeSection.value) : null
 )
 
-// Load API keys on mount
+// Load data on mount
 onMounted(() => {
   store.loadApiKeys()
+  store.loadDomains()
 })
 
-// Create key
+// --- API Key Handlers ---
+
 async function handleCreateKey() {
   const success = await store.createApiKey({
     name: newKeyForm.value.name,
     scopes: newKeyForm.value.scopes,
-    domain_ids: [], // Could add domain selection
+    domain_ids: [],
     rate_limit: newKeyForm.value.rate_limit,
     expires_at: newKeyForm.value.expires_at || null,
   })
 
   if (success) {
-    // Reset form
     newKeyForm.value = {
       name: '',
       scopes: ['read'],
@@ -431,7 +680,6 @@ async function handleCreateKey() {
   }
 }
 
-// Revoke key
 function confirmRevoke(key: APIKey) {
   keyToRevoke.value = key
   showRevokeModal.value = true
@@ -447,7 +695,90 @@ async function handleRevoke() {
   }
 }
 
-// Copy key to clipboard
+// --- Domain Handlers ---
+
+function editDomain(domain: Domain) {
+  domainToEdit.value = domain
+  domainForm.value = {
+    name: domain.name,
+    description: domain.description || '',
+  }
+  showCreateDomainModal.value = true
+}
+
+async function handleSaveDomain() {
+  let success = false
+  if (domainToEdit.value) {
+    success = await store.updateDomain(domainToEdit.value.id, {
+      name: domainForm.value.name,
+      description: domainForm.value.description,
+    })
+  } else {
+    success = await store.createDomain({
+      name: domainForm.value.name,
+      description: domainForm.value.description,
+    })
+  }
+
+  if (success) {
+    closeDomainModal()
+  }
+}
+
+function confirmDeleteDomain(domain: Domain) {
+  domainToDelete.value = domain
+  showDeleteDomainModal.value = true
+}
+
+async function handleDeleteDomain() {
+  if (!domainToDelete.value) return
+  const success = await store.deleteDomain(domainToDelete.value.id)
+  if (success) {
+    showDeleteDomainModal.value = false
+    domainToDelete.value = null
+  }
+}
+
+// --- Domain Access Handlers ---
+
+async function manageAccess(domain: Domain) {
+  currentDomainForAccess.value = domain
+  accessGrants.value = await store.loadDomainAccess(domain.id)
+  showAccessModal.value = true
+}
+
+async function handleGrantAccess() {
+  if (!currentDomainForAccess.value || !newAccessForm.value.user_id) return
+  
+  const success = await store.grantDomainAccess(currentDomainForAccess.value.id, {
+    user_id: newAccessForm.value.user_id,
+    role: newAccessForm.value.role
+  })
+  
+  if (success) {
+    accessGrants.value = await store.loadDomainAccess(currentDomainForAccess.value.id)
+    newAccessForm.value.user_id = ''
+  }
+}
+
+async function handleRevokeAccess(userId: string) {
+  if (!currentDomainForAccess.value) return
+  
+  const success = await store.revokeDomainAccess(currentDomainForAccess.value.id, userId)
+  if (success) {
+    accessGrants.value = await store.loadDomainAccess(currentDomainForAccess.value.id)
+  }
+}
+
+function closeDomainModal() {
+  showCreateDomainModal.value = false
+  domainToEdit.value = null
+  domainForm.value = { name: '', description: '' }
+  store.clearError()
+}
+
+// --- Utilities ---
+
 async function copyKey() {
   if (!store.newlyCreatedKey) return
   await navigator.clipboard.writeText(store.newlyCreatedKey)
@@ -455,14 +786,12 @@ async function copyKey() {
   setTimeout(() => copied.value = false, 2000)
 }
 
-// Close modal and reset
 function closeModal() {
   showCreateKeyModal.value = false
   store.clearNewlyCreatedKey()
   copied.value = false
 }
 
-// Format date
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
   return date.toLocaleDateString('en-US', { 

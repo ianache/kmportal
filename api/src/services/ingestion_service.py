@@ -1,17 +1,15 @@
 """Ingestion service - orchestrates document processing pipeline."""
 
-import uuid
 from datetime import datetime
-from typing import Optional, List, BinaryIO
 from uuid import UUID
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
-from models import Document, IngestionJob, DocumentStatus, Domain
+from ingestion.chunking import ChunkingConfig, chunk_document
+from ingestion.extractors import TextExtractionError, UnsupportedFormatError, extract_text
+from models import Document, DocumentStatus, Domain, IngestionJob
 from schemas import IngestionResponse, IngestionStatusResponse
-from ingestion.extractors import extract_text, UnsupportedFormatError, TextExtractionError
-from ingestion.chunking import chunk_document, ChunkingConfig
 
 
 class IngestionError(Exception):
@@ -21,7 +19,7 @@ class IngestionError(Exception):
 
 class IngestionService:
     """Service for document ingestion pipeline."""
-    
+
     def __init__(
         self,
         db: AsyncSession,
@@ -31,19 +29,19 @@ class IngestionService:
         self.db = db
         self.vector_store = vector_store
         self.embedding_provider = embedding_provider
-    
+
     async def create_ingestion_job(
         self,
         domain_id: UUID,
         title: str,
         source_type: str,
-        source_uri: Optional[str] = None,
-        file_type: Optional[str] = None,
+        source_uri: str | None = None,
+        file_type: str | None = None,
         metadata: dict = None
     ) -> tuple[Document, IngestionJob]:
         """
         Create a new document and ingestion job.
-        
+
         Args:
             domain_id: Domain ID
             title: Document title
@@ -51,7 +49,7 @@ class IngestionService:
             source_uri: Optional source URI
             file_type: Optional file MIME type
             metadata: Optional document metadata
-            
+
         Returns:
             Tuple of (Document, IngestionJob)
         """
@@ -72,10 +70,10 @@ class IngestionService:
             metadata_=metadata or {},
             chunk_count=0
         )
-        
+
         self.db.add(document)
         await self.db.flush()  # Get document ID
-        
+
         # Create ingestion job
         job = IngestionJob(
             document_id=document.id,
@@ -83,14 +81,14 @@ class IngestionService:
             status=DocumentStatus.PENDING,
             progress=0
         )
-        
+
         self.db.add(job)
         await self.db.commit()
         await self.db.refresh(document)
         await self.db.refresh(job)
-        
+
         return document, job
-    
+
     async def process_document(
         self,
         document_id: UUID,
@@ -99,14 +97,14 @@ class IngestionService:
     ) -> None:
         """
         Process a document through the full pipeline.
-        
+
         Pipeline steps:
         1. Extract text from file
         2. Chunk content
         3. Generate embeddings
         4. Store in vector database
         5. Update document status
-        
+
         Args:
             document_id: Document ID
             file_content: Raw file bytes
@@ -117,37 +115,37 @@ class IngestionService:
             select(Document).where(Document.id == document_id)
         )
         document = result.scalar_one_or_none()
-        
+
         if not document:
             raise IngestionError(f"Document {document_id} not found")
-        
+
         # Get job
         result = await self.db.execute(
             select(IngestionJob).where(IngestionJob.document_id == document_id)
         )
         job = result.scalar_one_or_none()
-        
+
         if not job:
             raise IngestionError(f"Ingestion job for document {document_id} not found")
-        
+
         try:
             # Update job status
             job.status = DocumentStatus.PROCESSING
             job.started_at = datetime.utcnow()
             job.progress = 10
             await self.db.commit()
-            
+
             # Step 1: Extract text
             text = extract_text(file_content, filename)
             job.progress = 30
             await self.db.commit()
-            
+
             # Step 2: Get domain for embedding config
             result = await self.db.execute(
                 select(Domain).where(Domain.id == document.domain_id)
             )
             domain = result.scalar_one()
-            
+
             # Step 3: Chunk content
             config = ChunkingConfig(
                 chunk_size=1000,
@@ -157,12 +155,12 @@ class IngestionService:
             chunks = chunk_document(text, config)
             job.progress = 50
             await self.db.commit()
-            
+
             # Step 4: Generate embeddings and store (if providers available)
             if self.embedding_provider and self.vector_store:
                 # Get collection name (domain-based)
                 collection_name = str(domain.id)
-                
+
                 # Ensure collection exists
                 try:
                     await self.vector_store.create_collection(
@@ -172,22 +170,22 @@ class IngestionService:
                 except Exception:
                     # Collection might already exist
                     pass
-                
+
                 # Process chunks in batches
                 batch_size = 10
                 total_chunks = len(chunks)
-                
+
                 for i in range(0, total_chunks, batch_size):
                     batch = chunks[i:i + batch_size]
                     batch_texts = [chunk.text for chunk in batch]
-                    
+
                     # Generate embeddings
                     embeddings = await self.embedding_provider.embed(batch_texts)
-                    
+
                     # Prepare chunks for vector store
                     from ports.vector_store import Chunk as VectorChunk
                     vector_chunks = []
-                    for j, (chunk, embedding) in enumerate(zip(batch, embeddings)):
+                    for _j, (chunk, embedding) in enumerate(zip(batch, embeddings, strict=False)):
                         chunk_id = f"{document.id}_{chunk.index}"
                         vector_chunks.append(VectorChunk(
                             id=chunk_id,
@@ -200,29 +198,29 @@ class IngestionService:
                                 "title": document.title
                             }
                         ))
-                    
+
                     # Store in vector database
                     await self.vector_store.upsert(
                         collection=collection_name,
                         chunks=vector_chunks
                     )
-                    
+
                     # Update progress
                     progress = 50 + int((i + len(batch)) / total_chunks * 40)
                     job.progress = min(progress, 90)
                     await self.db.commit()
-            
+
             # Step 5: Update document
             document.status = DocumentStatus.DONE
             document.chunk_count = len(chunks)
-            
+
             # Update job
             job.status = DocumentStatus.DONE
             job.progress = 100
             job.completed_at = datetime.utcnow()
-            
+
             await self.db.commit()
-            
+
         except UnsupportedFormatError as e:
             await self._fail_job(document, job, f"Unsupported format: {str(e)}")
             raise IngestionError(f"Unsupported format: {str(e)}")
@@ -232,7 +230,7 @@ class IngestionService:
         except Exception as e:
             await self._fail_job(document, job, f"Processing error: {str(e)}")
             raise IngestionError(f"Failed to process document: {str(e)}")
-    
+
     async def _fail_job(
         self,
         document: Document,
@@ -242,13 +240,13 @@ class IngestionService:
         """Mark document and job as failed."""
         document.status = DocumentStatus.FAILED
         document.error_message = error_message
-        
+
         job.status = DocumentStatus.FAILED
         job.error_message = error_message
         job.completed_at = datetime.utcnow()
-        
+
         await self.db.commit()
-    
+
     async def retry_job(self, job_id: UUID) -> IngestionJob:
         """
         Reset a failed job to pending so it can be reprocessed.
@@ -283,15 +281,18 @@ class IngestionService:
 
     async def list_jobs(
         self,
-        domain_id: Optional[UUID] = None,
-        status: Optional[DocumentStatus] = None,
+        domain_id: UUID | list[UUID] | None = None,
+        status: DocumentStatus | None = None,
         page: int = 1,
         page_size: int = 20,
-    ) -> tuple[List[IngestionJob], int]:
+    ) -> tuple[list[IngestionJob], int]:
         """List ingestion jobs with optional filters."""
         conditions = []
         if domain_id is not None:
-            conditions.append(IngestionJob.domain_id == domain_id)
+            if isinstance(domain_id, list):
+                conditions.append(IngestionJob.domain_id.in_(domain_id))
+            else:
+                conditions.append(IngestionJob.domain_id == domain_id)
         if status is not None:
             conditions.append(IngestionJob.status == status)
 
@@ -309,14 +310,14 @@ class IngestionService:
         )
         return list(result.scalars().all()), total
 
-    async def get_job_status(self, job_id: UUID) -> Optional[IngestionJob]:
+    async def get_job_status(self, job_id: UUID) -> IngestionJob | None:
         """Get ingestion job status."""
         result = await self.db.execute(
             select(IngestionJob).where(IngestionJob.id == job_id)
         )
         return result.scalar_one_or_none()
-    
-    async def get_document_status(self, document_id: UUID) -> Optional[Document]:
+
+    async def get_document_status(self, document_id: UUID) -> Document | None:
         """Get document processing status."""
         result = await self.db.execute(
             select(Document).where(Document.id == document_id)

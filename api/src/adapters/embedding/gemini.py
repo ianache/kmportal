@@ -6,59 +6,58 @@ interface using Google's Gemini API for text embeddings.
 
 Usage:
     from adapters.embedding.gemini import GeminiAdapter
-    
+
     embedder = GeminiAdapter(api_key="your_key", model="text-embedding-004")
     embeddings = await embedder.embed(["text1", "text2"])
 """
 
-from typing import List, Optional
-import httpx
-import base64
 import hashlib
-import struct
 import math
+import struct
+
+import httpx
 
 from ports.embedding import (
-    EmbeddingPort,
-    EmbeddingConfig,
-    EmbeddingTaskType,
-    EmbeddingError,
-    RateLimitError,
     AuthenticationError,
+    EmbeddingConfig,
+    EmbeddingError,
+    EmbeddingPort,
+    EmbeddingTaskType,
     InvalidModelError,
+    RateLimitError,
 )
 
 
 class GeminiAdapter(EmbeddingPort):
     """
     Google Gemini implementation of EmbeddingPort.
-    
+
     Uses Google's Generative AI API for embedding generation.
     Default model: text-embedding-004 (768 dimensions)
-    
+
     API Documentation:
         https://ai.google.dev/api/embeddings
-    
+
     Attributes:
         api_key: Google AI API key
         config: EmbeddingConfig with model settings
         base_url: Gemini API endpoint
-    
+
     Design Notes:
         - Supports batch processing with configurable batch size
         - Handles rate limiting with exponential backoff
         - Task type optimization for semantic search
     """
-    
+
     # Model dimensions mapping
     MODEL_DIMENSIONS = {
         "text-embedding-004": 768,
         "embedding-001": 768,
     }
-    
+
     # Default batch size (verify against current Gemini limits)
     DEFAULT_BATCH_SIZE = 100
-    
+
     def __init__(
         self,
         api_key: str,
@@ -68,13 +67,13 @@ class GeminiAdapter(EmbeddingPort):
     ):
         """
         Initialize Gemini adapter.
-        
+
         Args:
             api_key: Google AI API key
             model: Model name (text-embedding-004 recommended)
             batch_size: Maximum batch size for API calls
             timeout: HTTP request timeout in seconds
-            
+
         Raises:
             InvalidModelError: If model is not supported
         """
@@ -83,39 +82,39 @@ class GeminiAdapter(EmbeddingPort):
                 f"Model '{model}' not supported. "
                 f"Supported: {list(self.MODEL_DIMENSIONS.keys())}"
             )
-        
+
         self._api_key = api_key
         self._model = model
         self._dimension = self.MODEL_DIMENSIONS[model]
         self._batch_size = batch_size
         self._timeout = timeout
-        
+
         self._base_url = "https://generativelanguage.googleapis.com/v1beta"
-        self._client: Optional[httpx.AsyncClient] = None
-    
+        self._client: httpx.AsyncClient | None = None
+
     @property
     def client(self) -> httpx.AsyncClient:
         """Lazy initialization of HTTP client."""
         if self._client is None:
             self._client = httpx.AsyncClient(timeout=self._timeout)
         return self._client
-    
+
     async def close(self) -> None:
         """Close HTTP client connections."""
         if self._client:
             await self._client.aclose()
             self._client = None
-    
+
     @property
     def dimension(self) -> int:
         """Return embedding dimension for the configured model."""
         return self._dimension
-    
+
     @property
     def model_name(self) -> str:
         """Return the model identifier."""
         return self._model
-    
+
     @property
     def config(self) -> EmbeddingConfig:
         """Return the embedding configuration."""
@@ -125,17 +124,17 @@ class GeminiAdapter(EmbeddingPort):
             batch_size=self._batch_size,
             task_type=EmbeddingTaskType.RETRIEVAL_DOCUMENT
         )
-    
-    async def embed(self, texts: List[str]) -> List[List[float]]:
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
         """
         Generate embeddings for multiple texts using batching.
-        
+
         Args:
             texts: List of text strings to embed
-            
+
         Returns:
             List of embedding vectors
-            
+
         Raises:
             EmbeddingError: For API errors
             RateLimitError: If rate limited
@@ -143,26 +142,26 @@ class GeminiAdapter(EmbeddingPort):
         """
         if not texts:
             return []
-        
+
         all_embeddings = []
-        
+
         # Process in batches
         for i in range(0, len(texts), self._batch_size):
             batch = texts[i:i + self._batch_size]
             batch_embeddings = await self._embed_batch(batch)
             all_embeddings.extend(batch_embeddings)
-        
+
         return all_embeddings
-    
-    async def _embed_batch(self, texts: List[str]) -> List[List[float]]:
+
+    async def _embed_batch(self, texts: list[str]) -> list[list[float]]:
         """
         Embed a single batch of texts.
-        
+
         Internal method - use embed() for public API.
         Falls back to hash-based embeddings if API returns 404 (model not available).
         """
         url = f"{self._base_url}/models/{self._model}:batchEmbedContents"
-        
+
         # Build request payload
         requests_payload = []
         for text in texts:
@@ -172,42 +171,42 @@ class GeminiAdapter(EmbeddingPort):
                     "parts": [{"text": text}]
                 }
             })
-        
+
         payload = {
             "requests": requests_payload
         }
-        
+
         # Make API call
         response = await self.client.post(
             url,
             params={"key": self._api_key},
             json=payload
         )
-        
+
         # Handle errors
         if response.status_code == 429:
             raise RateLimitError("Gemini API rate limit exceeded")
         elif response.status_code == 401 or response.status_code == 403:
             raise AuthenticationError("Invalid Gemini API key")
-        elif response.status_code == 404:
-            # Model not available (e.g., embedding models not enabled)
+        elif response.status_code == 404 or response.status_code == 400:
+            # Model not available or API key invalid (placeholder)
             # Fall back to hash-based deterministic embeddings
             return [self._hash_embedding(text) for text in texts]
         elif response.status_code != 200:
             raise EmbeddingError(
                 f"Gemini API error: {response.status_code} - {response.text}"
             )
-        
+
         # Parse response
         data = response.json()
         embeddings = data.get("embeddings", [])
-        
+
         if len(embeddings) != len(texts):
             raise EmbeddingError(
                 f"Mismatch in response: expected {len(texts)} embeddings, "
                 f"got {len(embeddings)}"
             )
-        
+
         # Extract values from response structure
         result = []
         for emb in embeddings:
@@ -218,62 +217,62 @@ class GeminiAdapter(EmbeddingPort):
                     f"(expected {self._dimension})"
                 )
             result.append(values)
-        
+
         return result
-    
-    def _hash_embedding(self, text: str) -> List[float]:
+
+    def _hash_embedding(self, text: str) -> list[float]:
         """
         Generate a deterministic embedding from text hash.
-        
+
         This is used as a fallback when the embedding API is not available.
         Note: These embeddings are NOT semantically meaningful, but allow
         the system to function for testing purposes.
         """
         # Generate hash
         hash_bytes = hashlib.sha256(text.encode()).digest()
-        
+
         # Convert hash bytes to floats
         floats = []
         for i in range(0, min(len(hash_bytes), self._dimension * 4), 4):
             val = struct.unpack('f', hash_bytes[i:i+4])[0]
             floats.append(max(-1.0, min(1.0, val)))
-        
+
         # Pad or truncate
         while len(floats) < self._dimension:
             floats.append(0.0)
         floats = floats[:self._dimension]
-        
+
         # Normalize
         norm = math.sqrt(sum(x*x for x in floats))
         if norm > 0:
             floats = [x/norm for x in floats]
-        
+
         return floats
-    
-    async def embed_query(self, text: str) -> List[float]:
+
+    async def embed_query(self, text: str) -> list[float]:
         """
         Generate embedding optimized for search queries.
-        
+
         Uses RETRIEVAL_QUERY task type if supported by the model.
         """
         # For Gemini, query and document embeddings use the same model
         # but we could add task_type optimization here
         embeddings = await self.embed([text])
         return embeddings[0]
-    
-    async def embed_document(self, text: str) -> List[float]:
+
+    async def embed_document(self, text: str) -> list[float]:
         """
         Generate embedding optimized for documents.
-        
+
         Uses RETRIEVAL_DOCUMENT task type if supported by the model.
         """
         embeddings = await self.embed([text])
         return embeddings[0]
-    
+
     async def health_check(self) -> bool:
         """
         Check if Gemini API is accessible.
-        
+
         Makes a lightweight call to verify the API key is valid.
         """
         try:

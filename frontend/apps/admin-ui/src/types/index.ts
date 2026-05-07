@@ -36,12 +36,51 @@ export interface APIKeyListResponse {
   pages: number
 }
 
-// ==================== Domain Types (for dropdown) ====================
+// ==================== Domain Types ====================
 
 export interface Domain {
   id: string
   name: string
   description: string | null
+  owner_id: string
+  created_at: string
+  updated_at: string
+  document_count?: number
+}
+
+export interface DomainCreate {
+  name: string
+  description: string | null
+}
+
+export interface DomainUpdate {
+  name?: string
+  description?: string | null
+}
+
+export interface DomainListResponse {
+  items: Domain[]
+  total: number
+  page: number
+  page_size: number
+  pages: number
+}
+
+export interface DomainAccess {
+  id: string
+  domain_id: string
+  user_id: string
+  role: 'admin' | 'reader'
+  granted_at: string
+}
+
+export interface DomainAccessGrant {
+  user_id: string
+  role: 'admin' | 'reader'
+}
+
+export interface DomainAccessResponse extends DomainAccess {
+  user?: { id: string; email: string; full_name?: string | null }
 }
 
 // ==================== Stats Types ====================

@@ -7,13 +7,12 @@ and Prometheus-compatible metrics endpoint.
 import time
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.database import get_db, AsyncSessionLocal
 from core.logging_config import get_logger
+from db.database import AsyncSessionLocal
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["Health"])
@@ -53,26 +52,26 @@ class MetricsResponse(BaseModel):
 async def check_database() -> HealthCheck:
     """Check database connectivity."""
     start_time = time.time()
-    
+
     try:
         async with AsyncSessionLocal() as session:
             # Simple query to verify connection
             result = await session.execute(text("SELECT 1"))
             await result.scalar()
-        
+
         response_time = (time.time() - start_time) * 1000
-        
+
         return HealthCheck(
             name="database",
             status="healthy",
             response_time_ms=round(response_time, 2),
             message="Database connection successful"
         )
-        
+
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
         logger.error("health_check_database_failed", error=str(e))
-        
+
         return HealthCheck(
             name="database",
             status="unhealthy",
@@ -84,18 +83,18 @@ async def check_database() -> HealthCheck:
 async def check_vector_store() -> HealthCheck:
     """Check vector store connectivity."""
     start_time = time.time()
-    
+
     try:
         # Check if vector store adapter is configured
         from adapters import get_vector_store_adapter
-        
+
         adapter = await get_vector_store_adapter()
-        
+
         # Try to get collections count as health check
         collections = await adapter.list_collections()
-        
+
         response_time = (time.time() - start_time) * 1000
-        
+
         return HealthCheck(
             name="vector_store",
             status="healthy",
@@ -103,11 +102,11 @@ async def check_vector_store() -> HealthCheck:
             message="Vector store connection successful",
             details={"collections_count": len(collections)}
         )
-        
+
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
         logger.error("health_check_vector_store_failed", error=str(e))
-        
+
         return HealthCheck(
             name="vector_store",
             status="degraded",  # Degraded, not unhealthy - app can still work
@@ -119,15 +118,15 @@ async def check_vector_store() -> HealthCheck:
 async def check_embedding_provider() -> HealthCheck:
     """Check embedding provider connectivity."""
     start_time = time.time()
-    
+
     try:
         from adapters import get_embedding_adapter
-        
+
         adapter = await get_embedding_adapter()
-        
+
         # Get configuration info (don't actually call API to save costs)
         response_time = (time.time() - start_time) * 1000
-        
+
         return HealthCheck(
             name="embedding_provider",
             status="healthy",
@@ -138,11 +137,11 @@ async def check_embedding_provider() -> HealthCheck:
                 "dimension": adapter.dimension
             }
         )
-        
+
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
         logger.error("health_check_embedding_failed", error=str(e))
-        
+
         return HealthCheck(
             name="embedding_provider",
             status="degraded",
@@ -178,7 +177,7 @@ async def basic_health() -> HealthResponse:
 async def detailed_health() -> HealthResponse:
     """Detailed health check for monitoring systems."""
     import os
-    
+
     # Run all health checks concurrently
     checks = await asyncio.gather(
         check_database(),
@@ -186,7 +185,7 @@ async def detailed_health() -> HealthResponse:
         check_embedding_provider(),
         return_exceptions=True
     )
-    
+
     # Filter out exceptions and convert to HealthCheck objects
     valid_checks = []
     for check in checks:
@@ -199,7 +198,7 @@ async def detailed_health() -> HealthResponse:
             ))
         else:
             valid_checks.append(check)
-    
+
     # Determine overall status
     if any(c.status == "unhealthy" for c in valid_checks):
         overall_status = "unhealthy"
@@ -207,7 +206,7 @@ async def detailed_health() -> HealthResponse:
         overall_status = "degraded"
     else:
         overall_status = "healthy"
-    
+
     return HealthResponse(
         status=overall_status,
         version=os.getenv("VERSION", "0.2.0"),
@@ -230,9 +229,9 @@ async def readiness_probe() -> dict[str, str]:
     try:
         async with AsyncSessionLocal() as session:
             await session.execute(text("SELECT 1"))
-        
+
         return {"status": "ready"}
-        
+
     except Exception as e:
         logger.error("readiness_check_failed", error=str(e))
         raise HTTPException(
@@ -262,7 +261,7 @@ async def liveness_probe() -> dict[str, str]:
 async def prometheus_metrics() -> MetricsResponse:
     """Prometheus metrics endpoint."""
     global _request_count, _request_duration_total, _error_count
-    
+
     # Build Prometheus-style metrics
     metrics_lines = [
         "# HELP http_requests_total Total HTTP requests",
@@ -281,7 +280,7 @@ async def prometheus_metrics() -> MetricsResponse:
         "# TYPE process_uptime_seconds gauge",
         f'process_uptime_seconds{{service="knowledge-api"}} {time.time() - _last_check_time}',
     ]
-    
+
     return MetricsResponse(metrics="\n".join(metrics_lines))
 
 

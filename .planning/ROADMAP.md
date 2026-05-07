@@ -12,13 +12,13 @@ Greenfield internal knowledge platform built as a 10-phase layered pipeline. Pha
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Bootstrap infrastructure** - Monorepo, Docker Compose, port abstractions, and env configuration
-- [ ] **Phase 2: Core API foundation** - FastAPI service with auth (Keycloak JWT), domain CRUD, and OpenAPI docs
-- [ ] **Phase 3: Document ingestion pipeline** - Multi-source ingestion (local, REST, S3, Kafka, RabbitMQ), chunking, and embedding generation
-- [ ] **Phase 4: Search engine** - Semantic, hybrid, and filtered search over domain-scoped embeddings
-- [ ] **Phase 5: BFF layer** - Node.js BFF with OAuth2 proxy, REST API, WebSocket, and Redis cache
-- [ ] **Phase 6: Frontend shell** - Vue 3 Module Federation host with auth state, global layout, and design system
-- [ ] **Phase 7: Core micro UIs** - Search, domain explorer, ingestion status, and real-time notifications micro UIs
+- [x] **Phase 1: Bootstrap infrastructure** - Monorepo, Docker Compose, port abstractions, and env configuration
+- [x] **Phase 2: Core API foundation** - FastAPI service with auth (Keycloak JWT), domain CRUD, and OpenAPI docs
+- [x] **Phase 3: Document ingestion pipeline** - Multi-source ingestion (local, REST, S3, Kafka, RabbitMQ), chunking, and embedding generation
+- [x] **Phase 4: Search engine** - Semantic, hybrid, and filtered search over domain-scoped embeddings
+- [x] **Phase 5: BFF layer** - Node.js BFF with OAuth2 proxy, REST API, WebSocket, and Redis cache
+- [x] **Phase 6: Frontend shell** - Vue 3 Module Federation host with auth state, global layout, and design system
+- [x] **Phase 7: Core micro UIs** - Search, domain explorer, ingestion status, and real-time notifications micro UIs
 - [ ] **Phase 8: Admin and API keys** - Admin micro UIs for domain/user management and API key lifecycle
 - [ ] **Phase 9: MCP integration** - FastMCP server exposing search and domain tools to AI agents via API Keys
 - [ ] **Phase 10: Production hardening** - Structured logging, observability, Docker Compose finalization, and deployment validation

@@ -5,14 +5,25 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { apiKeysApi, ApiKeyError } from '../services/apiKeysApi'
-import type { APIKey, APIKeyCreate, APIKeyCreateResponse, APIKeyListResponse } from '../types'
+import { apiKeysApi } from '../services/apiKeysApi'
+import { domainsApi } from '../services/domainsApi'
+import type { 
+  APIKey, APIKeyCreate, APIKeyCreateResponse, APIKeyListResponse,
+  Domain, DomainCreate, DomainUpdate, DomainAccessGrant, DomainAccessResponse
+} from '../types'
 
 export const useAdminStore = defineStore('admin', () => {
   // ==================== State ====================
+  // API Keys
   const apiKeys = ref<APIKey[]>([])
   const totalApiKeys = ref(0)
-  const currentPage = ref(1)
+  const apiKeysPage = ref(1)
+  
+  // Domains
+  const domains = ref<Domain[]>([])
+  const totalDomains = ref(0)
+  const domainsPage = ref(1)
+  
   const pageSize = ref(20)
   const isLoading = ref(false)
   const error = ref<string | null>(null)
@@ -29,12 +40,18 @@ export const useAdminStore = defineStore('admin', () => {
     apiKeys.value.filter(key => !key.is_active)
   )
   
-  const totalPages = computed(() => 
+  const apiKeysTotalPages = computed(() => 
     Math.ceil(totalApiKeys.value / pageSize.value)
+  )
+
+  const domainsTotalPages = computed(() => 
+    Math.ceil(totalDomains.value / pageSize.value)
   )
 
   // ==================== Actions ====================
   
+  // --- API Keys Actions ---
+
   /**
    * Load API keys from the server
    */
@@ -46,13 +63,9 @@ export const useAdminStore = defineStore('admin', () => {
       const response = await apiKeysApi.listApiKeys(page, pageSize.value)
       apiKeys.value = response.items
       totalApiKeys.value = response.total
-      currentPage.value = response.page
+      apiKeysPage.value = response.page
     } catch (err) {
-      if (err instanceof ApiKeyError) {
-        error.value = err.message
-      } else {
-        error.value = 'Failed to load API keys'
-      }
+      error.value = err instanceof Error ? err.message : 'Failed to load API keys'
       console.error('Error loading API keys:', err)
     } finally {
       isLoading.value = false
@@ -74,11 +87,7 @@ export const useAdminStore = defineStore('admin', () => {
       newlyCreatedKey.value = response.key // Save the plain key (shown only once)
       return true
     } catch (err) {
-      if (err instanceof ApiKeyError) {
-        error.value = err.message
-      } else {
-        error.value = 'Failed to create API key'
-      }
+      error.value = err instanceof Error ? err.message : 'Failed to create API key'
       console.error('Error creating API key:', err)
       return false
     } finally {
@@ -102,17 +111,160 @@ export const useAdminStore = defineStore('admin', () => {
       }
       return true
     } catch (err) {
-      if (err instanceof ApiKeyError) {
-        error.value = err.message
-      } else {
-        error.value = 'Failed to revoke API key'
-      }
+      error.value = err instanceof Error ? err.message : 'Failed to revoke API key'
       console.error('Error revoking API key:', err)
       return false
     } finally {
       isLoading.value = false
     }
   }
+
+  // --- Domains Actions ---
+
+  /**
+   * Load domains from the server
+   */
+  async function loadDomains(page: number = 1): Promise<void> {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      const response = await domainsApi.listDomains(page, pageSize.value)
+      domains.value = response.items
+      totalDomains.value = response.total
+      domainsPage.value = response.page
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load domains'
+      console.error('Error loading domains:', err)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Create a new domain
+   */
+  async function createDomain(data: DomainCreate): Promise<boolean> {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      const response = await domainsApi.createDomain(data)
+      domains.value.unshift(response)
+      totalDomains.value++
+      return true
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to create domain'
+      console.error('Error creating domain:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Update a domain
+   */
+  async function updateDomain(id: string, data: DomainUpdate): Promise<boolean> {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      const response = await domainsApi.updateDomain(id, data)
+      const index = domains.value.findIndex(d => d.id === id)
+      if (index !== -1) {
+        domains.value[index] = response
+      }
+      return true
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to update domain'
+      console.error('Error updating domain:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Delete a domain
+   */
+  async function deleteDomain(id: string): Promise<boolean> {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      await domainsApi.deleteDomain(id)
+      domains.value = domains.value.filter(d => d.id !== id)
+      totalDomains.value--
+      return true
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to delete domain'
+      console.error('Error deleting domain:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // --- Domain Access Actions ---
+
+  /**
+   * Load access grants for a domain
+   */
+  async function loadDomainAccess(domainId: string): Promise<DomainAccessResponse[]> {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      return await domainsApi.listAccess(domainId)
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load domain access'
+      console.error('Error loading domain access:', err)
+      return []
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Grant access to a domain
+   */
+  async function grantDomainAccess(domainId: string, data: DomainAccessGrant): Promise<boolean> {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      await domainsApi.grantAccess(domainId, data)
+      return true
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to grant domain access'
+      console.error('Error granting domain access:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Revoke access from a domain
+   */
+  async function revokeDomainAccess(domainId: string, userId: string): Promise<boolean> {
+    isLoading.value = true
+    error.value = null
+    
+    try {
+      await domainsApi.revokeAccess(domainId, userId)
+      return true
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to revoke domain access'
+      console.error('Error revoking domain access:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // --- UI Helpers ---
 
   /**
    * Clear the newly created key from display
@@ -132,7 +284,10 @@ export const useAdminStore = defineStore('admin', () => {
     // State
     apiKeys,
     totalApiKeys,
-    currentPage,
+    apiKeysPage,
+    domains,
+    totalDomains,
+    domainsPage,
     pageSize,
     isLoading,
     error,
@@ -141,12 +296,20 @@ export const useAdminStore = defineStore('admin', () => {
     // Getters
     activeApiKeys,
     revokedApiKeys,
-    totalPages,
+    apiKeysTotalPages,
+    domainsTotalPages,
     
     // Actions
     loadApiKeys,
     createApiKey,
     revokeApiKey,
+    loadDomains,
+    createDomain,
+    updateDomain,
+    deleteDomain,
+    loadDomainAccess,
+    grantDomainAccess,
+    revokeDomainAccess,
     clearNewlyCreatedKey,
     clearError,
   }

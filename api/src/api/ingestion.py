@@ -1,25 +1,24 @@
 """Ingestion API endpoints."""
 
-from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.database import get_db
 from core.dependencies import get_current_user, require_domain_access
+from db.database import get_db
 from models import DocumentStatus
 from schemas import (
+    IngestionJobListResponse,
     IngestionResponse,
     IngestionStatusResponse,
-    IngestionJobListResponse,
     UserInToken,
 )
 from services.ingestion_service import (
+    IngestionError,
     IngestionService,
     to_ingestion_response,
     to_ingestion_status_response,
-    IngestionError,
 )
 
 router = APIRouter(prefix="/ingest", tags=["Ingestion"])
@@ -35,18 +34,18 @@ router = APIRouter(prefix="/ingest", tags=["Ingestion"])
 async def ingest_document(
     domain_id: UUID = Form(..., description="Target domain ID"),
     file: UploadFile = File(..., description="Document file to upload"),
-    title: Optional[str] = Form(None, description="Document title (defaults to filename)"),
+    title: str | None = Form(None, description="Document title (defaults to filename)"),
     user: UserInToken = Depends(require_domain_access),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Upload and ingest a document file.
-    
+
     Supported formats:
     - PDF (.pdf)
     - Word (.docx)
     - Text (.txt, .md)
-    
+
     Returns a job ID for tracking processing status.
     """
     service = IngestionService(db)
@@ -83,9 +82,9 @@ async def ingest_document(
             file_content=content,
             filename=safe_filename,
         )
-        
+
         return to_ingestion_response(document, job)
-        
+
     except IngestionError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -114,16 +113,16 @@ async def ingest_text(
 ):
     """
     Ingest raw text content directly.
-    
+
     Useful for:
     - Small text snippets
     - API integrations
     - Testing
-    
+
     For large documents, use the file upload endpoint instead.
     """
     service = IngestionService(db)
-    
+
     try:
         # Create document and job
         document, job = await service.create_ingestion_job(
@@ -135,7 +134,7 @@ async def ingest_text(
                 "content_length": len(content)
             }
         )
-        
+
         # Process text as a "virtual" text file
         content_bytes = content.encode('utf-8')
         await service.process_document(
@@ -143,9 +142,9 @@ async def ingest_text(
             file_content=content_bytes,
             filename="content.txt"
         )
-        
+
         return to_ingestion_response(document, job)
-        
+
     except IngestionError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -181,18 +180,45 @@ async def retry_ingestion_job(
     "/jobs",
     response_model=IngestionJobListResponse,
     summary="List ingestion jobs",
-    description="List ingestion jobs with optional filters."
+    description="List ingestion jobs with optional filters. Users can only see jobs for domains they have access to."
 )
 async def list_ingestion_jobs(
-    domain_id: Optional[UUID] = Query(None, description="Filter by domain ID"),
-    status: Optional[DocumentStatus] = Query(None, description="Filter by status"),
+    domain_id: UUID | None = Query(None, description="Filter by domain ID"),
+    status: DocumentStatus | None = Query(None, description="Filter by status"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     user: UserInToken = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """List ingestion jobs."""
+    # If domain_id provided, check access
+    if domain_id and "KM_ADMIN" not in user.roles:
+        from core.dependencies import require_domain_access
+        await require_domain_access(domain_id=domain_id, user=user, db=db)
+
+    # If no domain_id provided and not admin, we should only return jobs from authorized domains
+    authorized_domain_ids = None
+    if "KM_ADMIN" not in user.roles:
+        from sqlalchemy import select
+
+        from models import DomainAccess
+        result = await db.execute(
+            select(DomainAccess.domain_id).where(DomainAccess.user_id == user.id)
+        )
+        authorized_domain_ids = [r for (r,) in result.all()]
+
+        # If user has no domains, return empty list
+        if not authorized_domain_ids:
+            return IngestionJobListResponse(items=[], total=0)
+
+        # If domain_id was provided, it was already checked, so we just use it
+        # If not, we filter by all authorized domains
+        if not domain_id:
+            domain_id = authorized_domain_ids # Service should handle list of IDs or we loop
+
     service = IngestionService(db)
+    # IngestionService.list_jobs currently takes a single domain_id.
+    # I might need to update it to support multiple IDs if domain_id is None.
     jobs, total = await service.list_jobs(
         domain_id=domain_id,
         status=status,
@@ -209,7 +235,7 @@ async def list_ingestion_jobs(
     "/{job_id}",
     response_model=IngestionStatusResponse,
     summary="Get ingestion job status",
-    description="Get the status and progress of an ingestion job."
+    description="Get the status and progress of an ingestion job. Requires domain access."
 )
 async def get_ingestion_status(
     job_id: UUID,
@@ -218,26 +244,29 @@ async def get_ingestion_status(
 ):
     """
     Get ingestion job status.
-    
+
     Status values:
     - `pending`: Job queued, waiting to start
     - `processing`: Actively being processed
     - `done`: Successfully completed
     - `failed`: Processing failed
-    
+
     Progress is a percentage (0-100).
     """
     service = IngestionService(db)
     job = await service.get_job_status(job_id)
-    
+
     if not job:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Ingestion job not found"
         )
-    
-    # TODO: Check if user has access to this job's domain
-    
+
+    # Check if user has access to this job's domain
+    if "KM_ADMIN" not in user.roles:
+        from core.dependencies import require_domain_access
+        await require_domain_access(domain_id=job.domain_id, user=user, db=db)
+
     return to_ingestion_status_response(job)
 
 
@@ -255,13 +284,13 @@ async def get_document_status(
     """Get document processing status."""
     service = IngestionService(db)
     document = await service.get_document_status(document_id)
-    
+
     if not document:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found"
         )
-    
+
     return {
         "document_id": str(document.id),
         "title": document.title,

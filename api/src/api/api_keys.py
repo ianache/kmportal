@@ -1,25 +1,21 @@
 """API Key API endpoints."""
 
-from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.database import get_db
 from core.dependencies import get_current_user
+from db.database import get_db
 from schemas import (
     APIKeyCreate,
-    APIKeyResponse,
     APIKeyCreateResponse,
     APIKeyListResponse,
+    APIKeyResponse,
     PaginationParams,
     UserInToken,
 )
-from services.api_key_service import (
-    APIKeyService,
-    to_api_key_response
-)
+from services.api_key_service import APIKeyService, to_api_key_response
 
 router = APIRouter(prefix="/api-keys", tags=["API Keys"])
 
@@ -39,7 +35,7 @@ async def create_api_key(
     """Create a new API key."""
     service = APIKeyService(db)
     api_key, plain_key = await service.create_api_key(key_data, user.id)
-    
+
     response = to_api_key_response(api_key)
     return APIKeyCreateResponse(
         **response.model_dump(),
@@ -65,9 +61,9 @@ async def list_api_keys(
         page=pagination.page,
         page_size=pagination.page_size
     )
-    
+
     pages = (total + pagination.page_size - 1) // pagination.page_size
-    
+
     return APIKeyListResponse(
         items=[to_api_key_response(k) for k in keys],
         total=total,
@@ -91,13 +87,13 @@ async def get_api_key(
     """Get API key by ID."""
     service = APIKeyService(db)
     api_key = await service.get_api_key(key_id)
-    
+
     if not api_key or api_key.created_by != user.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found"
         )
-    
+
     return to_api_key_response(api_key)
 
 
@@ -115,11 +111,11 @@ async def revoke_api_key(
     """Revoke API key."""
     service = APIKeyService(db)
     revoked = await service.revoke_api_key(key_id, user.id)
-    
+
     if not revoked:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found"
         )
-    
+
     return None

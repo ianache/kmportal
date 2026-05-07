@@ -5,7 +5,7 @@ environments, making logs easily parseable by log aggregation systems.
 
 Usage:
     from core.logging_config import get_logger
-    
+
     logger = get_logger(__name__)
     logger.info("event_description", key="value", user_id="123")
 """
@@ -20,7 +20,7 @@ import structlog
 def configure_logging(log_level: str = "INFO", json_format: bool = True) -> None:
     """
     Configure structured logging for the application.
-    
+
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         json_format: Whether to output JSON formatted logs (True for production)
@@ -31,7 +31,7 @@ def configure_logging(log_level: str = "INFO", json_format: bool = True) -> None
         stream=sys.stdout,
         level=getattr(logging, log_level.upper()),
     )
-    
+
     # Shared processors for all loggers
     shared_processors: list[Any] = [
         # Add timestamp in ISO format
@@ -57,7 +57,7 @@ def configure_logging(log_level: str = "INFO", json_format: bool = True) -> None
         # Unescape HTML in log messages
         structlog.processors.UnicodeDecoder(),
     ]
-    
+
     if json_format:
         # JSON format for production
         processors = shared_processors + [
@@ -68,7 +68,7 @@ def configure_logging(log_level: str = "INFO", json_format: bool = True) -> None
         processors = shared_processors + [
             structlog.dev.ConsoleRenderer(colors=True)
         ]
-    
+
     # Configure structlog
     structlog.configure(
         processors=processors,
@@ -77,7 +77,7 @@ def configure_logging(log_level: str = "INFO", json_format: bool = True) -> None
         wrapper_class=structlog.stdlib.BoundLogger,
         cache_logger_on_first_use=True,
     )
-    
+
     # Suppress noisy third-party loggers
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
@@ -86,13 +86,13 @@ def configure_logging(log_level: str = "INFO", json_format: bool = True) -> None
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """
     Get a structured logger instance.
-    
+
     Args:
         name: Logger name (typically __name__)
-    
+
     Returns:
         Configured structlog logger
-    
+
     Example:
         logger = get_logger(__name__)
         logger.info(
@@ -113,19 +113,19 @@ def bind_request_context(
 ) -> Any:
     """
     Bind context variables that will be included in all subsequent log entries.
-    
+
     Useful for adding request-specific context that should appear in all logs
     during that request.
-    
+
     Args:
         request_id: Unique request identifier
         user_id: Authenticated user identifier
         client_ip: Client IP address
         **kwargs: Additional context variables
-    
+
     Returns:
         Bound context that can be used as a context manager
-    
+
     Example:
         with bind_request_context(request_id="abc123", user_id="user456"):
             logger.info("processing_request")
@@ -139,5 +139,5 @@ def bind_request_context(
     if client_ip:
         context["client_ip"] = client_ip
     context.update(kwargs)
-    
+
     return structlog.contextvars.bind_contextvars(**context)

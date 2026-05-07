@@ -123,7 +123,13 @@ class BffClient {
     })
   }
 
-  async delete<T>(path: string, options?: RequestInit) {
+  async delete<T>(path: string, body?: any, options?: RequestInit) {
+    if (body) {
+      return this.request<T>('DELETE', `/api${path}`, {
+        ...options,
+        body: JSON.stringify(body),
+      })
+    }
     return this.request<T>('DELETE', `/api${path}`, options)
   }
 }

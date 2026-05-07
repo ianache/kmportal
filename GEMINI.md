@@ -20,7 +20,9 @@ This file provides guidance to Gemini  when working with code in this repository
 
 ## Project Status
 
-This is a new, empty project. No source code, build system, or dependencies have been added yet. Update this file as the project takes shape.
+Phases 1-7 are complete. Core infrastructure, API, ingestion, search, BFF, and core micro-UIs (Search, Domains, Ingestion) are implemented and functional.
+
+**Current Focus:** Phase 8 — Admin and API keys. Implementing the Admin micro-UI and API key lifecycle management.
 
 ## Project Name
 

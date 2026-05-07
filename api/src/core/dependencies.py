@@ -1,26 +1,25 @@
 """FastAPI dependencies for authentication and authorization."""
 
 import os
-from typing import Optional
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status, Security, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends, HTTPException, Request, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.database import get_db, AsyncSessionLocal
-from core.auth import verify_jwt_token, extract_user_from_token, hash_api_key
-from schemas import UserInToken, UserResponse
-from models import User, DomainAccess, DomainAccessRole
+from core.auth import extract_user_from_token, verify_jwt_token
+from core.rate_limiter import rate_limiter
+from db.database import AsyncSessionLocal, get_db
+from models import DomainAccess, DomainAccessRole, User
+from schemas import UserInToken
 from services.api_key_service import APIKeyService
-
 
 # Security scheme
 security = HTTPBearer(auto_error=False)
 
 # Cache only the scalar UUID — ORM objects become detached when their session closes
-_dev_user_id_cache: Optional[UUID] = None
+_dev_user_id_cache: UUID | None = None
 
 _DEV_KEYCLOAK_ID = "dev-user-00000000-0000-0000-0000-000000000000"
 
@@ -57,9 +56,9 @@ async def _get_or_create_dev_user_id(db: AsyncSession) -> UUID:
 
 async def get_current_user_optional(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Security(security),
+    credentials: HTTPAuthorizationCredentials | None = Security(security),
     db: AsyncSession = Depends(get_db)
-) -> Optional[UserInToken]:
+) -> UserInToken | None:
     """
     Get current user from JWT token or API Key (optional).
 
@@ -83,6 +82,15 @@ async def get_current_user_optional(
         valid_key = await api_key_service.validate_api_key(api_key)
 
         if valid_key:
+            # Enforce per-key rate limit (sliding 1-hour window)
+            allowed, retry_after = rate_limiter.check(str(valid_key.id), valid_key.rate_limit)
+            if not allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Rate limit exceeded",
+                    headers={"Retry-After": str(retry_after)},
+                )
+
             # Get the user who created the API key
             result = await db.execute(
                 select(User).where(User.id == valid_key.created_by)
@@ -95,6 +103,8 @@ async def get_current_user_optional(
                     keycloak_id=user.keycloak_id,
                     email=user.email,
                     roles=user.roles,
+                    scopes=valid_key.scopes,
+                    allowed_domains=valid_key.domain_ids,
                 )
 
     if not credentials:
@@ -115,10 +125,24 @@ async def get_current_user_optional(
 
         if user:
             user_data.id = user.id
-            # Update roles if changed
+            # Sync roles if changed
             if set(user.roles) != set(user_data.roles):
                 user.roles = user_data.roles
                 await db.commit()
+        else:
+            # First login — provision the user record
+            async with AsyncSessionLocal() as write_session:
+                new_user = User(
+                    keycloak_id=user_data.keycloak_id,
+                    email=user_data.email,
+                    full_name=None,
+                    roles=user_data.roles,
+                    is_active=True,
+                )
+                write_session.add(new_user)
+                await write_session.commit()
+                await write_session.refresh(new_user)
+                user_data.id = new_user.id
 
         return user_data
 
@@ -126,11 +150,11 @@ async def get_current_user_optional(
 
 
 async def get_current_user(
-    user: Optional[UserInToken] = Depends(get_current_user_optional)
+    user: UserInToken | None = Depends(get_current_user_optional)
 ) -> UserInToken:
     """
     Get current user (required).
-    
+
     Raises 401 if no valid authentication provided.
     """
     if not user:
@@ -176,13 +200,13 @@ async def require_reader(
 
 class DomainAccessChecker:
     """Check if user has access to a specific domain."""
-    
+
     def __init__(self, require_admin: bool = False):
         self.require_admin = require_admin
-    
+
     async def __call__(
         self,
-        domain_id: Optional[UUID] = None,
+        domain_id: UUID | None = None,
         user: UserInToken = Depends(get_current_user),
         db: AsyncSession = Depends(get_db)
     ) -> UserInToken:
@@ -192,7 +216,14 @@ class DomainAccessChecker:
         produce a 422. Admins bypass the check entirely; non-admins must supply
         a domain_id (from path or query) that they have access to.
         """
-        # Global admins always have access
+        # Check if API key restricts domains
+        if user.allowed_domains and domain_id not in user.allowed_domains:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"API Key does not have access to domain {domain_id}"
+            )
+
+        # Global admins always have access (unless restricted by API key above)
         if "KM_ADMIN" in user.roles:
             return user
 
@@ -201,14 +232,14 @@ class DomainAccessChecker:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Domain access required"
             )
-        
+
         # Check specific domain access
         if not user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Domain access required"
             )
-        
+
         result = await db.execute(
             select(DomainAccess).where(
                 DomainAccess.user_id == user.id,
@@ -216,19 +247,19 @@ class DomainAccessChecker:
             )
         )
         access = result.scalar_one_or_none()
-        
+
         if not access:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Domain access required"
             )
-        
+
         if self.require_admin and access.role != DomainAccessRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Domain admin access required"
             )
-        
+
         return user
 
 

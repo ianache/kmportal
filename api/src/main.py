@@ -13,6 +13,7 @@ Endpoints:
 
 # Load .env file before anything else reads env vars
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 _env_file = Path(__file__).resolve().parent.parent / ".env"
@@ -28,14 +29,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from db.database import init_db, close_db
-from api import (
-    domains_router, api_keys_router, ingestion_router, 
-    search_router, health_router
-)
-from mcp_server import get_mcp_app, MCPAuthMiddleware
+from api import api_keys_router, domains_router, health_router, ingestion_router, ontology_router, search_router
 from core.logging_config import configure_logging, get_logger
 from core.logging_middleware import LoggingMiddleware
+from core.rate_limit_middleware import RateLimitMiddleware
+from db.database import close_db, init_db
+from db.neo4j_client import close_neo4j
+from mcp_server import MCPAuthMiddleware, get_mcp_app
 
 # Initialize logger
 logger = get_logger(__name__)
@@ -51,7 +51,7 @@ class Config:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
     JSON_LOGS = os.getenv("JSON_LOGS", "false").lower() == "true"
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5100").split(",")
-    
+
     @classmethod
     def is_production(cls) -> bool:
         """Check if running in production environment."""
@@ -70,7 +70,7 @@ configure_logging(
 async def lifespan(app: FastAPI):
     """
     Application lifespan manager.
-    
+
     Handles startup and shutdown events:
     - Startup: Initialize connections to databases
     - Shutdown: Close connections gracefully
@@ -83,27 +83,28 @@ async def lifespan(app: FastAPI):
         log_level=Config.LOG_LEVEL,
         structured_logging=Config.JSON_LOGS or Config.is_production()
     )
-    
+
     try:
         # Initialize database
         logger.info("database_initialization_start")
         await init_db()
         logger.info("database_initialization_complete")
-        
+
         # Calculate startup time
         startup_time = time.time() - _start_time
         logger.info("application_startup_complete", startup_time_ms=round(startup_time * 1000, 2))
-        
+
     except Exception as e:
         logger.error("application_startup_failed", error=str(e), error_type=type(e).__name__)
         raise
-    
+
     yield
-    
+
     # Shutdown
     logger.info("application_shutdown_start")
     try:
         await close_db()
+        await close_neo4j()
         logger.info("application_shutdown_complete")
     except Exception as e:
         logger.error("application_shutdown_error", error=str(e))
@@ -114,22 +115,22 @@ app = FastAPI(
     title="Knowledge Management Center API",
     description="""
     API for the Knowledge Management Center platform.
-    
+
     ## Features
-    
+
     - **Domain Management**: Create and manage knowledge domains
     - **Document Ingestion**: Upload and process documents from multiple sources
     - **Semantic Search**: Search documents using vector similarity
     - **API Keys**: Manage access for third-party integrations
     - **MCP**: Model Context Protocol for AI agent integration
-    
+
     ## Authentication
-    
+
     - Web users: OAuth2/OIDC via Keycloak (JWT Bearer token)
     - API clients: API Key in X-API-Key header
-    
+
     ## Health Endpoints
-    
+
     - `GET /health` - Basic health check
     - `GET /health/detailed` - Comprehensive health check
     - `GET /health/ready` - Kubernetes readiness probe
@@ -160,10 +161,14 @@ app.add_middleware(
 # 3. Request logging middleware (must be after CORS to log all requests)
 app.add_middleware(LoggingMiddleware)
 
+# 4. API Key Rate Limiting
+app.add_middleware(RateLimitMiddleware)
+
 # Include routers
 app.include_router(domains_router, prefix="/v1")
 app.include_router(api_keys_router, prefix="/v1")
 app.include_router(ingestion_router, prefix="/v1")
+app.include_router(ontology_router, prefix="/v1")
 app.include_router(search_router)
 app.include_router(health_router)
 

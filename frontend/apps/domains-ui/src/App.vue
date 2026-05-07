@@ -1,18 +1,43 @@
 <template>
   <div class="domains-app">
-    <transition name="fade" mode="out-in">
-      <DomainList v-if="!domainsStore.hasSelectedDomain" />
-      <DomainDetail v-else />
-    </transition>
+    <!-- Ontology editor takes full focus when active -->
+    <OntologyEditor
+      v-if="ontologyDomain"
+      :domain-id="ontologyDomain.id"
+      :domain-name="ontologyDomain.name"
+      @close="ontologyDomain = null"
+    />
+
+    <template v-else>
+      <transition name="fade" mode="out-in">
+        <DomainList
+          v-if="!domainsStore.hasSelectedDomain"
+          @open-ontology="openOntology"
+        />
+        <DomainDetail v-else />
+      </transition>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useDomainsStore } from './stores/domains'
+import { useOntologyStore } from './stores/ontology'
 import DomainList from './components/DomainList.vue'
 import DomainDetail from './components/DomainDetail.vue'
+import OntologyEditor from './components/ontology/OntologyEditor.vue'
+import type { Domain } from './types/domains'
 
 const domainsStore = useDomainsStore()
+const ontologyStore = useOntologyStore()
+
+const ontologyDomain = ref<Domain | null>(null)
+
+function openOntology(domain: Domain) {
+  ontologyStore.reset()
+  ontologyDomain.value = domain
+}
 </script>
 
 <style scoped>

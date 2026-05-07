@@ -1,11 +1,10 @@
 """Pydantic schemas for API request/response validation."""
 
 from datetime import datetime
-from typing import List, Optional, Any, Dict
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, ConfigDict
-
+from pydantic import BaseModel, ConfigDict, Field
 
 # ==================== Pagination ====================
 
@@ -17,12 +16,12 @@ class PaginationParams(BaseModel):
 
 class PaginatedResponse(BaseModel):
     """Paginated response metadata."""
-    items: List[Any]
+    items: list[Any]
     total: int = Field(..., description="Total number of items")
     page: int = Field(..., description="Current page number")
     page_size: int = Field(..., description="Items per page")
     pages: int = Field(..., description="Total number of pages")
-    
+
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "items": [],
@@ -39,32 +38,34 @@ class PaginatedResponse(BaseModel):
 class UserBase(BaseModel):
     """Base user schema."""
     email: str = Field(..., description="User email address")
-    full_name: Optional[str] = Field(None, description="User full name")
-    
+    full_name: str | None = Field(None, description="User full name")
+
 
 class UserCreate(UserBase):
     """User creation schema."""
     keycloak_id: str = Field(..., description="Keycloak user ID")
-    roles: List[str] = Field(default=[], description="User roles")
+    roles: list[str] = Field(default=[], description="User roles")
 
 
 class UserResponse(UserBase):
     """User response schema."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
-    roles: List[str]
+    roles: list[str]
     is_active: bool
-    last_login: Optional[datetime]
+    last_login: datetime | None
     created_at: datetime
-    
+
 
 class UserInToken(BaseModel):
-    """User info embedded in JWT token."""
-    id: Optional[UUID] = None
+    """User info embedded in JWT token or API Key."""
+    id: UUID | None = None
     keycloak_id: str
     email: str
-    roles: List[str] = []
+    roles: list[str] = []
+    scopes: list[str] = []
+    allowed_domains: list[UUID] = []
 
 
 # ==================== Domain ====================
@@ -72,30 +73,30 @@ class UserInToken(BaseModel):
 class DomainBase(BaseModel):
     """Base domain schema."""
     name: str = Field(..., min_length=1, max_length=255, description="Domain name (ES)")
-    description: Optional[str] = Field(None, max_length=2000, description="Domain description (ES)")
+    description: str | None = Field(None, max_length=2000, description="Domain description (ES)")
 
 
 class DomainCreate(DomainBase):
     """Domain creation schema."""
     embedding_model: str = Field("text-embedding-004", description="Embedding model to use")
     embedding_dimension: int = Field(768, ge=1, le=4096, description="Embedding dimension")
-    name_en: Optional[str] = Field(None, max_length=255, description="Domain name in English")
-    description_en: Optional[str] = Field(None, max_length=2000, description="Domain description in English")
-    tags: List[str] = Field(default=[], description="Domain tags")
+    name_en: str | None = Field(None, max_length=255, description="Domain name in English")
+    description_en: str | None = Field(None, max_length=2000, description="Domain description in English")
+    tags: list[str] = Field(default=[], description="Domain tags")
     visibility: str = Field("private", pattern="^(public|private)$", description="Domain visibility")
-    cover_image: Optional[str] = Field(None, description="Cover image data URL or URL")
-    ingestion_flow: Optional[str] = Field(None, description="Ingestion workflow name")
+    cover_image: str | None = Field(None, description="Cover image data URL or URL")
+    ingestion_flow: str | None = Field(None, description="Ingestion workflow name")
 
 
 class DomainUpdate(BaseModel):
     """Domain update schema."""
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = Field(None, max_length=2000)
-    name_en: Optional[str] = Field(None, max_length=255)
-    description_en: Optional[str] = Field(None, max_length=2000)
-    tags: Optional[List[str]] = None
-    visibility: Optional[str] = Field(None, pattern="^(public|private)$")
-    cover_image: Optional[str] = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = Field(None, max_length=2000)
+    name_en: str | None = Field(None, max_length=255)
+    description_en: str | None = Field(None, max_length=2000)
+    tags: list[str] | None = None
+    visibility: str | None = Field(None, pattern="^(public|private)$")
+    cover_image: str | None = None
 
 
 class DomainResponse(DomainBase):
@@ -105,20 +106,20 @@ class DomainResponse(DomainBase):
     id: UUID
     embedding_model: str
     embedding_dimension: int
-    name_en: Optional[str] = None
-    description_en: Optional[str] = None
-    tags: List[str] = []
+    name_en: str | None = None
+    description_en: str | None = None
+    tags: list[str] = []
     visibility: str = "private"
-    cover_image: Optional[str] = None
+    cover_image: str | None = None
     created_by: UUID
     created_at: datetime
     updated_at: datetime
     document_count: int = Field(0, description="Number of documents in domain")
-    
+
 
 class DomainListResponse(PaginatedResponse):
     """Paginated domain list response."""
-    items: List[DomainResponse]
+    items: list[DomainResponse]
 
 
 # ==================== Domain Access ====================
@@ -137,7 +138,7 @@ class DomainAccessRevoke(BaseModel):
 class DomainAccessResponse(BaseModel):
     """Domain access response."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     user_id: UUID
     domain_id: UUID
@@ -151,34 +152,34 @@ class DomainAccessResponse(BaseModel):
 class DocumentBase(BaseModel):
     """Base document schema."""
     title: str = Field(..., min_length=1, max_length=500, description="Document title")
-    metadata: Dict[str, Any] = Field(default={}, description="Document metadata")
+    metadata: dict[str, Any] = Field(default={}, description="Document metadata")
 
 
 class DocumentCreate(DocumentBase):
     """Document creation schema."""
     domain_id: UUID = Field(..., description="Domain ID")
     source_type: str = Field("upload", description="Source type (upload, s3, kafka, etc.)")
-    source_uri: Optional[str] = Field(None, description="Source URI")
+    source_uri: str | None = Field(None, description="Source URI")
 
 
 class DocumentResponse(DocumentBase):
     """Document response schema."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     domain_id: UUID
     source_type: str
-    source_uri: Optional[str]
+    source_uri: str | None
     status: str
     chunk_count: int
-    error_message: Optional[str]
+    error_message: str | None
     created_at: datetime
     updated_at: datetime
 
 
 class DocumentListResponse(PaginatedResponse):
     """Paginated document list response."""
-    items: List[DocumentResponse]
+    items: list[DocumentResponse]
 
 
 # ==================== API Key ====================
@@ -186,24 +187,24 @@ class DocumentListResponse(PaginatedResponse):
 class APIKeyCreate(BaseModel):
     """API Key creation schema."""
     name: str = Field(..., min_length=1, max_length=255, description="API Key name")
-    scopes: List[str] = Field(default=["read"], description="Allowed scopes")
-    domain_ids: List[UUID] = Field(default=[], description="Allowed domain IDs")
+    scopes: list[str] = Field(default=["read"], description="Allowed scopes")
+    domain_ids: list[UUID] = Field(default=[], description="Allowed domain IDs")
     rate_limit: int = Field(1000, ge=1, le=10000, description="Rate limit per hour")
-    expires_at: Optional[datetime] = Field(None, description="Expiration date")
+    expires_at: datetime | None = Field(None, description="Expiration date")
 
 
 class APIKeyResponse(BaseModel):
     """API Key response schema (without the actual key)."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     name: str
-    scopes: List[str]
-    domain_ids: List[UUID]
+    scopes: list[str]
+    domain_ids: list[UUID]
     rate_limit: int
     created_at: datetime
-    expires_at: Optional[datetime]
-    last_used_at: Optional[datetime]
+    expires_at: datetime | None
+    last_used_at: datetime | None
     is_active: bool
 
 
@@ -214,7 +215,7 @@ class APIKeyCreateResponse(APIKeyResponse):
 
 class APIKeyListResponse(PaginatedResponse):
     """Paginated API key list response."""
-    items: List[APIKeyResponse]
+    items: list[APIKeyResponse]
 
 
 # ==================== Search ====================
@@ -222,10 +223,10 @@ class APIKeyListResponse(PaginatedResponse):
 class SearchRequest(BaseModel):
     """Search request schema."""
     query: str = Field(..., min_length=1, max_length=1000, description="Search query")
-    domain_ids: List[UUID] = Field(default=[], description="Domain IDs to search")
+    domain_ids: list[UUID] = Field(default=[], description="Domain IDs to search")
     mode: str = Field("hybrid", pattern="^(semantic|keyword|hybrid)$", description="Search mode")
     top_k: int = Field(10, ge=1, le=100, description="Number of results")
-    filters: Optional[Dict[str, Any]] = Field(None, description="Metadata filters")
+    filters: dict[str, Any] | None = Field(None, description="Metadata filters")
 
 
 class SearchResult(BaseModel):
@@ -236,13 +237,13 @@ class SearchResult(BaseModel):
     document_id: UUID = Field(..., description="Document ID")
     document_title: str = Field(..., description="Document title")
     domain_id: UUID = Field(..., description="Domain ID")
-    metadata: Dict[str, Any] = Field(default={}, description="Chunk metadata")
+    metadata: dict[str, Any] = Field(default={}, description="Chunk metadata")
 
 
 class SearchResponse(BaseModel):
     """Search response."""
     query: str = Field(..., description="Original query")
-    results: List[SearchResult]
+    results: list[SearchResult]
     total: int = Field(..., description="Total results")
     search_time_ms: int = Field(..., description="Search time in milliseconds")
 
@@ -253,9 +254,9 @@ class IngestionRequest(BaseModel):
     """Document ingestion request."""
     domain_id: UUID = Field(..., description="Target domain ID")
     title: str = Field(..., min_length=1, max_length=500, description="Document title")
-    content: Optional[str] = Field(None, description="Document content (if inline)")
+    content: str | None = Field(None, description="Document content (if inline)")
     source_type: str = Field("api", description="Source type")
-    metadata: Dict[str, Any] = Field(default={}, description="Document metadata")
+    metadata: dict[str, Any] = Field(default={}, description="Document metadata")
 
 
 class IngestionResponse(BaseModel):
@@ -269,21 +270,21 @@ class IngestionResponse(BaseModel):
 class IngestionStatusResponse(BaseModel):
     """Ingestion job status response."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     document_id: UUID
     domain_id: UUID
     status: str
     progress: int
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
-    error_message: Optional[str]
+    started_at: datetime | None
+    completed_at: datetime | None
+    error_message: str | None
     created_at: datetime
 
 
 class IngestionJobListResponse(BaseModel):
     """Paginated list of ingestion jobs."""
-    items: List[IngestionStatusResponse]
+    items: list[IngestionStatusResponse]
     total: int
 
 
@@ -295,7 +296,119 @@ class HealthResponse(BaseModel):
     status: str = Field(..., description="Health status")
     version: str = Field(..., description="Service version")
     environment: str = Field(..., description="Environment name")
-    checks: Optional[Dict[str, Any]] = Field(None, description="Detailed health checks")
+    checks: dict[str, Any] | None = Field(None, description="Detailed health checks")
+
+
+# ==================== Ontology ====================
+
+class OntologyConceptCreate(BaseModel):
+    """Create an OWL class in the ontology."""
+    uri: str = Field(..., min_length=1, max_length=500, description="OWL class URI")
+    label: str = Field(..., min_length=1, max_length=255, description="Human-readable label")
+    comment: str | None = Field(None, max_length=2000, description="Description or comment")
+
+
+class OntologyConceptUpdate(BaseModel):
+    """Update an OWL class."""
+    uri: str | None = Field(None, min_length=1, max_length=500)
+    label: str | None = Field(None, min_length=1, max_length=255)
+    comment: str | None = Field(None, max_length=2000)
+
+
+class OntologyConceptResponse(BaseModel):
+    """OWL class response."""
+    id: str
+    domain_id: str
+    uri: str
+    label: str
+    comment: str | None = None
+
+
+class OntologyPropertyCreate(BaseModel):
+    """Create an OWL property (object or datatype)."""
+    uri: str = Field(..., min_length=1, max_length=500, description="Property URI")
+    label: str = Field(..., min_length=1, max_length=255, description="Property label")
+    property_type: str = Field("ObjectProperty", pattern="^(ObjectProperty|DatatypeProperty)$")
+    source_class_id: str = Field(..., description="Domain OWL class ID")
+    target_class_id: str = Field(..., description="Range OWL class ID")
+    comment: str | None = Field(None, max_length=2000)
+
+
+class OntologyPropertyResponse(BaseModel):
+    """OWL property response."""
+    id: str
+    domain_id: str
+    uri: str
+    label: str
+    property_type: str
+    source_class_id: str
+    target_class_id: str
+    comment: str | None = None
+
+
+class OntologyResponse(BaseModel):
+    """Full ontology for a domain (concepts + properties)."""
+    domain_id: str
+    concepts: list[OntologyConceptResponse]
+    properties: list[OntologyPropertyResponse]
+
+
+# ==================== Diagrams ====================
+
+class DiagramNodePosition(BaseModel):
+    x: float
+    y: float
+
+
+class DiagramNode(BaseModel):
+    """Vue Flow node with concept reference and layout data."""
+    id: str
+    concept_id: str
+    position: DiagramNodePosition
+    style: dict[str, Any] = Field(default_factory=dict)
+
+
+class DiagramEdge(BaseModel):
+    """Vue Flow edge with property reference."""
+    id: str
+    property_id: str
+    source: str
+    target: str
+    label: str = ""
+    style: dict[str, Any] = Field(default_factory=dict)
+
+
+class DiagramCreate(BaseModel):
+    """Create a new diagram for a domain."""
+    name: str = Field(..., min_length=1, max_length=255, description="Diagram name")
+
+
+class DiagramUpdate(BaseModel):
+    """Update diagram metadata or layout."""
+    name: str | None = Field(None, min_length=1, max_length=255)
+    nodes: list[dict[str, Any]] | None = None
+    edges: list[dict[str, Any]] | None = None
+    viewport: dict[str, Any] | None = None
+
+
+class DiagramResponse(BaseModel):
+    """Diagram response."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    domain_id: UUID
+    name: str
+    nodes: list[dict[str, Any]]
+    edges: list[dict[str, Any]]
+    viewport: dict[str, Any]
+    created_at: datetime
+    updated_at: datetime
+
+
+class DiagramListResponse(BaseModel):
+    """List of diagrams for a domain."""
+    items: list[DiagramResponse]
+    total: int
 
 
 # ==================== Error ====================
@@ -303,5 +416,5 @@ class HealthResponse(BaseModel):
 class ErrorResponse(BaseModel):
     """Error response schema."""
     detail: str = Field(..., description="Error message")
-    code: Optional[str] = Field(None, description="Error code")
-    errors: Optional[List[Dict[str, Any]]] = Field(None, description="Validation errors")
+    code: str | None = Field(None, description="Error code")
+    errors: list[dict[str, Any]] | None = Field(None, description="Validation errors")

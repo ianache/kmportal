@@ -1,7 +1,7 @@
 """Document ingestion module."""
 
-from ingestion.extractors import extract_text, UnsupportedFormatError, TextExtractionError
-from ingestion.chunking import chunk_document, ChunkingConfig, Chunk
+from ingestion.chunking import Chunk, ChunkingConfig, chunk_document
+from ingestion.extractors import TextExtractionError, UnsupportedFormatError, extract_text
 
 __all__ = [
     "extract_text",

@@ -9,8 +9,8 @@ Exports:
     MCPAuthMiddleware: Authentication middleware for MCP endpoints
 """
 
-from .server import mcp, get_mcp_app
-from .auth import MCPAuthMiddleware, require_scope, check_domain_access
+from .auth import MCPAuthMiddleware, check_domain_access, require_scope
+from .server import get_mcp_app, mcp
 
 __all__ = [
     "mcp",

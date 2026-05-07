@@ -19,8 +19,8 @@
     </div>
 
     <div v-else-if="domainsStore.hasDomains" class="domains-grid">
-      <BaseCard 
-        v-for="domain in domainsStore.sortedDomains" 
+      <BaseCard
+        v-for="domain in domainsStore.sortedDomains"
         :key="domain.id"
         class="domain-card"
         clickable
@@ -43,11 +43,27 @@
             </span>
           </div>
         </div>
-        <div class="card-action">
-          <span>View Documents</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
+        <div class="card-footer">
+          <div class="card-action">
+            <span>View Documents</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </div>
+          <button
+            class="ontology-btn"
+            title="Open Ontology Editor"
+            @click.stop="$emit('open-ontology', domain)"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"/>
+              <circle cx="4" cy="6" r="2"/><line x1="6" y1="6" x2="9" y2="11"/>
+              <circle cx="20" cy="6" r="2"/><line x1="18" y1="6" x2="15" y2="11"/>
+              <circle cx="4" cy="18" r="2"/><line x1="6" y1="18" x2="9" y2="13"/>
+              <circle cx="20" cy="18" r="2"/><line x1="18" y1="18" x2="15" y2="13"/>
+            </svg>
+            <span>Ontology</span>
+          </button>
         </div>
       </BaseCard>
     </div>
@@ -84,7 +100,10 @@ import { useDomainsStore } from '../stores/domains'
 import BaseButton from 'shell/BaseButton'
 import BaseCard from 'shell/BaseCard'
 
+import type { Domain } from '../types/domains'
+
 const domainsStore = useDomainsStore()
+defineEmits<{ (e: 'open-ontology', domain: Domain): void }>()
 
 onMounted(() => {
   domainsStore.loadDomains()
@@ -207,14 +226,40 @@ function formatDate(dateStr: string) {
   font-weight: 500;
 }
 
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
 .card-action {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 24px;
   font-size: 14px;
   font-weight: 600;
   color: var(--primary, #007AFF);
+}
+
+.ontology-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--outline-variant, #e5e5e7);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #8e44ad;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.ontology-btn:hover {
+  background: rgba(142, 68, 173, 0.08);
+  border-color: #8e44ad;
 }
 
 /* Pagination */

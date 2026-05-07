@@ -1,36 +1,35 @@
 """Domain API endpoints."""
 
-from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.database import get_db
 from core.dependencies import (
     get_current_user,
     require_admin,
+    require_domain_access,
     require_domain_admin,
-    require_domain_access
 )
+from db.database import get_db
 from models import DocumentStatus
 from schemas import (
-    DomainCreate,
-    DomainUpdate,
-    DomainResponse,
-    DomainListResponse,
-    DomainAccessGrant,
-    DomainAccessRevoke,
-    DomainAccessResponse,
     DocumentListResponse,
+    DomainAccessGrant,
+    DomainAccessResponse,
+    DomainAccessRevoke,
+    DomainCreate,
+    DomainListResponse,
+    DomainResponse,
+    DomainUpdate,
     PaginationParams,
     UserInToken,
 )
 from services.domain_service import (
     DomainService,
     to_document_response,
+    to_domain_access_response,
     to_domain_response,
-    to_domain_access_response
 )
 
 router = APIRouter(prefix="/domains", tags=["Domains"])
@@ -68,16 +67,16 @@ async def list_domains(
     """List domains."""
     service = DomainService(db)
     is_admin = "KM_ADMIN" in user.roles
-    
+
     domains, total = await service.list_domains(
         user_id=user.id,
         is_admin=is_admin,
         page=pagination.page,
         page_size=pagination.page_size
     )
-    
+
     pages = (total + pagination.page_size - 1) // pagination.page_size
-    
+
     return DomainListResponse(
         items=[to_domain_response(d) for d in domains],
         total=total,
@@ -101,13 +100,13 @@ async def get_domain(
     """Get domain by ID."""
     service = DomainService(db)
     domain = await service.get_domain(domain_id)
-    
+
     if not domain:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Domain not found"
         )
-    
+
     return to_domain_response(domain)
 
 
@@ -126,13 +125,13 @@ async def update_domain(
     """Update domain."""
     service = DomainService(db)
     domain = await service.update_domain(domain_id, domain_data)
-    
+
     if not domain:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Domain not found"
         )
-    
+
     return to_domain_response(domain)
 
 
@@ -150,13 +149,13 @@ async def delete_domain(
     """Delete domain."""
     service = DomainService(db)
     deleted = await service.delete_domain(domain_id)
-    
+
     if not deleted:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Domain not found"
         )
-    
+
     return None
 
 
@@ -172,9 +171,9 @@ async def list_domain_documents(
     domain_id: UUID,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    status: Optional[DocumentStatus] = Query(None, description="Filter by document status"),
-    type: Optional[str] = Query(None, description="Filter by source type (upload, api, etc.)"),
-    q: Optional[str] = Query(None, description="Search by title"),
+    status: DocumentStatus | None = Query(None, description="Filter by document status"),
+    type: str | None = Query(None, description="Filter by source type (upload, api, etc.)"),
+    q: str | None = Query(None, description="Search by title"),
     user: UserInToken = Depends(require_domain_access),
     db: AsyncSession = Depends(get_db)
 ):
@@ -236,19 +235,19 @@ async def revoke_domain_access(
     """Revoke access from domain."""
     service = DomainService(db)
     revoked = await service.revoke_access(domain_id, revoke_data.user_id)
-    
+
     if not revoked:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Access grant not found"
         )
-    
+
     return None
 
 
 @router.get(
     "/{domain_id}/access",
-    response_model=List[DomainAccessResponse],
+    response_model=list[DomainAccessResponse],
     summary="List domain access grants",
     description="List all access grants for domain. Requires domain admin access."
 )
