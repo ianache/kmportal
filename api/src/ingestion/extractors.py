@@ -122,12 +122,18 @@ def extract_text(file_content: bytes, filename: str) -> str:
     extractor = extractors.get(extension)
     
     if not extractor:
+        supported = ", ".join(extractors.keys())
         raise UnsupportedFormatError(
-            f"Unsupported file format: {extension}. "
-            f"Supported: {', '.join(extractors.keys())}"
+            f"Unsupported file format: '{extension}'. "
+            f"Supported extensions: {supported}"
         )
     
-    return extractor(file_content)
+    try:
+        return extractor(file_content)
+    except TextExtractionError:
+        raise
+    except Exception as e:
+        raise TextExtractionError(f"Extraction failed for {extension}: {str(e)}")
 
 
 def detect_file_type(filename: str) -> str:

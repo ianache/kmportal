@@ -63,6 +63,13 @@ export function createProxyMiddleware() {
         // proxy can pipe it. Re-serialize and write it to the proxy request.
         if (req.body && ['POST', 'PUT', 'PATCH'].includes(req.method || '')) {
           const contentType = req.headers['content-type'] || '';
+          
+          // Skip for multipart (file uploads) as they are handled by stream piping
+          // and express-json doesn't populate req.body for them anyway.
+          if (contentType.includes('multipart/form-data')) {
+            return;
+          }
+
           let bodyData: string;
 
           if (contentType.includes('application/json')) {
