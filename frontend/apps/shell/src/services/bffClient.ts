@@ -62,12 +62,13 @@ class BffClient {
         }
       }
 
-      // Try to parse JSON response
+      // Try to parse JSON response — read text first to avoid parse error on empty bodies (e.g. 204 No Content)
       let data: T | undefined
       const contentType = response.headers.get('content-type')
-      
+
       if (contentType?.includes('application/json')) {
-        data = await response.json()
+        const text = await response.text()
+        if (text) data = JSON.parse(text) as T
       }
 
       if (!response.ok) {

@@ -5,7 +5,7 @@ import uuid
 from typing import Any
 
 from neo4j import AsyncDriver
-from rdflib import OWL, RDF, RDFS, Graph, Literal, Namespace, URIRef
+from rdflib import OWL, RDF, RDFS, XSD, Graph, Literal, Namespace, URIRef
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -303,14 +303,22 @@ async def export_owl(driver: AsyncDriver, domain_id: str) -> bytes:
     concept_uri_map = {c.id: c.uri for c in onto.concepts}
     for p in onto.properties:
         puri = URIRef(p.uri if p.uri.startswith("http") else str(NS[p.label.replace(" ", "_")]))
-        g.add((puri, RDF.type, OWL.ObjectProperty))
+        is_datatype = p.property_type == "DatatypeProperty"
+        g.add((puri, RDF.type, OWL.DatatypeProperty if is_datatype else OWL.ObjectProperty))
         g.add((puri, RDFS.label, Literal(p.label)))
+        if p.comment:
+            g.add((puri, RDFS.comment, Literal(p.comment)))
         src_uri = concept_uri_map.get(p.source_class_id)
-        tgt_uri = concept_uri_map.get(p.target_class_id)
         if src_uri:
             g.add((puri, RDFS.domain, URIRef(src_uri)))
-        if tgt_uri:
-            g.add((puri, RDFS.range, URIRef(tgt_uri)))
+        if is_datatype:
+            # target_class_id holds the XSD type URI for DatatypeProperties
+            if p.target_class_id.startswith("http"):
+                g.add((puri, RDFS.range, URIRef(p.target_class_id)))
+        else:
+            tgt_uri = concept_uri_map.get(p.target_class_id)
+            if tgt_uri:
+                g.add((puri, RDFS.range, URIRef(tgt_uri)))
 
     return g.serialize(format="xml").encode()
 

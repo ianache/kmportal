@@ -58,6 +58,14 @@ export const useOntologyStore = defineStore('ontology', () => {
     return propertyMap.value[edge.property_id] ?? null
   })
 
+  // DatatypeProperties (attributes) belonging to the currently selected class
+  const selectedConceptAttributes = computed(() => {
+    if (!selectedConcept.value) return []
+    return properties.value.filter(
+      p => p.property_type === 'DatatypeProperty' && p.source_class_id === selectedConcept.value!.id
+    )
+  })
+
   // ── Actions ─────────────────────────────────────────────────────────────────
 
   async function loadForDomain(domainId: string) {
@@ -157,20 +165,74 @@ export const useOntologyStore = defineStore('ontology', () => {
   }
 
   async function deleteSelectedConcept() {
-    if (!selectedConcept.value || !activeDomainId.value || !activeDiagram.value) return
+    if (!selectedConcept.value || !activeDomainId.value) return
     const cid = selectedConcept.value.id
-    await ontologyApi.deleteConcept(activeDomainId.value, cid)
+    const domainId = activeDomainId.value
+    await ontologyApi.deleteConcept(domainId, cid)
     concepts.value = concepts.value.filter(c => c.id !== cid)
     properties.value = properties.value.filter(p => p.source_class_id !== cid && p.target_class_id !== cid)
-    // Remove nodes and edges referencing this concept
-    if (activeDomainId.value) {
-      const nodes = activeDiagram.value.nodes.filter(n => n.concept_id !== cid)
-      const removedNodeIds = new Set(activeDiagram.value.nodes.filter(n => n.concept_id === cid).map(n => n.id))
-      const edges = activeDiagram.value.edges.filter(e => !removedNodeIds.has(e.source) && !removedNodeIds.has(e.target))
-      const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { nodes, edges })
-      _patchDiagram(updated)
-    }
+    // Remove from ALL diagrams that reference this concept
+    await Promise.all(
+      diagrams.value
+        .filter(d => d.nodes.some(n => n.concept_id === cid))
+        .map(async (d) => {
+          const removedIds = new Set(d.nodes.filter(n => n.concept_id === cid).map(n => n.id))
+          const nodes = d.nodes.filter(n => n.concept_id !== cid)
+          const edges = d.edges.filter(e => !removedIds.has(e.source) && !removedIds.has(e.target))
+          const updated = await ontologyApi.saveDiagram(domainId, d.id, { nodes, edges })
+          _patchDiagram(updated)
+        })
+    )
     selectedElementId.value = null
+  }
+
+  async function removeNodesFromCanvas(nodeIds: string[]) {
+    if (!activeDiagram.value || !activeDomainId.value) return
+    const removeSet = new Set(nodeIds)
+    const removedConceptIds = new Set(
+      activeDiagram.value.nodes.filter(n => removeSet.has(n.id)).map(n => n.concept_id)
+    )
+    const nodes = activeDiagram.value.nodes.filter(n => !removeSet.has(n.id))
+    const edges = activeDiagram.value.edges.filter(e => !removeSet.has(e.source) && !removeSet.has(e.target))
+    const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { nodes, edges })
+    _patchDiagram(updated)
+    if (selectedElementId.value && removedConceptIds.has(selectedElementId.value)) {
+      selectedElementId.value = null
+    }
+  }
+
+  async function removeEdgesFromCanvas(edgeIds: string[]) {
+    if (!activeDiagram.value || !activeDomainId.value) return
+    const removeSet = new Set(edgeIds)
+    const edges = activeDiagram.value.edges.filter(e => !removeSet.has(e.id))
+    const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { edges })
+    _patchDiagram(updated)
+    if (selectedElementId.value && removeSet.has(selectedElementId.value)) {
+      selectedElementId.value = null
+    }
+  }
+
+  async function createDatatypeAttribute(label: string, xsdUri: string, comment?: string): Promise<void> {
+    if (!selectedConcept.value || !activeDomainId.value) return
+    const concept = selectedConcept.value
+    const base = concept.uri.includes('#')
+      ? concept.uri.substring(0, concept.uri.lastIndexOf('#') + 1)
+      : concept.uri + '#'
+    const prop = await ontologyApi.createProperty(activeDomainId.value, {
+      uri: `${base}${label.replace(/\s+/g, '_')}`,
+      label,
+      property_type: 'DatatypeProperty',
+      source_class_id: concept.id,
+      target_class_id: xsdUri,
+      comment,
+    })
+    properties.value.push(prop)
+  }
+
+  async function deleteDatatypeAttribute(propertyId: string): Promise<void> {
+    if (!activeDomainId.value) return
+    await ontologyApi.deleteProperty(activeDomainId.value, propertyId)
+    properties.value = properties.value.filter(p => p.id !== propertyId)
   }
 
   async function createProperty(payload: PropertyCreatePayload): Promise<OntologyProperty | null> {
@@ -219,6 +281,7 @@ export const useOntologyStore = defineStore('ontology', () => {
     activeDiagram,
     selectedConcept,
     selectedProperty,
+    selectedConceptAttributes,
     loadForDomain,
     selectDiagram,
     createDiagram,
@@ -230,6 +293,10 @@ export const useOntologyStore = defineStore('ontology', () => {
     createConcept,
     updateSelectedConcept,
     deleteSelectedConcept,
+    createDatatypeAttribute,
+    deleteDatatypeAttribute,
+    removeNodesFromCanvas,
+    removeEdgesFromCanvas,
     createProperty,
     selectElement,
     toggleSnapToGrid,

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+>
+  <rdf:Description rdf:about="https://kmportal.ai/ontology/telemetry#generatesObservation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label>genera observación</rdfs:label>
+    <rdfs:domain rdf:resource="https://kmportal.ai/ontology/telemetry#Device"/>
+    <rdfs:range rdf:resource="https://kmportal.ai/ontology/telemetry#Observation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://kmportal.ai/ontology/telemetry#JammingAlert">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>Alerta de Jamming</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://kmportal.ai/ontology/telemetry#Observation">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>Punto de Telemetría</rdfs:label>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://km.local/ontology#reports">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#ObjectProperty"/>
+    <rdfs:label>reports</rdfs:label>
+    <rdfs:domain rdf:resource="https://kmportal.ai/ontology/telemetry#Device"/>
+    <rdfs:range rdf:resource="https://kmportal.ai/ontology/telemetry#Observation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://kmportal.ai/ontology/telemetry#Device">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>Dispositivo GPS</rdfs:label>
+    <rdfs:comment>Representa un dispositivo GPS fisico o virtual</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://kmportal.ai/ontology/telemetry#Alert">
+    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Class"/>
+    <rdfs:label>Alerta de Seguridad</rdfs:label>
+  </rdf:Description>
+</rdf:RDF>

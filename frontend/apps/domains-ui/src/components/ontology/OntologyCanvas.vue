@@ -15,9 +15,10 @@
       @edge-click="onEdgeClick"
       @pane-click="store.selectElement(null)"
       @move-end="onMoveEnd"
+      @connect="onConnect"
     />
 
-    <!-- Inline property-creation form shown after dropping "Property" from palette -->
+    <!-- Inline property-creation form: shown after dropping "Property" OR connecting two nodes -->
     <div
       v-if="propertyForm.visible"
       class="prop-form-overlay"
@@ -25,17 +26,27 @@
     >
       <h4 class="pf-title">New Property</h4>
       <label class="pf-label">Label</label>
-      <input class="pf-input" v-model="propertyForm.label" placeholder="e.g. hasRelation" />
-      <label class="pf-label">Source class</label>
-      <select class="pf-input" v-model="propertyForm.sourceId">
-        <option value="">— select —</option>
-        <option v-for="c in store.concepts" :key="c.id" :value="c.id">{{ c.label }}</option>
-      </select>
-      <label class="pf-label">Target class</label>
-      <select class="pf-input" v-model="propertyForm.targetId">
-        <option value="">— select —</option>
-        <option v-for="c in store.concepts" :key="c.id" :value="c.id">{{ c.label }}</option>
-      </select>
+      <input ref="labelInputRef" class="pf-input" v-model="propertyForm.label" placeholder="e.g. hasRelation" @keydown.enter="confirmPropertyForm" @keydown.esc="cancelPropertyForm" />
+
+      <template v-if="propertyForm.fromConnection">
+        <label class="pf-label">Source</label>
+        <p class="pf-value">{{ store.conceptMap[propertyForm.sourceId]?.label }}</p>
+        <label class="pf-label">Target</label>
+        <p class="pf-value">{{ store.conceptMap[propertyForm.targetId]?.label }}</p>
+      </template>
+      <template v-else>
+        <label class="pf-label">Source class</label>
+        <select class="pf-input" v-model="propertyForm.sourceId">
+          <option value="">— select —</option>
+          <option v-for="c in store.concepts" :key="c.id" :value="c.id">{{ c.label }}</option>
+        </select>
+        <label class="pf-label">Target class</label>
+        <select class="pf-input" v-model="propertyForm.targetId">
+          <option value="">— select —</option>
+          <option v-for="c in store.concepts" :key="c.id" :value="c.id">{{ c.label }}</option>
+        </select>
+      </template>
+
       <div class="pf-actions">
         <button class="pf-cancel" @click="cancelPropertyForm">Cancel</button>
         <button
@@ -49,16 +60,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, nextTick, reactive, ref } from 'vue'
 import {
   VueFlow,
   useVueFlow,
-  type Node,
+  type Connection,
   type Edge,
-  type NodeChange,
   type EdgeChange,
-  type NodeMouseEvent,
   type EdgeMouseEvent,
+  type Node,
+  type NodeChange,
+  type NodeMouseEvent,
 } from '@vue-flow/core'
 import { useOntologyStore } from '../../stores/ontology'
 import type { DiagramNode, DiagramViewport } from '../../types/ontology'
@@ -67,6 +79,7 @@ const FLOW_ID = 'km-ontology-flow'
 
 const store = useOntologyStore()
 const wrapper = ref<HTMLDivElement | null>(null)
+const labelInputRef = ref<HTMLInputElement | null>(null)
 const { fitView, zoomIn, zoomOut, getViewport } = useVueFlow({ id: FLOW_ID })
 
 defineExpose({ fitView, zoomIn, zoomOut })
@@ -117,10 +130,9 @@ const flowEdges = computed<Edge[]>(() => {
   }))
 })
 
-// ── Click handlers (Vue Flow v1: single NodeMouseEvent / EdgeMouseEvent arg) ──
+// ── Click handlers ────────────────────────────────────────────────────────────
 
 function onNodeClick({ node }: NodeMouseEvent) {
-  // Select by concept_id so Properties panel can look up semantic data
   const storeNode = activeDiagram.value?.nodes.find(n => n.id === node.id)
   store.selectElement(storeNode?.concept_id ?? null)
 }
@@ -146,6 +158,16 @@ function scheduleSave() {
 
 function onNodesChange(changes: NodeChange[]) {
   if (!activeDiagram.value) return
+
+  // Visual-only delete: remove selected nodes from diagram without touching the ontology
+  const removeIds = changes
+    .filter(c => c.type === 'remove')
+    .map(c => (c as { type: 'remove'; id: string }).id)
+  if (removeIds.length) {
+    store.removeNodesFromCanvas(removeIds)
+    return
+  }
+
   const posChanges = changes.filter(c => c.type === 'position' && 'position' in c && c.position)
   if (!posChanges.length) return
   const updated = activeDiagram.value.nodes.map(n => {
@@ -160,12 +182,43 @@ function onNodesChange(changes: NodeChange[]) {
   scheduleSave()
 }
 
-function onEdgesChange(_changes: EdgeChange[]) {
+function onEdgesChange(changes: EdgeChange[]) {
+  // Visual-only delete: remove selected edges from diagram without touching the ontology
+  const removeIds = changes
+    .filter(c => c.type === 'remove')
+    .map(c => (c as { type: 'remove'; id: string }).id)
+  if (removeIds.length) {
+    store.removeEdgesFromCanvas(removeIds)
+    return
+  }
   scheduleSave()
 }
 
 function onMoveEnd() {
   scheduleSave()
+}
+
+// ── Node connection by dragging handles ──────────────────────────────────────
+
+function onConnect(connection: Connection) {
+  if (!activeDiagram.value || !wrapper.value) return
+  const srcNode = activeDiagram.value.nodes.find(n => n.id === connection.source)
+  const tgtNode = activeDiagram.value.nodes.find(n => n.id === connection.target)
+  if (!srcNode || !tgtNode) return
+
+  // Center the form in the canvas wrapper
+  const rect = wrapper.value.getBoundingClientRect()
+  propertyForm.visible = true
+  propertyForm.x = rect.width / 2 - 115
+  propertyForm.y = rect.height / 2 - 110
+  propertyForm.label = ''
+  propertyForm.sourceId = srcNode.concept_id
+  propertyForm.targetId = tgtNode.concept_id
+  propertyForm.sourceNodeId = connection.source
+  propertyForm.targetNodeId = connection.target
+  propertyForm.fromConnection = true
+
+  nextTick(() => labelInputRef.value?.focus())
 }
 
 // ── Drag & drop from palette ──────────────────────────────────────────────────
@@ -177,6 +230,9 @@ const propertyForm = reactive({
   label: '',
   sourceId: '',
   targetId: '',
+  sourceNodeId: '',
+  targetNodeId: '',
+  fromConnection: false,
 })
 
 async function onDrop(event: DragEvent) {
@@ -206,23 +262,33 @@ async function onDrop(event: DragEvent) {
       alert('Add at least two classes first before creating a property.')
       return
     }
-    // Show inline form near the drop position (in screen coords)
     propertyForm.visible = true
     propertyForm.x = event.clientX - rect.left + 10
     propertyForm.y = event.clientY - rect.top + 10
     propertyForm.label = ''
     propertyForm.sourceId = ''
     propertyForm.targetId = ''
+    propertyForm.sourceNodeId = ''
+    propertyForm.targetNodeId = ''
+    propertyForm.fromConnection = false
+
+    nextTick(() => labelInputRef.value?.focus())
   }
 }
 
 function cancelPropertyForm() {
   propertyForm.visible = false
+  propertyForm.fromConnection = false
 }
 
 async function confirmPropertyForm() {
   if (!propertyForm.label || !propertyForm.sourceId || !propertyForm.targetId) return
   propertyForm.visible = false
+
+  const fromConnection = propertyForm.fromConnection
+  const srcNodeId = propertyForm.sourceNodeId
+  const tgtNodeId = propertyForm.targetNodeId
+  propertyForm.fromConnection = false
 
   const prop = await store.createProperty({
     label: propertyForm.label,
@@ -233,11 +299,16 @@ async function confirmPropertyForm() {
   })
   if (!prop || !activeDiagram.value) return
 
-  // Find nodes that correspond to the source/target classes
-  const srcNode = activeDiagram.value.nodes.find(n => n.concept_id === propertyForm.sourceId)
-  const tgtNode = activeDiagram.value.nodes.find(n => n.concept_id === propertyForm.targetId)
-  if (srcNode && tgtNode) {
-    await store.addRelationToCanvas(prop.id, srcNode.id, tgtNode.id)
+  if (fromConnection) {
+    // Node IDs are known precisely from the drag connection
+    await store.addRelationToCanvas(prop.id, srcNodeId, tgtNodeId)
+  } else {
+    // From palette drop — find a representative node for each class
+    const srcNode = activeDiagram.value.nodes.find(n => n.concept_id === propertyForm.sourceId)
+    const tgtNode = activeDiagram.value.nodes.find(n => n.concept_id === propertyForm.targetId)
+    if (srcNode && tgtNode) {
+      await store.addRelationToCanvas(prop.id, srcNode.id, tgtNode.id)
+    }
   }
 }
 </script>
@@ -258,6 +329,24 @@ async function confirmPropertyForm() {
   background: transparent;
 }
 
+/* Make connection handles clearly visible on node hover */
+:deep(.vue-flow__handle) {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0058bc;
+  border: 2px solid #fff;
+  opacity: 0;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+:deep(.vue-flow__node:hover .vue-flow__handle),
+:deep(.vue-flow__handle.connecting),
+:deep(.vue-flow__handle.valid) {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
 /* ── Inline property form ────────────────────────────────────────────────── */
 .prop-form-overlay {
   position: absolute;
@@ -266,7 +355,7 @@ async function confirmPropertyForm() {
   border: 1px solid var(--outline-variant, #e5e5e7);
   border-radius: 10px;
   padding: 14px 16px;
-  min-width: 220px;
+  min-width: 230px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
@@ -286,6 +375,14 @@ async function confirmPropertyForm() {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--on-surface-variant, #86868b);
+}
+
+.pf-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface, #1d1d1f);
+  margin: 0;
+  padding: 4px 0;
 }
 
 .pf-input {

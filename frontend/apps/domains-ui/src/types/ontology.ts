@@ -66,6 +66,23 @@ export interface DiagramListResponse {
   total: number
 }
 
+export const XSD_TYPES = [
+  { label: 'string',   uri: 'http://www.w3.org/2001/XMLSchema#string' },
+  { label: 'integer',  uri: 'http://www.w3.org/2001/XMLSchema#integer' },
+  { label: 'decimal',  uri: 'http://www.w3.org/2001/XMLSchema#decimal' },
+  { label: 'float',    uri: 'http://www.w3.org/2001/XMLSchema#float' },
+  { label: 'boolean',  uri: 'http://www.w3.org/2001/XMLSchema#boolean' },
+  { label: 'date',     uri: 'http://www.w3.org/2001/XMLSchema#date' },
+  { label: 'dateTime', uri: 'http://www.w3.org/2001/XMLSchema#dateTime' },
+  { label: 'anyURI',   uri: 'http://www.w3.org/2001/XMLSchema#anyURI' },
+] as const
+
+export type XsdTypeUri = typeof XSD_TYPES[number]['uri']
+
+export function xsdLabel(uri: string): string {
+  return uri.replace('http://www.w3.org/2001/XMLSchema#', 'xsd:')
+}
+
 export interface ConceptCreatePayload {
   uri: string
   label: string

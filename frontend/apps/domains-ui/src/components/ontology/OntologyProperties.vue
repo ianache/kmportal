@@ -7,6 +7,7 @@
     <div v-if="isOpen" class="panel-content">
       <h4 class="panel-title">Properties</h4>
 
+      <!-- ── Class editor ───────────────────────────────────────────────── -->
       <template v-if="selectedConcept">
         <label class="field-label">Label</label>
         <input class="field-input" v-model="editLabel" @blur="save" />
@@ -14,9 +15,58 @@
         <input class="field-input" v-model="editUri" @blur="save" />
         <label class="field-label">Comment</label>
         <textarea class="field-input" rows="3" v-model="editComment" @blur="save" />
-        <button class="btn-danger" @click="store.deleteSelectedConcept()">Delete Class</button>
+
+        <!-- ── Data Attributes ──────────────────────────────────────────── -->
+        <div class="section-header">
+          <span class="section-title">Data Attributes</span>
+          <button class="btn-add-attr" @click="openAddForm" title="Add attribute">+</button>
+        </div>
+
+        <!-- Existing attributes list -->
+        <div v-if="selectedConceptAttributes.length" class="attr-list">
+          <div
+            v-for="attr in selectedConceptAttributes"
+            :key="attr.id"
+            class="attr-row"
+          >
+            <div class="attr-info">
+              <span class="attr-name">{{ attr.label }}</span>
+              <span class="attr-type">{{ xsdLabel(attr.target_class_id) }}</span>
+            </div>
+            <button class="btn-del-attr" @click="confirmDeleteAttr(attr)" title="Delete attribute">×</button>
+          </div>
+        </div>
+        <p v-else class="attr-empty">No data attributes yet.</p>
+
+        <!-- Add attribute form -->
+        <div v-if="attrForm.visible" class="attr-form">
+          <label class="field-label">Name</label>
+          <input
+            ref="attrLabelRef"
+            class="field-input"
+            v-model="attrForm.label"
+            placeholder="e.g. hasLicensePlate"
+            @keydown.enter="submitAttrForm"
+            @keydown.esc="closeAddForm"
+          />
+          <label class="field-label">XSD Type</label>
+          <select class="field-input" v-model="attrForm.xsdUri">
+            <option v-for="t in XSD_TYPES" :key="t.uri" :value="t.uri">xsd:{{ t.label }}</option>
+          </select>
+          <label class="field-label">Comment</label>
+          <input class="field-input" v-model="attrForm.comment" placeholder="(optional)" />
+          <div class="attr-form-actions">
+            <button class="btn-secondary" @click="closeAddForm">Cancel</button>
+            <button class="btn-primary" :disabled="!attrForm.label" @click="submitAttrForm">Add</button>
+          </div>
+        </div>
+
+        <div class="danger-zone">
+          <button class="btn-danger" @click="confirmDeleteClass">Delete Class</button>
+        </div>
       </template>
 
+      <!-- ── Object-property (edge) viewer ─────────────────────────────── -->
       <template v-else-if="selectedProperty">
         <label class="field-label">Label</label>
         <p class="field-value">{{ selectedProperty!.label }}</p>
@@ -32,14 +82,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { nextTick, reactive, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useOntologyStore } from '../../stores/ontology'
+import { XSD_TYPES, xsdLabel, type XsdTypeUri } from '../../types/ontology'
+import type { OntologyProperty } from '../../types/ontology'
 
 const store = useOntologyStore()
-const { selectedConcept, selectedProperty } = storeToRefs(store)
+const { selectedConcept, selectedProperty, selectedConceptAttributes } = storeToRefs(store)
 const isOpen = ref(true)
 
+// ── Class metadata edit ──────────────────────────────────────────────────────
 const editLabel = ref('')
 const editUri = ref('')
 const editComment = ref('')
@@ -50,6 +103,7 @@ watch(
     editLabel.value = c?.label ?? ''
     editUri.value = c?.uri ?? ''
     editComment.value = c?.comment ?? ''
+    attrForm.visible = false
   },
   { immediate: true }
 )
@@ -68,6 +122,49 @@ async function save() {
     comment: editComment.value || undefined,
   })
 }
+
+function confirmDeleteClass() {
+  if (!selectedConcept.value) return
+  if (!confirm(`Delete class "${selectedConcept.value.label}"?\n\nThis will permanently remove it from the ontology and from all diagrams.`)) return
+  store.deleteSelectedConcept()
+}
+
+// ── Data attributes ──────────────────────────────────────────────────────────
+const attrLabelRef = ref<HTMLInputElement | null>(null)
+
+const attrForm = reactive({
+  visible: false,
+  label: '',
+  xsdUri: XSD_TYPES[0].uri as string,
+  comment: '',
+})
+
+function openAddForm() {
+  attrForm.label = ''
+  attrForm.xsdUri = XSD_TYPES[0].uri
+  attrForm.comment = ''
+  attrForm.visible = true
+  nextTick(() => attrLabelRef.value?.focus())
+}
+
+function closeAddForm() {
+  attrForm.visible = false
+}
+
+async function submitAttrForm() {
+  if (!attrForm.label.trim()) return
+  await store.createDatatypeAttribute(
+    attrForm.label.trim(),
+    attrForm.xsdUri,
+    attrForm.comment.trim() || undefined,
+  )
+  closeAddForm()
+}
+
+async function confirmDeleteAttr(attr: OntologyProperty) {
+  if (!confirm(`Delete attribute "${attr.label}"?`)) return
+  await store.deleteDatatypeAttribute(attr.id)
+}
 </script>
 
 <style scoped>
@@ -83,7 +180,7 @@ async function save() {
 }
 
 .props-panel.open {
-  width: 240px;
+  width: 260px;
 }
 
 .toggle-btn {
@@ -103,10 +200,10 @@ async function save() {
 }
 
 .panel-content {
-  padding: 16px 16px 16px 28px;
+  padding: 16px 14px 16px 28px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   width: 100%;
   overflow-y: auto;
 }
@@ -117,7 +214,7 @@ async function save() {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--on-surface-variant, #86868b);
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 
 .field-label {
@@ -126,13 +223,14 @@ async function save() {
   color: var(--on-surface-variant, #86868b);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  margin-top: 4px;
 }
 
 .field-input {
-  padding: 6px 8px;
+  padding: 5px 8px;
   border: 1px solid var(--outline-variant, #e5e5e7);
   border-radius: 6px;
-  font-size: 13px;
+  font-size: 12px;
   outline: none;
   resize: vertical;
   width: 100%;
@@ -144,15 +242,188 @@ async function save() {
 }
 
 .field-value {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--on-surface, #1d1d1f);
   margin: 0;
 }
 
 .mono {
   font-family: monospace;
-  font-size: 11px;
+  font-size: 10px;
   word-break: break-all;
+}
+
+/* ── Section header ──────────────────────────────────────────────────────── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--outline-variant, #e5e5e7);
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--on-surface-variant, #86868b);
+}
+
+.btn-add-attr {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary, #0058bc);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn-add-attr:hover {
+  background: #0047a0;
+}
+
+/* ── Attribute list ──────────────────────────────────────────────────────── */
+.attr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.attr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-container, #f4f4f8);
+  border-radius: 6px;
+  padding: 5px 8px;
+  gap: 4px;
+}
+
+.attr-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.attr-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface, #1d1d1f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attr-type {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--on-surface-variant, #86868b);
+}
+
+.btn-del-attr {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--on-surface-variant, #86868b);
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-del-attr:hover {
+  background: #fee2e2;
+  color: #c0392b;
+}
+
+.attr-empty {
+  font-size: 11px;
+  color: var(--on-surface-variant, #86868b);
+  font-style: italic;
+  margin: 4px 0 0;
+}
+
+/* ── Add attribute form ──────────────────────────────────────────────────── */
+.attr-form {
+  background: var(--surface-container, #f4f4f8);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  border: 1px solid var(--outline-variant, #e5e5e7);
+}
+
+.attr-form-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.btn-primary,
+.btn-secondary {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 6px;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--primary, #0058bc);
+  color: #fff;
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--surface-container-highest, #e0e0e6);
+  color: var(--on-surface, #1d1d1f);
+}
+
+/* ── Danger zone ─────────────────────────────────────────────────────────── */
+.danger-zone {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--outline-variant, #e5e5e7);
+}
+
+.btn-danger {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: none;
+  background: #c0392b;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-danger:hover {
+  background: #a93226;
 }
 
 .empty-msg {
@@ -162,17 +433,5 @@ async function save() {
   margin: 0;
   text-align: center;
   padding-top: 24px;
-}
-
-.btn-danger {
-  padding: 7px 12px;
-  border-radius: 8px;
-  border: none;
-  background: #c0392b;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 8px;
 }
 </style>
