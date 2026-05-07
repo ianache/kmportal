@@ -68,9 +68,9 @@ class SearchService:
                 
                 # Convert to SearchResult
                 for vr in vector_results:
-                    # Extract document_id from chunk_id (format: doc_id-chunk-index)
-                    chunk_parts = vr.chunk_id.rsplit('-', 2)
-                    document_id = chunk_parts[0] if len(chunk_parts) >= 3 else vr.chunk_id
+                    # Extract document_id from chunk_id (format: doc_id_index)
+                    chunk_parts = vr.chunk_id.rsplit('_', 1)
+                    document_id = chunk_parts[0] if len(chunk_parts) >= 2 else vr.chunk_id
                     
                     all_results.append(SearchResult(
                         chunk_id=vr.chunk_id,

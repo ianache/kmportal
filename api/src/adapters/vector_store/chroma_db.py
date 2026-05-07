@@ -239,11 +239,10 @@ to connect to a separate ChromaDB container without requiring the
             
             for i, chunk_id in enumerate(ids):
                 # Convert distance to similarity score
-                # ChromaDB uses L2 distance by default, convert to similarity
-                # Using exponential decay: score = exp(-distance)
+                # ChromaDB uses L2 distance by default.
+                # Standard conversion: score = 1 / (1 + distance)
                 distance = distances[i] if i < len(distances) else 0.0
-                import math
-                score = math.exp(-distance)
+                score = 1.0 / (1.0 + distance)
                 
                 results.append(SearchResult(
                     chunk_id=chunk_id,
