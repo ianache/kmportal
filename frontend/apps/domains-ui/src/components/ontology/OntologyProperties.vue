@@ -97,6 +97,14 @@ const editLabel = ref('')
 const editUri = ref('')
 const editComment = ref('')
 
+// Declared before watch so the immediate callback can safely reference it
+const attrForm = reactive({
+  visible: false,
+  label: '',
+  xsdUri: XSD_TYPES[0].uri as string,
+  comment: '',
+})
+
 watch(
   selectedConcept,
   (c) => {
@@ -131,13 +139,6 @@ function confirmDeleteClass() {
 
 // ── Data attributes ──────────────────────────────────────────────────────────
 const attrLabelRef = ref<HTMLInputElement | null>(null)
-
-const attrForm = reactive({
-  visible: false,
-  label: '',
-  xsdUri: XSD_TYPES[0].uri as string,
-  comment: '',
-})
 
 function openAddForm() {
   attrForm.label = ''
