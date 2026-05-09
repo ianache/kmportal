@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import {
   VueFlow,
   useVueFlow,
@@ -197,6 +197,25 @@ function onEdgesChange(changes: EdgeChange[]) {
 function onMoveEnd() {
   scheduleSave()
 }
+
+// ── Shift+Delete: remove selected node from diagram only (visual-only) ────────
+function onShiftDelete(e: KeyboardEvent) {
+  if (!e.shiftKey || (e.key !== 'Delete' && e.key !== 'Backspace')) return
+  const tag = (e.target as HTMLElement).tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  const selId = store.selectedElementId
+  if (!selId || !store.activeDiagram) return
+  // Only act when the selected element is a concept (node), not an edge
+  if (!store.conceptMap[selId]) return
+  e.preventDefault()
+  const nodeIds = store.activeDiagram.nodes
+    .filter(n => n.concept_id === selId)
+    .map(n => n.id)
+  if (nodeIds.length) store.removeNodesFromCanvas(nodeIds)
+}
+
+onMounted(() => document.addEventListener('keydown', onShiftDelete))
+onBeforeUnmount(() => document.removeEventListener('keydown', onShiftDelete))
 
 // ── Node connection by dragging handles ──────────────────────────────────────
 

@@ -74,6 +74,9 @@
         <p class="field-value">{{ selectedProperty!.property_type }}</p>
         <label class="field-label">URI</label>
         <p class="field-value mono">{{ selectedProperty!.uri }}</p>
+        <div class="danger-zone">
+          <button class="btn-danger" @click="confirmDeleteProperty">Delete Property</button>
+        </div>
       </template>
 
       <p v-else class="empty-msg">Select a class or relation on the canvas.</p>
@@ -135,6 +138,12 @@ function confirmDeleteClass() {
   if (!selectedConcept.value) return
   if (!confirm(`Delete class "${selectedConcept.value.label}"?\n\nThis will permanently remove it from the ontology and from all diagrams.`)) return
   store.deleteSelectedConcept()
+}
+
+function confirmDeleteProperty() {
+  if (!selectedProperty.value) return
+  if (!confirm(`Delete property "${selectedProperty.value.label}"?\n\nThis will permanently remove it from the ontology and from all diagrams.`)) return
+  store.deleteSelectedProperty()
 }
 
 // ── Data attributes ──────────────────────────────────────────────────────────

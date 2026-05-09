@@ -123,8 +123,35 @@ export const useOntologyStore = defineStore('ontology', () => {
     if (!activeDiagram.value || !activeDomainId.value) return
     const nodeId = `node-${Date.now()}`
     const node: DiagramNode = { id: nodeId, concept_id: concept.id, position }
+
+    // Auto-add edges for ObjectProperties between this concept and already-present classes
+    const presentNodes = activeDiagram.value.nodes
+    const existingPropIds = new Set(activeDiagram.value.edges.map(e => e.property_id))
+    const autoEdges: DiagramEdge[] = []
+
+    properties.value
+      .filter(p => p.property_type === 'ObjectProperty' && !existingPropIds.has(p.id))
+      .forEach((p, idx) => {
+        const isSource = p.source_class_id === concept.id
+        const isTarget = p.target_class_id === concept.id
+        if (!isSource && !isTarget) return
+
+        const otherConceptId = isSource ? p.target_class_id : p.source_class_id
+        const otherNode = presentNodes.find(n => n.concept_id === otherConceptId)
+        if (!otherNode) return
+
+        autoEdges.push({
+          id: `edge-${Date.now()}-${idx}`,
+          property_id: p.id,
+          source: isSource ? nodeId : otherNode.id,
+          target: isSource ? otherNode.id : nodeId,
+          label: p.label,
+        })
+      })
+
     const nodes = [...activeDiagram.value.nodes, node]
-    const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { nodes })
+    const edges = [...activeDiagram.value.edges, ...autoEdges]
+    const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { nodes, edges })
     _patchDiagram(updated)
   }
 
@@ -180,6 +207,25 @@ export const useOntologyStore = defineStore('ontology', () => {
           const nodes = d.nodes.filter(n => n.concept_id !== cid)
           const edges = d.edges.filter(e => !removedIds.has(e.source) && !removedIds.has(e.target))
           const updated = await ontologyApi.saveDiagram(domainId, d.id, { nodes, edges })
+          _patchDiagram(updated)
+        })
+    )
+    selectedElementId.value = null
+  }
+
+  async function deleteSelectedProperty() {
+    if (!selectedProperty.value || !activeDomainId.value) return
+    const pid = selectedProperty.value.id
+    const domainId = activeDomainId.value
+    await ontologyApi.deleteProperty(domainId, pid)
+    properties.value = properties.value.filter(p => p.id !== pid)
+    // Remove edges referencing this property from ALL diagrams
+    await Promise.all(
+      diagrams.value
+        .filter(d => d.edges.some(e => e.property_id === pid))
+        .map(async (d) => {
+          const edges = d.edges.filter(e => e.property_id !== pid)
+          const updated = await ontologyApi.saveDiagram(domainId, d.id, { edges })
           _patchDiagram(updated)
         })
     )
@@ -293,6 +339,7 @@ export const useOntologyStore = defineStore('ontology', () => {
     createConcept,
     updateSelectedConcept,
     deleteSelectedConcept,
+    deleteSelectedProperty,
     createDatatypeAttribute,
     deleteDatatypeAttribute,
     removeNodesFromCanvas,
