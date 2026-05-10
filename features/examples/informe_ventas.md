@@ -1,0 +1,1 @@
+La venta realizads para el cliente ILVER ANACHE PUPO con id 000199985 el 2026-04-02 para la oferta de servicio de Rastreo Satelital.
