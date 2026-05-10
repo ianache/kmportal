@@ -13,6 +13,15 @@ declare global {
   }
 }
 
+declare module 'shell/microFrontendApi' {
+  export function createLazyApiClient(): {
+    get<T>(path: string): Promise<{ data?: T; error?: { message: string } }>
+    post<T>(path: string, body: unknown): Promise<{ data?: T; error?: { message: string } }>
+    put<T>(path: string, body: unknown): Promise<{ data?: T; error?: { message: string } }>
+    delete<T>(path: string): Promise<{ data?: T; error?: { message: string } }>
+  }
+}
+
 declare module 'shell/BaseButton' {
   import { DefineComponent } from 'vue'
   const BaseButton: DefineComponent<any, any, any>
