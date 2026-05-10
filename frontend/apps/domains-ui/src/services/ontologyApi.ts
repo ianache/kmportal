@@ -9,6 +9,7 @@ import type {
   OntologyData,
   OntologyProperty,
   PropertyCreatePayload,
+  PropertyUpdatePayload,
 } from '../types/ontology'
 
 const apiClient = createLazyApiClient()
@@ -39,6 +40,12 @@ class OntologyApiClient {
 
   async createProperty(domainId: string, payload: PropertyCreatePayload): Promise<OntologyProperty> {
     const r = await apiClient.post<OntologyProperty>(`/v1/domains/${domainId}/ontology/properties`, payload)
+    if (r.error) throw new Error(r.error.message)
+    return r.data!
+  }
+
+  async updateProperty(domainId: string, propertyId: string, payload: PropertyUpdatePayload): Promise<OntologyProperty> {
+    const r = await apiClient.put<OntologyProperty>(`/v1/domains/${domainId}/ontology/properties/${propertyId}`, payload)
     if (r.error) throw new Error(r.error.message)
     return r.data!
   }

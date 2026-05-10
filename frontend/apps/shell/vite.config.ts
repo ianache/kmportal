@@ -45,6 +45,13 @@ export default defineConfig({
         target: 'http://localhost:3000',
         ws: true,
         changeOrigin: true,
+        // Suppress noisy ECONNRESET logs when the BFF WS server is not yet ready
+        // or when the browser closes the connection on navigation.
+        configure: (proxy) => {
+          proxy.on('error', (err: NodeJS.ErrnoException) => {
+            if (err.code !== 'ECONNRESET') console.error('[ws proxy]', err.message);
+          });
+        },
       },
 
     },

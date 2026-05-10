@@ -24,17 +24,40 @@
 
         <!-- Existing attributes list -->
         <div v-if="selectedConceptAttributes.length" class="attr-list">
-          <div
-            v-for="attr in selectedConceptAttributes"
-            :key="attr.id"
-            class="attr-row"
-          >
-            <div class="attr-info">
-              <span class="attr-name">{{ attr.label }}</span>
-              <span class="attr-type">{{ xsdLabel(attr.target_class_id) }}</span>
+          <template v-for="attr in selectedConceptAttributes" :key="attr.id">
+            <!-- Edit form (inline, replaces the row) -->
+            <div v-if="editingAttrId === attr.id" class="attr-form">
+              <label class="field-label">Name</label>
+              <input
+                class="field-input"
+                v-model="editForm.label"
+                @keydown.enter="submitEditForm"
+                @keydown.esc="closeEditForm"
+              />
+              <label class="field-label">XSD Type</label>
+              <select class="field-input" v-model="editForm.xsdUri">
+                <option v-for="t in XSD_TYPES" :key="t.uri" :value="t.uri">xsd:{{ t.label }}</option>
+              </select>
+              <label class="field-label">Comment</label>
+              <input class="field-input" v-model="editForm.comment" placeholder="(optional)" />
+              <div class="attr-form-actions">
+                <button class="btn-secondary" @click="closeEditForm">Cancel</button>
+                <button class="btn-primary" :disabled="!editForm.label" @click="submitEditForm">Save</button>
+              </div>
             </div>
-            <button class="btn-del-attr" @click="confirmDeleteAttr(attr)" title="Delete attribute">×</button>
-          </div>
+            <!-- Read-only row -->
+            <div v-else class="attr-row">
+              <div class="attr-info">
+                <span class="attr-name">{{ attr.label }}</span>
+                <span class="attr-type">{{ xsdLabel(attr.target_class_id) }}</span>
+                <span v-if="attr.comment" class="attr-comment">{{ attr.comment }}</span>
+              </div>
+              <div class="attr-actions">
+                <button class="btn-edit-attr" @click="openEditForm(attr)" title="Edit attribute">✎</button>
+                <button class="btn-del-attr" @click="confirmDeleteAttr(attr)" title="Delete attribute">×</button>
+              </div>
+            </div>
+          </template>
         </div>
         <p v-else class="attr-empty">No data attributes yet.</p>
 
@@ -100,13 +123,16 @@ const editLabel = ref('')
 const editUri = ref('')
 const editComment = ref('')
 
-// Declared before watch so the immediate callback can safely reference it
+// All reactive state that the immediate watch touches must be declared before the watch call
 const attrForm = reactive({
   visible: false,
   label: '',
   xsdUri: XSD_TYPES[0].uri as string,
   comment: '',
 })
+
+const editingAttrId = ref<string | null>(null)
+const editForm = reactive({ label: '', xsdUri: XSD_TYPES[0].uri as string, comment: '' })
 
 watch(
   selectedConcept,
@@ -115,6 +141,7 @@ watch(
     editUri.value = c?.uri ?? ''
     editComment.value = c?.comment ?? ''
     attrForm.visible = false
+    editingAttrId.value = null
   },
   { immediate: true }
 )
@@ -148,6 +175,29 @@ function confirmDeleteProperty() {
 
 // ── Data attributes ──────────────────────────────────────────────────────────
 const attrLabelRef = ref<HTMLInputElement | null>(null)
+
+function openEditForm(attr: OntologyProperty) {
+  attrForm.visible = false
+  editingAttrId.value = attr.id
+  editForm.label = attr.label
+  editForm.xsdUri = attr.target_class_id
+  editForm.comment = attr.comment ?? ''
+}
+
+function closeEditForm() {
+  editingAttrId.value = null
+}
+
+async function submitEditForm() {
+  if (!editForm.label.trim() || !editingAttrId.value) return
+  await store.updateDatatypeAttribute(
+    editingAttrId.value,
+    editForm.label.trim(),
+    editForm.xsdUri,
+    editForm.comment.trim() || undefined,
+  )
+  closeEditForm()
+}
 
 function openAddForm() {
   attrForm.label = ''
@@ -341,20 +391,40 @@ async function confirmDeleteAttr(attr: OntologyProperty) {
   color: var(--on-surface-variant, #86868b);
 }
 
-.btn-del-attr {
+.attr-comment {
+  font-size: 10px;
+  color: var(--on-surface-variant, #86868b);
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+.attr-actions {
+  display: flex;
+  gap: 2px;
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+}
+
+.btn-edit-attr,
+.btn-del-attr {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
   border: none;
   background: transparent;
   color: var(--on-surface-variant, #86868b);
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
-  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.btn-edit-attr:hover {
+  background: #e8f0fe;
+  color: #0058bc;
 }
 
 .btn-del-attr:hover {

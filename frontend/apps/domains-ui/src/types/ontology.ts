@@ -98,6 +98,12 @@ export interface PropertyCreatePayload {
   comment?: string
 }
 
+export interface PropertyUpdatePayload {
+  label?: string
+  target_class_id?: string
+  comment?: string
+}
+
 export interface DiagramCreatePayload {
   name: string
 }

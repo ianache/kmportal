@@ -275,6 +275,17 @@ export const useOntologyStore = defineStore('ontology', () => {
     properties.value.push(prop)
   }
 
+  async function updateDatatypeAttribute(propertyId: string, label: string, xsdUri: string, comment?: string): Promise<void> {
+    if (!activeDomainId.value) return
+    const updated = await ontologyApi.updateProperty(activeDomainId.value, propertyId, {
+      label,
+      target_class_id: xsdUri,
+      comment: comment ?? '',
+    })
+    const idx = properties.value.findIndex(p => p.id === propertyId)
+    if (idx >= 0) properties.value[idx] = updated
+  }
+
   async function deleteDatatypeAttribute(propertyId: string): Promise<void> {
     if (!activeDomainId.value) return
     await ontologyApi.deleteProperty(activeDomainId.value, propertyId)
@@ -341,6 +352,7 @@ export const useOntologyStore = defineStore('ontology', () => {
     deleteSelectedConcept,
     deleteSelectedProperty,
     createDatatypeAttribute,
+    updateDatatypeAttribute,
     deleteDatatypeAttribute,
     removeNodesFromCanvas,
     removeEdgesFromCanvas,
