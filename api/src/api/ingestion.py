@@ -7,12 +7,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.dependencies import get_current_user, require_domain_access
 from db.database import get_db
+from db.neo4j_client import get_neo4j
 from models import DocumentStatus
 from schemas import (
+    ExtractResponse,
     IngestionJobListResponse,
+    IngestionPayload,
     IngestionResponse,
     IngestionStatusResponse,
+    SemanticIngestionResponse,
     UserInToken,
+    VectorIngestRequest,
+    VectorIngestResponse,
 )
 from services.ingestion_service import (
     IngestionError,
@@ -173,6 +179,118 @@ async def ingest_text(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+
+
+@router.post(
+    "/extract",
+    response_model=ExtractResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Extract text from document",
+    description="Return plain text from a PDF or TXT file for user review before ingestion."
+)
+async def extract_document_text(
+    file: UploadFile = File(..., description="PDF or TXT file to extract"),
+    user: UserInToken = Depends(get_current_user),
+) -> ExtractResponse:
+    from ingestion.extractors import TextExtractionError, UnsupportedFormatError, extract_text
+
+    content = await file.read()
+    filename = file.filename or "upload"
+    try:
+        text = extract_text(content, filename)
+        return ExtractResponse(content=text, filename=filename)
+    except UnsupportedFormatError as e:
+        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=str(e))
+    except TextExtractionError as e:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+
+
+@router.post(
+    "/vector",
+    response_model=VectorIngestResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Quick RAG — vector-only ingestion",
+    description="Index text content directly into the domain's ChromaDB collection. No ontology write."
+)
+async def ingest_vector(
+    payload: VectorIngestRequest,
+    domain_id: UUID = Query(..., description="Target domain ID"),
+    user: UserInToken = Depends(require_domain_access),
+) -> VectorIngestResponse:
+    import uuid as _uuid
+
+    from adapters import get_embedding_adapter, get_vector_store_adapter
+    from ports.vector_store import Chunk
+
+    embedding_provider = await get_embedding_adapter()
+    vector_store = await get_vector_store_adapter()
+    collection_name = str(domain_id)
+
+    try:
+        await vector_store.create_collection(
+            name=collection_name,
+            dimension=embedding_provider.dimension,
+        )
+    except Exception:
+        pass
+
+    embeddings = await embedding_provider.embed([payload.content])
+    chunk = Chunk(
+        id=str(_uuid.uuid4()),
+        text=payload.content,
+        embedding=embeddings[0],
+        metadata={
+            "source": payload.metadata.source,
+            "type": payload.metadata.type,
+            "domain_id": str(domain_id),
+        },
+    )
+    try:
+        await vector_store.upsert(collection=collection_name, chunks=[chunk])
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Vector store write failed: {e}",
+        )
+    return VectorIngestResponse(success=True, message="Indexado exitosamente")
+
+
+@router.post(
+    "/semantic",
+    response_model=SemanticIngestionResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Semantic atomic ingestion (Neo4j + ChromaDB)",
+    description="Atomic dual-write: KnowledgeItem to Neo4j then embedding to ChromaDB. Neo4j is rolled back on ChromaDB failure."
+)
+async def ingest_semantic(
+    payload: IngestionPayload,
+    domain_id: UUID = Query(..., description="Target domain ID"),
+    user: UserInToken = Depends(require_domain_access),
+    driver=Depends(get_neo4j),
+) -> SemanticIngestionResponse:
+    import os
+
+    from adapters import get_embedding_adapter
+    from adapters.vector_store.chroma_db import ChromaDBAdapter
+    from services.semantic_ingestion_service import IngestionCoordinator
+
+    embedding_provider = await get_embedding_adapter()
+    vector_store = ChromaDBAdapter(
+        host=os.getenv("CHROMA_HOST", "localhost"),
+        port=int(os.getenv("CHROMA_PORT", "8000")),
+    )
+    coordinator = IngestionCoordinator(
+        driver=driver,
+        vector_store=vector_store,
+        embedding_provider=embedding_provider,
+    )
+    try:
+        return await coordinator.execute_atomic_ingestion(payload, str(domain_id))
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(exc),
         )
 
 

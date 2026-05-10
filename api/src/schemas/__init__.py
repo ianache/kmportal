@@ -539,6 +539,28 @@ class SemanticIngestionResponse(BaseModel):
     link_id: str
 
 
+class ExtractResponse(BaseModel):
+    """Text extracted from an uploaded file, returned for preview."""
+    content: str
+    filename: str
+
+
+class VectorIngestMetadata(BaseModel):
+    source: str
+    type: str = "quick_rag"
+
+
+class VectorIngestRequest(BaseModel):
+    """Payload for quick RAG vector-only ingestion."""
+    content: str
+    metadata: VectorIngestMetadata
+
+
+class VectorIngestResponse(BaseModel):
+    success: bool
+    message: str
+
+
 # ==================== Error ====================
 
 class ErrorResponse(BaseModel):

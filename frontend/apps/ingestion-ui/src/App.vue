@@ -20,7 +20,7 @@
         </div>
         
         <aside class="upload-section">
-          <FileUpload />
+          <IngestionForm />
         </aside>
       </div>
     </main>
@@ -32,7 +32,7 @@ import { inject, onMounted, onUnmounted } from 'vue'
 import { useIngestionStore } from './stores/ingestion'
 import { WebSocketKey, wsClient as localWsClient, type WebSocketService } from './services/websocket'
 import JobList from './components/JobList.vue'
-import FileUpload from './components/FileUpload.vue'
+import IngestionForm from './components/IngestionForm.vue'
 
 const ingestionStore = useIngestionStore()
 
