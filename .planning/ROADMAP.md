@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Frontend shell** - Vue 3 Module Federation host with auth state, global layout, and design system
 - [x] **Phase 7: Core micro UIs** - Search, domain explorer, ingestion status, and real-time notifications micro UIs
 - [x] **Phase 8: Admin and API keys** - Admin micro UIs for domain/user management and API key lifecycle
-- [ ] **Phase 9: MCP integration** - FastMCP server exposing search and domain tools to AI agents via API Keys
+- [x] **Phase 9: MCP integration** - FastMCP server exposing search and domain tools to AI agents via API Keys
 - [ ] **Phase 10: Production hardening** - Structured logging, observability, Docker Compose finalization, and deployment validation
 
 ## Phase Details
@@ -151,7 +151,10 @@ Plans:
   2. An MCP client calling `search_knowledge(query="...", domain="...")` with a valid API Key receives chunk references and relevance scores; the response contains snippets, not full document text
   3. An MCP client calling `list_domains()` receives only the domains authorized for its API Key's scope
   4. A request to any MCP tool without a valid API Key returns an authentication error; a key scoped to Domain A cannot retrieve results from Domain B
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [x] 09-01-PLAN.md — FastMCP server with search_knowledge, list_domains, get_domain_info tools
 
 ### Phase 10: Production hardening
 **Goal**: The full stack is deployable via a single `docker compose up` command with structured JSON logging, health checks, and configuration verified against a production-readiness checklist
@@ -179,5 +182,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Frontend shell | ✅ | Complete | 2026-05-03 |
 | 7. Core micro UIs | 0/TBD | Not started | - |
 | 8. Admin and API keys | 1/1 | Complete | 2026-05-09 |
-| 9. MCP integration | 0/TBD | Not started | - |
+| 9. MCP integration | 1/1 | Complete | 2026-05-09 |
 | 10. Production hardening | 0/TBD | Not started | - |
