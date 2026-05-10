@@ -59,7 +59,7 @@ async def create_concept(
 
 
 @router.put(
-    "/{domain_id}/ontology/concepts/{concept_id}",
+    "/{domain_id}/ontology/concepts/{concept_id:path}",
     response_model=OntologyConceptResponse,
     summary="Update OWL class",
 )
@@ -77,7 +77,7 @@ async def update_concept(
 
 
 @router.delete(
-    "/{domain_id}/ontology/concepts/{concept_id}",
+    "/{domain_id}/ontology/concepts/{concept_id:path}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete OWL class (cascades to properties)",
 )
@@ -108,7 +108,7 @@ async def create_property(
 
 
 @router.put(
-    "/{domain_id}/ontology/properties/{property_id}",
+    "/{domain_id}/ontology/properties/{property_id:path}",
     response_model=OntologyPropertyResponse,
     summary="Update OWL property label, range or comment",
 )
@@ -126,7 +126,7 @@ async def update_property(
 
 
 @router.delete(
-    "/{domain_id}/ontology/properties/{property_id}",
+    "/{domain_id}/ontology/properties/{property_id:path}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete OWL property",
 )

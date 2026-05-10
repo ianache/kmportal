@@ -44,8 +44,75 @@ async def get_embedding_adapter(
     api_key: str | None = None,
     model: str | None = None
 ) -> "EmbeddingPort":
-    # ... (omitted for brevity in replace call, but I will provide full implementation)
-    pass
+    """
+    Factory function to get the configured embedding adapter.
+
+    Provider priority:
+    1. Ollama (local) - if EMBEDDING_PROVIDER=ollama or OLLAMA_HOST is set
+    2. Gemini (cloud) - if GEMINI_API_KEY is available
+    3. Mock (fallback) - for testing without external services
+
+    Args:
+        api_key: API key for cloud providers (defaults to GEMINI_API_KEY env var)
+        model: Model name (defaults to provider-specific env var or sensible default)
+
+    Returns:
+        Configured EmbeddingPort instance
+
+    Environment Variables:
+        EMBEDDING_PROVIDER: 'ollama', 'gemini', or 'mock' (default: auto-detect)
+        OLLAMA_HOST: Ollama host (default: localhost)
+        OLLAMA_PORT: Ollama port (default: 11434)
+        OLLAMA_MODEL: Ollama model name (default: embeddinggemma)
+        GEMINI_API_KEY: Gemini API key
+        GEMINI_EMBEDDING_MODEL: Gemini model (default: text-embedding-004)
+    """
+    from adapters.embedding.gemini import GeminiAdapter
+    from adapters.embedding.mock import MockEmbeddingAdapter
+    from adapters.embedding.ollama import OllamaAdapter
+
+    provider = os.getenv("EMBEDDING_PROVIDER", "auto").lower()
+
+    # Determine provider if auto
+    if provider == "auto":
+        if os.getenv("OLLAMA_HOST") or os.getenv("EMBEDDING_PROVIDER") == "ollama":
+            provider = "ollama"
+        elif os.getenv("GEMINI_API_KEY"):
+            provider = "gemini"
+        else:
+            provider = "mock"
+
+    # Create Ollama adapter (local)
+    if provider == "ollama":
+        host = os.getenv("OLLAMA_HOST", "localhost")
+        port = int(os.getenv("OLLAMA_PORT", "11434"))
+        model = model or os.getenv("OLLAMA_MODEL", "embeddinggemma")
+
+        return OllamaAdapter(
+            model=model,
+            host=host,
+            port=port,
+            batch_size=10
+        )
+
+    # Create Gemini adapter (cloud)
+    elif provider == "gemini":
+        api_key = api_key or os.getenv("GEMINI_API_KEY")
+        model = model or os.getenv("GEMINI_EMBEDDING_MODEL", "text-embedding-004")
+
+        if not api_key:
+            raise ValueError(
+                "Gemini provider selected but GEMINI_API_KEY not set. "
+                "Set the API key or choose a different provider."
+            )
+
+        return GeminiAdapter(api_key=api_key, model=model)
+
+    # Fall back to mock adapter for testing/development
+    else:
+        model = model or "mock-embedding"
+        dimension = int(os.getenv("MOCK_EMBEDDING_DIMENSION", "768"))
+        return MockEmbeddingAdapter(dimension=dimension)
 
 async def get_graph_adapter(
     uri: str | None = None,

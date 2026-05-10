@@ -160,7 +160,9 @@ class GeminiAdapter(EmbeddingPort):
         Internal method - use embed() for public API.
         Falls back to hash-based embeddings if API returns 404 (model not available).
         """
-        url = f"{self._base_url}/models/{self._model}:batchEmbedContents"
+        # Use models/ prefix as required by Gemini API resource name format
+        model_resource = f"models/{self._model}"
+        url = f"{self._base_url}/{model_resource}:batchEmbedContents"
 
         # Build request payload
         requests_payload = []
@@ -183,6 +185,13 @@ class GeminiAdapter(EmbeddingPort):
             json=payload
         )
 
+        # Debug logging for errors
+        if response.status_code == 404:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Gemini API 404: URL={url}, model={self._model}")
+            logger.error(f"Response: {response.text}")
+
         # Handle errors
         if response.status_code == 429:
             raise RateLimitError("Gemini API rate limit exceeded")
@@ -191,6 +200,13 @@ class GeminiAdapter(EmbeddingPort):
         elif response.status_code == 404 or response.status_code == 400:
             # Model not available or API key invalid (placeholder)
             # Fall back to hash-based deterministic embeddings
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"Gemini API returned {response.status_code}. "
+                f"Falling back to hash-based embeddings. "
+                f"Response: {response.text[:200]}"
+            )
             return [self._hash_embedding(text) for text in texts]
         elif response.status_code != 200:
             raise EmbeddingError(

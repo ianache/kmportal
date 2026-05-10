@@ -32,14 +32,21 @@ Base = declarative_base()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession]:
-    """Dependency to get database session."""
+    """Dependency to get database session.
+
+    Usage:
+        - Route handlers should explicitly call `await session.commit()`
+          after successful operations
+        - Session is automatically closed (with rollback if needed) on exit
+    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
-            await session.commit()
         except Exception:
             await session.rollback()
             raise
+        finally:
+            await session.close()
 
 
 async def init_db() -> None:

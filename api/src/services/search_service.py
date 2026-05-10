@@ -202,25 +202,18 @@ class SearchService:
         Returns:
             List of search results
         """
-        # Run searches in parallel
-        import asyncio
-
-        vector_task = self.semantic_search(
+        # Run searches sequentially (concurrent DB operations not safe with AsyncSession)
+        vector_results = await self.semantic_search(
             query=query,
             domain_ids=domain_ids,
             top_k=top_k * 2,  # Get more for fusion
             filters=filters
         )
 
-        keyword_task = self.keyword_search(
+        keyword_results = await self.keyword_search(
             query=query,
             domain_ids=domain_ids,
             limit=top_k * 2
-        )
-
-        vector_results, keyword_results = await asyncio.gather(
-            vector_task,
-            keyword_task
         )
 
         # Apply RRF fusion

@@ -298,9 +298,9 @@ async def get_document_status(document_id: str) -> dict:
 
 def get_mcp_app():
     """
-    Get the MCP server as an ASGI application.
+    Get the MCP server as an ASGI application (Streamable HTTP transport).
 
     Returns:
         ASGI app that can be mounted on the main FastAPI application
     """
-    return mcp.http_app(transport="sse")
+    return mcp.http_app()
