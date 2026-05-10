@@ -114,3 +114,47 @@ export interface DiagramUpdatePayload {
   edges?: DiagramEdge[]
   viewport?: DiagramViewport
 }
+
+// Batch operations for ontology save
+export interface ConceptBatchOperation {
+  operation: 'create' | 'update' | 'delete'
+  id?: string
+  data?: ConceptCreatePayload
+}
+
+export interface PropertyBatchOperation {
+  operation: 'create' | 'update' | 'delete'
+  id?: string
+  data?: PropertyCreatePayload
+}
+
+export interface DiagramBatchOperation {
+  operation: 'create' | 'update' | 'delete'
+  id?: string
+  data?: {
+    name?: string
+    nodes?: DiagramNode[]
+    edges?: DiagramEdge[]
+    viewport?: DiagramViewport
+  }
+}
+
+export interface OntologyBatchPayload {
+  concepts: ConceptBatchOperation[]
+  properties: PropertyBatchOperation[]
+  diagrams: DiagramBatchOperation[]
+}
+
+export interface OntologyBatchResponse {
+  success: boolean
+  concepts_created: string[]
+  concepts_updated: string[]
+  concepts_deleted: string[]
+  properties_created: string[]
+  properties_updated: string[]
+  properties_deleted: string[]
+  diagrams_created: string[]
+  diagrams_updated: string[]
+  diagrams_deleted: string[]
+  errors: string[]
+}

@@ -144,14 +144,44 @@ function onEdgeClick({ edge }: EdgeMouseEvent) {
 // ── Save position changes back to store ──────────────────────────────────────
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 
-function scheduleSave() {
+function scheduleSave(nodes?: DiagramNode[], edges?: DiagramEdge[]) {
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     if (!activeDiagram.value) return
     store.saveLayout(
-      activeDiagram.value.nodes,
-      activeDiagram.value.edges,
+      nodes ?? JSON.parse(JSON.stringify(activeDiagram.value.nodes)),
+      edges ?? JSON.parse(JSON.stringify(activeDiagram.value.edges)),
       getViewport() as DiagramViewport,
+      true, // mark as unsaved for content changes
+    )
+  }, 600)
+}
+
+// Track last saved viewport to avoid unnecessary saves
+let lastSavedViewport: DiagramViewport | null = null
+
+function scheduleViewportSave() {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    if (!activeDiagram.value) return
+    const currentViewport = getViewport() as DiagramViewport
+    
+    // Only save if viewport actually changed
+    if (lastSavedViewport &&
+        lastSavedViewport.x === currentViewport.x &&
+        lastSavedViewport.y === currentViewport.y &&
+        lastSavedViewport.zoom === currentViewport.zoom) {
+      return
+    }
+    
+    lastSavedViewport = { ...currentViewport }
+    // Save viewport changes without marking as unsaved
+    // Pass current state for reference, but don't trigger dirty state
+    store.saveLayout(
+      JSON.parse(JSON.stringify(activeDiagram.value.nodes)),
+      JSON.parse(JSON.stringify(activeDiagram.value.edges)),
+      currentViewport,
+      false, // don't mark as unsaved for viewport-only changes
     )
   }, 600)
 }
@@ -170,6 +200,10 @@ function onNodesChange(changes: NodeChange[]) {
 
   const posChanges = changes.filter(c => c.type === 'position' && 'position' in c && c.position)
   if (!posChanges.length) return
+  
+  // Store original nodes for comparison
+  const originalNodes = JSON.parse(JSON.stringify(activeDiagram.value.nodes))
+  
   const updated = activeDiagram.value.nodes.map(n => {
     const change = posChanges.find(c => 'id' in c && c.id === n.id)
     if (change && 'position' in change && change.position) {
@@ -177,12 +211,23 @@ function onNodesChange(changes: NodeChange[]) {
     }
     return n
   })
+  
+  // Update store first
   const idx = store.diagrams.findIndex(d => d.id === activeDiagram.value!.id)
   if (idx >= 0) store.diagrams[idx].nodes = updated
-  scheduleSave()
+  
+  // Save with original nodes for comparison - node position changes ARE content changes
+  store.saveLayout(
+    originalNodes,
+    activeDiagram.value.edges,
+    getViewport() as DiagramViewport,
+    true // mark as unsaved - position changes should be saved
+  )
 }
 
 function onEdgesChange(changes: EdgeChange[]) {
+  if (!activeDiagram.value) return
+  
   // Visual-only delete: remove selected edges from diagram without touching the ontology
   const removeIds = changes
     .filter(c => c.type === 'remove')
@@ -191,11 +236,20 @@ function onEdgesChange(changes: EdgeChange[]) {
     store.removeEdgesFromCanvas(removeIds)
     return
   }
-  scheduleSave()
+  
+  // For other edge changes, compare and save
+  const originalEdges = JSON.parse(JSON.stringify(activeDiagram.value.edges))
+  store.saveLayout(
+    activeDiagram.value.nodes,
+    originalEdges,
+    getViewport() as DiagramViewport,
+    true // mark as unsaved
+  )
 }
 
 function onMoveEnd() {
-  scheduleSave()
+  // Viewport changes (zoom/pan) don't mark as unsaved, just save silently
+  scheduleViewportSave()
 }
 
 // ── Shift+Delete: remove selected node from diagram only (visual-only) ────────

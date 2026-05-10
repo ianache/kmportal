@@ -101,6 +101,17 @@ to connect to a separate ChromaDB container without requiring the
 
         if response.status_code == 409:
             raise CollectionExistsError(f"Collection '{name}' already exists")
+        elif response.status_code == 500:
+            # Some ChromaDB versions return 500 (not 409) for duplicate collections.
+            # Verify by listing: if the collection is found, treat it as already-exists.
+            check = await self.client.get(f"{self.base_url}/collections")
+            if check.status_code == 200:
+                exists = any(c.get("name") == name for c in check.json())
+                if exists:
+                    raise CollectionExistsError(f"Collection '{name}' already exists")
+            raise VectorStoreError(
+                f"Failed to create collection: {response.text}"
+            )
         elif response.status_code != 200:
             raise VectorStoreError(
                 f"Failed to create collection: {response.text}"
@@ -202,10 +213,17 @@ to connect to a separate ChromaDB container without requiring the
         collection: str,
         query_vector: list[float],
         top_k: int = 10,
-        filters: dict[str, Any] | None = None
+        filters: dict[str, Any] | None = None,
+        as_distances: bool = False,
     ) -> list[SearchResult]:
-        """Search ChromaDB collection with vector similarity."""
-        # Get collection ID (ChromaDB uses UUID, not name)
+        """Search ChromaDB collection with vector similarity.
+
+        Args:
+            as_distances: When True the ``score`` field contains the raw
+                ChromaDB distance instead of the converted similarity value.
+                Use this for collections with cosine distance so the caller
+                can apply ``1.0 - distance`` directly.
+        """
         collection_id = await self._get_collection_id(collection)
 
         url = f"{self.base_url}/collections/{collection_id}/query"
@@ -213,7 +231,7 @@ to connect to a separate ChromaDB container without requiring the
         payload = {
             "query_embeddings": [query_vector],
             "n_results": top_k,
-            "include": ["documents", "metadatas", "distances"]
+            "include": ["documents", "metadatas", "distances"],
         }
 
         if filters:
@@ -231,7 +249,6 @@ to connect to a separate ChromaDB container without requiring the
         data = response.json()
         results = []
 
-        # ChromaDB returns results grouped by query
         if data.get("ids") and len(data["ids"]) > 0:
             ids = data["ids"][0]
             documents = data.get("documents", [[]])[0] or []
@@ -239,17 +256,16 @@ to connect to a separate ChromaDB container without requiring the
             distances = data.get("distances", [[]])[0] or []
 
             for i, chunk_id in enumerate(ids):
-                # Convert distance to similarity score
-                # ChromaDB uses L2 distance by default.
-                # Standard conversion: score = 1 / (1 + distance)
                 distance = distances[i] if i < len(distances) else 0.0
-                score = 1.0 / (1.0 + distance)
+                # L2 default: score = 1 / (1 + distance)
+                # Cosine collections: caller requests raw distance via as_distances=True
+                score = distance if as_distances else 1.0 / (1.0 + distance)
 
                 results.append(SearchResult(
                     chunk_id=chunk_id,
                     score=score,
                     text=documents[i] if i < len(documents) else "",
-                    metadata=metadatas[i] if i < len(metadatas) else {}
+                    metadata=metadatas[i] if i < len(metadatas) else {},
                 ))
 
         return results

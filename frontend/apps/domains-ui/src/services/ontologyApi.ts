@@ -10,6 +10,8 @@ import type {
   OntologyProperty,
   PropertyCreatePayload,
   PropertyUpdatePayload,
+  OntologyBatchPayload,
+  OntologyBatchResponse,
 } from '../types/ontology'
 
 const apiClient = createLazyApiClient()
@@ -91,6 +93,12 @@ class OntologyApiClient {
   async deleteDiagram(domainId: string, diagramId: string): Promise<void> {
     const r = await apiClient.delete(`/v1/domains/${domainId}/diagrams/${diagramId}`)
     if (r.error) throw new Error(r.error.message)
+  }
+
+  async saveOntologyBatch(domainId: string, payload: OntologyBatchPayload): Promise<OntologyBatchResponse> {
+    const r = await apiClient.post<OntologyBatchResponse>(`/v1/domains/${domainId}/ontology/batch`, payload)
+    if (r.error) throw new Error(r.error.message)
+    return r.data!
   }
 }
 

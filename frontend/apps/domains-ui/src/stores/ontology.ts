@@ -10,6 +10,10 @@ import type {
   OntologyProperty,
   ConceptCreatePayload,
   PropertyCreatePayload,
+  OntologyBatchPayload,
+  ConceptBatchOperation,
+  PropertyBatchOperation,
+  DiagramBatchOperation,
 } from '../types/ontology'
 
 export const useOntologyStore = defineStore('ontology', () => {
@@ -30,6 +34,12 @@ export const useOntologyStore = defineStore('ontology', () => {
   const error = ref<string | null>(null)
   const selectedElementId = ref<string | null>(null)
   const snapToGrid = ref(false)
+
+  // ── Pending changes state (batch operations) ────────────────────────────────
+  const hasUnsavedChanges = ref(false)
+  const pendingConceptOperations = ref<ConceptBatchOperation[]>([])
+  const pendingPropertyOperations = ref<PropertyBatchOperation[]>([])
+  const pendingDiagramOperations = ref<DiagramBatchOperation[]>([])
 
   // ── Getters ─────────────────────────────────────────────────────────────────
   const conceptMap = computed(() =>
@@ -98,21 +108,37 @@ export const useOntologyStore = defineStore('ontology', () => {
 
   async function createDiagram(name: string) {
     if (!activeDomainId.value) return
-    const d = await ontologyApi.createDiagram(activeDomainId.value, { name })
+    const tempId = `temp-diagram-${Date.now()}`
+    queueDiagramOperation({ operation: 'create', id: tempId, data: { name } })
+    // Optimistic update
+    const d: Diagram = {
+      id: tempId,
+      domain_id: activeDomainId.value,
+      name,
+      nodes: [],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
     diagrams.value.push(d)
     activeDiagramId.value = d.id
   }
 
   async function renameDiagram(id: string, name: string) {
     if (!activeDomainId.value) return
-    const updated = await ontologyApi.saveDiagram(activeDomainId.value, id, { name })
+    queueDiagramOperation({ operation: 'update', id, data: { name } })
+    // Optimistic update
     const idx = diagrams.value.findIndex(d => d.id === id)
-    if (idx >= 0) diagrams.value[idx] = updated
+    if (idx >= 0) {
+      diagrams.value[idx] = { ...diagrams.value[idx], name, updated_at: new Date().toISOString() }
+    }
   }
 
   async function deleteDiagram(id: string) {
     if (!activeDomainId.value) return
-    await ontologyApi.deleteDiagram(activeDomainId.value, id)
+    queueDiagramOperation({ operation: 'delete', id })
+    // Optimistic update
     diagrams.value = diagrams.value.filter(d => d.id !== id)
     if (activeDiagramId.value === id) {
       activeDiagramId.value = diagrams.value[0]?.id ?? null
@@ -151,8 +177,24 @@ export const useOntologyStore = defineStore('ontology', () => {
 
     const nodes = [...activeDiagram.value.nodes, node]
     const edges = [...activeDiagram.value.edges, ...autoEdges]
-    const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { nodes, edges })
-    _patchDiagram(updated)
+    
+    // Queue diagram update
+    queueDiagramOperation({ 
+      operation: 'update', 
+      id: activeDiagram.value.id, 
+      data: { nodes, edges } 
+    })
+    
+    // Optimistic update
+    const idx = diagrams.value.findIndex(d => d.id === activeDiagram.value!.id)
+    if (idx >= 0) {
+      diagrams.value[idx] = { 
+        ...diagrams.value[idx], 
+        nodes, 
+        edges, 
+        updated_at: new Date().toISOString() 
+      }
+    }
   }
 
   async function addRelationToCanvas(propertyId: string, sourceNodeId: string, targetNodeId: string) {
@@ -162,18 +204,58 @@ export const useOntologyStore = defineStore('ontology', () => {
     const edgeId = `edge-${Date.now()}`
     const edge: DiagramEdge = { id: edgeId, property_id: propertyId, source: sourceNodeId, target: targetNodeId, label: prop.label }
     const edges = [...activeDiagram.value.edges, edge]
-    const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { edges })
-    _patchDiagram(updated)
+    
+    // Queue the change
+    queueDiagramOperation({
+      operation: 'update',
+      id: activeDiagram.value.id,
+      data: { edges }
+    })
+    
+    // Optimistic update
+    const idx = diagrams.value.findIndex(d => d.id === activeDiagram.value!.id)
+    if (idx >= 0) {
+      diagrams.value[idx] = {
+        ...diagrams.value[idx],
+        edges,
+        updated_at: new Date().toISOString()
+      }
+    }
   }
 
-  async function saveLayout(nodes: DiagramNode[], edges: DiagramEdge[], viewport: DiagramViewport) {
+  async function saveLayout(
+    previousNodes: DiagramNode[], 
+    previousEdges: DiagramEdge[], 
+    viewport: DiagramViewport,
+    markAsUnsaved: boolean = true
+  ) {
     if (!activeDiagram.value || !activeDomainId.value) return
-    isSaving.value = true
-    try {
-      const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { nodes, edges, viewport })
-      _patchDiagram(updated)
-    } finally {
-      isSaving.value = false
+    
+    // Get current state from store (which has been updated by the canvas)
+    const currentNodes = activeDiagram.value.nodes
+    const currentEdges = activeDiagram.value.edges
+    
+    // Compare previous state against current state to detect changes
+    const hasNodeChanges = JSON.stringify(previousNodes) !== JSON.stringify(currentNodes)
+    const hasEdgeChanges = JSON.stringify(previousEdges) !== JSON.stringify(currentEdges)
+    
+    if ((hasNodeChanges || hasEdgeChanges) && markAsUnsaved) {
+      // Queue the operation with current state for saving
+      queueDiagramOperation({ 
+        operation: 'update', 
+        id: activeDiagram.value.id, 
+        data: { nodes: currentNodes, edges: currentEdges, viewport } 
+      })
+    }
+    
+    // Update viewport in local state
+    const idx = diagrams.value.findIndex(d => d.id === activeDiagram.value!.id)
+    if (idx >= 0) {
+      diagrams.value[idx] = { 
+        ...diagrams.value[idx], 
+        viewport,
+        updated_at: new Date().toISOString() 
+      }
     }
   }
 
@@ -181,54 +263,46 @@ export const useOntologyStore = defineStore('ontology', () => {
     if (!activeDomainId.value) return null
     const concept = await ontologyApi.createConcept(activeDomainId.value, payload)
     concepts.value.push(concept)
+    queueConceptOperation({ operation: 'create', id: concept.id, data: payload })
     return concept
   }
 
   async function updateSelectedConcept(payload: Partial<ConceptCreatePayload>) {
     if (!selectedConcept.value || !activeDomainId.value) return
-    const updated = await ontologyApi.updateConcept(activeDomainId.value, selectedConcept.value.id, payload)
-    const idx = concepts.value.findIndex(c => c.id === updated.id)
-    if (idx >= 0) concepts.value[idx] = updated
+    queueConceptOperation({ operation: 'update', id: selectedConcept.value.id, data: payload as ConceptCreatePayload })
+    // Optimistic update
+    const idx = concepts.value.findIndex(c => c.id === selectedConcept.value!.id)
+    if (idx >= 0) {
+      concepts.value[idx] = { ...concepts.value[idx], ...payload }
+    }
   }
 
   async function deleteSelectedConcept() {
     if (!selectedConcept.value || !activeDomainId.value) return
     const cid = selectedConcept.value.id
-    const domainId = activeDomainId.value
-    await ontologyApi.deleteConcept(domainId, cid)
+    queueConceptOperation({ operation: 'delete', id: cid })
+    // Optimistic update - remove from local state
     concepts.value = concepts.value.filter(c => c.id !== cid)
     properties.value = properties.value.filter(p => p.source_class_id !== cid && p.target_class_id !== cid)
-    // Remove from ALL diagrams that reference this concept
-    await Promise.all(
-      diagrams.value
-        .filter(d => d.nodes.some(n => n.concept_id === cid))
-        .map(async (d) => {
-          const removedIds = new Set(d.nodes.filter(n => n.concept_id === cid).map(n => n.id))
-          const nodes = d.nodes.filter(n => n.concept_id !== cid)
-          const edges = d.edges.filter(e => !removedIds.has(e.source) && !removedIds.has(e.target))
-          const updated = await ontologyApi.saveDiagram(domainId, d.id, { nodes, edges })
-          _patchDiagram(updated)
-        })
-    )
+    // Remove from ALL diagrams in local state
+    diagrams.value.forEach(d => {
+      const removedIds = new Set(d.nodes.filter(n => n.concept_id === cid).map(n => n.id))
+      d.nodes = d.nodes.filter(n => n.concept_id !== cid)
+      d.edges = d.edges.filter(e => !removedIds.has(e.source) && !removedIds.has(e.target))
+    })
     selectedElementId.value = null
   }
 
   async function deleteSelectedProperty() {
     if (!selectedProperty.value || !activeDomainId.value) return
     const pid = selectedProperty.value.id
-    const domainId = activeDomainId.value
-    await ontologyApi.deleteProperty(domainId, pid)
+    queuePropertyOperation({ operation: 'delete', id: pid })
+    // Optimistic update
     properties.value = properties.value.filter(p => p.id !== pid)
-    // Remove edges referencing this property from ALL diagrams
-    await Promise.all(
-      diagrams.value
-        .filter(d => d.edges.some(e => e.property_id === pid))
-        .map(async (d) => {
-          const edges = d.edges.filter(e => e.property_id !== pid)
-          const updated = await ontologyApi.saveDiagram(domainId, d.id, { edges })
-          _patchDiagram(updated)
-        })
-    )
+    // Remove edges referencing this property from ALL diagrams in local state
+    diagrams.value.forEach(d => {
+      d.edges = d.edges.filter(e => e.property_id !== pid)
+    })
     selectedElementId.value = null
   }
 
@@ -240,8 +314,25 @@ export const useOntologyStore = defineStore('ontology', () => {
     )
     const nodes = activeDiagram.value.nodes.filter(n => !removeSet.has(n.id))
     const edges = activeDiagram.value.edges.filter(e => !removeSet.has(e.source) && !removeSet.has(e.target))
-    const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { nodes, edges })
-    _patchDiagram(updated)
+    
+    // Queue the change
+    queueDiagramOperation({
+      operation: 'update',
+      id: activeDiagram.value.id,
+      data: { nodes, edges }
+    })
+    
+    // Optimistic update
+    const idx = diagrams.value.findIndex(d => d.id === activeDiagram.value!.id)
+    if (idx >= 0) {
+      diagrams.value[idx] = {
+        ...diagrams.value[idx],
+        nodes,
+        edges,
+        updated_at: new Date().toISOString()
+      }
+    }
+    
     if (selectedElementId.value && removedConceptIds.has(selectedElementId.value)) {
       selectedElementId.value = null
     }
@@ -251,8 +342,24 @@ export const useOntologyStore = defineStore('ontology', () => {
     if (!activeDiagram.value || !activeDomainId.value) return
     const removeSet = new Set(edgeIds)
     const edges = activeDiagram.value.edges.filter(e => !removeSet.has(e.id))
-    const updated = await ontologyApi.saveDiagram(activeDomainId.value, activeDiagram.value.id, { edges })
-    _patchDiagram(updated)
+    
+    // Queue the change
+    queueDiagramOperation({
+      operation: 'update',
+      id: activeDiagram.value.id,
+      data: { edges }
+    })
+    
+    // Optimistic update
+    const idx = diagrams.value.findIndex(d => d.id === activeDiagram.value!.id)
+    if (idx >= 0) {
+      diagrams.value[idx] = {
+        ...diagrams.value[idx],
+        edges,
+        updated_at: new Date().toISOString()
+      }
+    }
+    
     if (selectedElementId.value && removeSet.has(selectedElementId.value)) {
       selectedElementId.value = null
     }
@@ -264,37 +371,65 @@ export const useOntologyStore = defineStore('ontology', () => {
     const base = concept.uri.includes('#')
       ? concept.uri.substring(0, concept.uri.lastIndexOf('#') + 1)
       : concept.uri + '#'
-    const prop = await ontologyApi.createProperty(activeDomainId.value, {
+    const tempId = `temp-attr-${Date.now()}`
+    const payload: PropertyCreatePayload = {
       uri: `${base}${label.replace(/\s+/g, '_')}`,
       label,
       property_type: 'DatatypeProperty',
       source_class_id: concept.id,
       target_class_id: xsdUri,
       comment,
-    })
+    }
+    queuePropertyOperation({ operation: 'create', id: tempId, data: payload })
+    // Optimistic update
+    const prop: OntologyProperty = {
+      id: tempId,
+      domain_id: activeDomainId.value,
+      ...payload,
+    }
     properties.value.push(prop)
   }
 
   async function updateDatatypeAttribute(propertyId: string, label: string, xsdUri: string, comment?: string): Promise<void> {
     if (!activeDomainId.value) return
-    const updated = await ontologyApi.updateProperty(activeDomainId.value, propertyId, {
+    const payload: PropertyCreatePayload = {
+      uri: '', // Will be preserved by backend
       label,
+      property_type: 'DatatypeProperty',
+      source_class_id: '', // Will be preserved by backend
       target_class_id: xsdUri,
-      comment: comment ?? '',
-    })
+      comment,
+    }
+    queuePropertyOperation({ operation: 'update', id: propertyId, data: payload })
+    // Optimistic update
     const idx = properties.value.findIndex(p => p.id === propertyId)
-    if (idx >= 0) properties.value[idx] = updated
+    if (idx >= 0) {
+      properties.value[idx] = { 
+        ...properties.value[idx], 
+        label, 
+        target_class_id: xsdUri, 
+        comment: comment ?? '' 
+      }
+    }
   }
 
   async function deleteDatatypeAttribute(propertyId: string): Promise<void> {
     if (!activeDomainId.value) return
-    await ontologyApi.deleteProperty(activeDomainId.value, propertyId)
+    queuePropertyOperation({ operation: 'delete', id: propertyId })
+    // Optimistic update
     properties.value = properties.value.filter(p => p.id !== propertyId)
   }
 
   async function createProperty(payload: PropertyCreatePayload): Promise<OntologyProperty | null> {
     if (!activeDomainId.value) return null
-    const prop = await ontologyApi.createProperty(activeDomainId.value, payload)
+    const tempId = `temp-prop-${Date.now()}`
+    queuePropertyOperation({ operation: 'create', id: tempId, data: payload })
+    // Optimistic update
+    const prop: OntologyProperty = {
+      id: tempId,
+      domain_id: activeDomainId.value,
+      ...payload,
+    }
     properties.value.push(prop)
     return prop
   }
@@ -305,6 +440,77 @@ export const useOntologyStore = defineStore('ontology', () => {
 
   function toggleSnapToGrid() {
     snapToGrid.value = !snapToGrid.value
+  }
+
+  // ── Pending changes tracking ────────────────────────────────────────────────
+
+  function markUnsaved() {
+    hasUnsavedChanges.value = true
+  }
+
+  function clearPendingChanges() {
+    hasUnsavedChanges.value = false
+    pendingConceptOperations.value = []
+    pendingPropertyOperations.value = []
+    pendingDiagramOperations.value = []
+  }
+
+  function queueConceptOperation(op: ConceptBatchOperation) {
+    // Remove any existing operation for the same ID to avoid duplicates
+    pendingConceptOperations.value = pendingConceptOperations.value.filter(
+      existing => existing.id !== op.id
+    )
+    pendingConceptOperations.value.push(op)
+    markUnsaved()
+  }
+
+  function queuePropertyOperation(op: PropertyBatchOperation) {
+    pendingPropertyOperations.value = pendingPropertyOperations.value.filter(
+      existing => existing.id !== op.id
+    )
+    pendingPropertyOperations.value.push(op)
+    markUnsaved()
+  }
+
+  function queueDiagramOperation(op: DiagramBatchOperation) {
+    pendingDiagramOperations.value = pendingDiagramOperations.value.filter(
+      existing => existing.id !== op.id
+    )
+    pendingDiagramOperations.value.push(op)
+    markUnsaved()
+  }
+
+  async function saveAllChanges(): Promise<boolean> {
+    if (!activeDomainId.value) return false
+    if (!hasUnsavedChanges.value) return true
+
+    isSaving.value = true
+    error.value = null
+
+    try {
+      const payload: OntologyBatchPayload = {
+        concepts: pendingConceptOperations.value,
+        properties: pendingPropertyOperations.value,
+        diagrams: pendingDiagramOperations.value,
+      }
+
+      const result = await ontologyApi.saveOntologyBatch(activeDomainId.value, payload)
+
+      if (result.success) {
+        clearPendingChanges()
+        // Reload to ensure consistency
+        await loadForDomain(activeDomainId.value)
+        return true
+      } else {
+        error.value = result.errors.join(', ')
+        return false
+      }
+    } catch (e) {
+      error.value = e instanceof Error ? e.message : 'Failed to save changes'
+      return false
+    } finally {
+      isSaving.value = false
+    }
   }
 
   function _patchDiagram(updated: Diagram) {
@@ -333,6 +539,10 @@ export const useOntologyStore = defineStore('ontology', () => {
     error,
     selectedElementId,
     snapToGrid,
+    hasUnsavedChanges,
+    pendingConceptOperations,
+    pendingPropertyOperations,
+    pendingDiagramOperations,
     conceptMap,
     propertyMap,
     activeDiagram,
@@ -359,6 +569,9 @@ export const useOntologyStore = defineStore('ontology', () => {
     createProperty,
     selectElement,
     toggleSnapToGrid,
+    saveAllChanges,
+    clearPendingChanges,
+    markUnsaved,
     reset,
   }
 })

@@ -17,6 +17,11 @@ from schemas import (
     DiagramCreate,
     DiagramUpdate,
     ExtractionResult,
+    OntologyBatchPayload,
+    OntologyBatchResponse,
+    ConceptBatchOperation,
+    PropertyBatchOperation,
+    DiagramBatchOperation,
 )
 
 logger = logging.getLogger(__name__)
@@ -277,3 +282,162 @@ async def delete_diagram(db: AsyncSession, diagram_id: str, domain_id: str) -> b
     await db.delete(diagram)
     await db.commit()
     return True
+
+
+# ──────────────────────────── Batch Operations ───────────────────────────────
+
+async def save_ontology_batch(
+    driver,
+    db: AsyncSession,
+    domain_id: str,
+    payload: OntologyBatchPayload
+) -> OntologyBatchResponse:
+    """
+    Execute batch operations for ontology concepts, properties, and diagrams.
+    All operations are executed in a transaction-like manner (best effort).
+    """
+    response = OntologyBatchResponse(success=True)
+    adapter = Neo4jAdapter(driver)
+    errors = []
+    
+    # Process concept operations
+    for op in payload.concepts:
+        try:
+            if op.operation == 'create' and op.data:
+                concept_id = str(uuid.uuid4())
+                info = OWLClassInfo(
+                    id=concept_id,
+                    label=op.data.label,
+                    uri=op.data.uri,
+                    domain_id=domain_id,
+                    metadata={"comment": op.data.comment} if op.data.comment else None
+                )
+                await adapter.upsert_class(info)
+                response.concepts_created.append(concept_id)
+                
+            elif op.operation == 'update' and op.id and op.data:
+                current = await adapter.get_ontology(domain_id)
+                existing = next((c for c in current["concepts"] if c["id"] == op.id), None)
+                if existing:
+                    info = OWLClassInfo(
+                        id=op.id,
+                        label=op.data.label if op.data.label else existing["label"],
+                        uri=op.data.uri if op.data.uri else existing["uri"],
+                        domain_id=domain_id,
+                        metadata={"comment": op.data.comment} if op.data.comment is not None else {"comment": existing.get("comment")}
+                    )
+                    await adapter.upsert_class(info)
+                    response.concepts_updated.append(op.id)
+                else:
+                    errors.append(f"Concept {op.id} not found for update")
+                    
+            elif op.operation == 'delete' and op.id:
+                deleted = await adapter.delete_class(op.id, domain_id)
+                if deleted:
+                    response.concepts_deleted.append(op.id)
+                else:
+                    errors.append(f"Concept {op.id} not found for deletion")
+                    
+        except Exception as e:
+            errors.append(f"Concept operation failed: {str(e)}")
+            logger.error(f"Batch concept operation failed: {e}", exc_info=True)
+    
+    # Process property operations
+    for op in payload.properties:
+        try:
+            if op.operation == 'create' and op.data:
+                prop_id = str(uuid.uuid4())
+                info = OWLPropertyInfo(
+                    id=prop_id,
+                    label=op.data.label,
+                    uri=op.data.uri,
+                    property_type=op.data.property_type,
+                    domain_id=domain_id,
+                    source_class_id=op.data.source_class_id,
+                    target_class_id=op.data.target_class_id,
+                    metadata={"comment": op.data.comment} if op.data.comment else None
+                )
+                await adapter.upsert_property(info)
+                response.properties_created.append(prop_id)
+                
+            elif op.operation == 'update' and op.id and op.data:
+                current = await adapter.get_ontology(domain_id)
+                existing = next((p for p in current["properties"] if p["id"] == op.id), None)
+                if existing:
+                    info = OWLPropertyInfo(
+                        id=op.id,
+                        label=op.data.label if op.data.label else existing["label"],
+                        uri=existing["uri"],
+                        property_type=existing["property_type"],
+                        domain_id=domain_id,
+                        source_class_id=existing["source_class_id"],
+                        target_class_id=op.data.target_class_id if op.data.target_class_id else existing["target_class_id"],
+                        metadata={"comment": op.data.comment} if op.data.comment is not None else {"comment": existing.get("comment")}
+                    )
+                    await adapter.upsert_property(info)
+                    response.properties_updated.append(op.id)
+                else:
+                    errors.append(f"Property {op.id} not found for update")
+                    
+            elif op.operation == 'delete' and op.id:
+                deleted = await adapter.delete_property(op.id, domain_id)
+                if deleted:
+                    response.properties_deleted.append(op.id)
+                else:
+                    errors.append(f"Property {op.id} not found for deletion")
+                    
+        except Exception as e:
+            errors.append(f"Property operation failed: {str(e)}")
+            logger.error(f"Batch property operation failed: {e}", exc_info=True)
+    
+    # Process diagram operations
+    for op in payload.diagrams:
+        try:
+            if op.operation == 'create' and op.data:
+                diagram = OntologyDiagram(
+                    domain_id=uuid.UUID(domain_id),
+                    name=op.data.name or "Untitled",
+                    nodes=op.data.nodes or [],
+                    edges=op.data.edges or [],
+                    viewport=op.data.viewport or {"x": 0, "y": 0, "zoom": 1}
+                )
+                db.add(diagram)
+                await db.commit()
+                await db.refresh(diagram)
+                response.diagrams_created.append(str(diagram.id))
+                
+            elif op.operation == 'update' and op.id and op.data:
+                diagram = await get_diagram(db, op.id)
+                if diagram and str(diagram.domain_id) == domain_id:
+                    if op.data.name is not None:
+                        diagram.name = op.data.name
+                    if op.data.nodes is not None:
+                        diagram.nodes = op.data.nodes
+                    if op.data.edges is not None:
+                        diagram.edges = op.data.edges
+                    if op.data.viewport is not None:
+                        diagram.viewport = op.data.viewport
+                    await db.commit()
+                    await db.refresh(diagram)
+                    response.diagrams_updated.append(op.id)
+                else:
+                    errors.append(f"Diagram {op.id} not found for update")
+                    
+            elif op.operation == 'delete' and op.id:
+                diagram = await get_diagram(db, op.id)
+                if diagram and str(diagram.domain_id) == domain_id:
+                    await db.delete(diagram)
+                    await db.commit()
+                    response.diagrams_deleted.append(op.id)
+                else:
+                    errors.append(f"Diagram {op.id} not found for deletion")
+                    
+        except Exception as e:
+            errors.append(f"Diagram operation failed: {str(e)}")
+            logger.error(f"Batch diagram operation failed: {e}", exc_info=True)
+    
+    # Set final response state
+    response.errors = errors
+    response.success = len(errors) == 0
+    
+    return response

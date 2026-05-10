@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -441,6 +441,102 @@ class DiagramListResponse(BaseModel):
     """List of diagrams for a domain."""
     items: list[DiagramResponse]
     total: int
+
+
+# ==================== Batch Operations ====================
+
+class ConceptBatchOperation(BaseModel):
+    """Single concept operation in a batch."""
+    operation: str = Field(..., pattern="^(create|update|delete)$")
+    id: str | None = None
+    data: OntologyConceptCreate | None = None
+
+
+class PropertyBatchOperation(BaseModel):
+    """Single property operation in a batch."""
+    operation: str = Field(..., pattern="^(create|update|delete)$")
+    id: str | None = None
+    data: OntologyPropertyCreate | None = None
+
+
+class DiagramBatchOperation(BaseModel):
+    """Single diagram operation in a batch."""
+    operation: str = Field(..., pattern="^(create|update|delete)$")
+    id: str | None = None
+    data: DiagramUpdate | None = None
+
+
+class OntologyBatchPayload(BaseModel):
+    """Payload for batch ontology operations."""
+    concepts: list[ConceptBatchOperation] = Field(default_factory=list)
+    properties: list[PropertyBatchOperation] = Field(default_factory=list)
+    diagrams: list[DiagramBatchOperation] = Field(default_factory=list)
+
+
+class OntologyBatchResponse(BaseModel):
+    """Response from batch ontology operations."""
+    success: bool
+    concepts_created: list[str] = Field(default_factory=list)
+    concepts_updated: list[str] = Field(default_factory=list)
+    concepts_deleted: list[str] = Field(default_factory=list)
+    properties_created: list[str] = Field(default_factory=list)
+    properties_updated: list[str] = Field(default_factory=list)
+    properties_deleted: list[str] = Field(default_factory=list)
+    diagrams_created: list[str] = Field(default_factory=list)
+    diagrams_updated: list[str] = Field(default_factory=list)
+    diagrams_deleted: list[str] = Field(default_factory=list)
+    errors: list[str] = Field(default_factory=list)
+
+
+# ==================== Semantic / FEAT6 ====================
+
+class SemanticLink(BaseModel):
+    """Provenance and governance metadata for a semantic knowledge item."""
+    link_id: UUID = Field(default_factory=uuid4)
+    owl_class: str = Field(..., description="OWL class that categorises this item")
+    governance_level: str = Field("CONFIDENCIAL", description="ISO 27001 governance classification")
+    source_ref: str = Field(..., description="Origin reference (filename, URL, etc.)")
+
+
+class IngestionPayload(BaseModel):
+    """Payload for atomic semantic ingestion (Neo4j + ChromaDB)."""
+    content: str = Field(..., description="Text content to index")
+    metadata: SemanticLink
+    graph_properties: Dict[str, str] = Field(default_factory=dict, description="Extra Neo4j node properties")
+
+
+class GraphNode(BaseModel):
+    id: str
+    label: str
+    name: str
+
+
+class GraphEdge(BaseModel):
+    source: str
+    target: str
+    relation_type: str
+
+
+class SemanticProvenance(BaseModel):
+    """Ontological lineage retrieved from Neo4j for a search hit."""
+    owl_class: str
+    iso_compliance: str
+    nodes: List[GraphNode] = Field(default_factory=list)
+    edges: List[GraphEdge] = Field(default_factory=list)
+
+
+class HybridSearchResult(BaseModel):
+    """Single result from the hybrid semantic search endpoint."""
+    link_id: UUID
+    content: str
+    score: float
+    source_file: str
+    provenance: SemanticProvenance
+
+
+class SemanticIngestionResponse(BaseModel):
+    success: bool
+    link_id: str
 
 
 # ==================== Error ====================

@@ -22,6 +22,8 @@ from schemas import (
     OntologyPropertyUpdate,
     OntologyResponse,
     UserInToken,
+    OntologyBatchPayload,
+    OntologyBatchResponse,
 )
 from services import ontology_service as svc
 
@@ -41,6 +43,21 @@ async def get_ontology(
     driver=Depends(get_neo4j),
 ):
     return await svc.get_ontology(driver, str(domain_id))
+
+
+@router.post(
+    "/{domain_id}/ontology/batch",
+    response_model=OntologyBatchResponse,
+    summary="Batch save ontology changes",
+)
+async def batch_save_ontology(
+    domain_id: UUID,
+    payload: OntologyBatchPayload,
+    user: UserInToken = Depends(require_domain_access),
+    driver=Depends(get_neo4j),
+    db: AsyncSession = Depends(get_db),
+):
+    return await svc.save_ontology_batch(driver, db, str(domain_id), payload)
 
 
 @router.post(
@@ -257,3 +274,24 @@ async def delete_diagram(
     deleted = await svc.delete_diagram(db, str(diagram_id), str(domain_id))
     if not deleted:
         raise HTTPException(status_code=404, detail="Diagram not found")
+
+
+# ──────────────────────────── Batch Operations ───────────────────────────────
+
+@router.post(
+    "/{domain_id}/ontology/batch",
+    response_model=OntologyBatchResponse,
+    summary="Batch save ontology changes",
+)
+async def batch_save_ontology(
+    domain_id: UUID,
+    data: OntologyBatchPayload,
+    user: UserInToken = Depends(require_domain_access),
+    driver=Depends(get_neo4j),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Execute batch operations for ontology changes.
+    Processes concepts, properties, and diagrams in a single request.
+    """
+    return await svc.save_ontology_batch(driver, db, str(domain_id), data)

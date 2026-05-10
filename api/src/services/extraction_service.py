@@ -5,11 +5,11 @@ based on a domain's OWL ontology.
 
 import json
 import logging
+import os
 from typing import Any
 from uuid import UUID
 
 from ports.embedding import EmbeddingPort
-from ports.graph import GraphPort
 from schemas import ExtractionResult, ExtractedEntity, ExtractedRelation
 
 logger = logging.getLogger(__name__)
@@ -21,13 +21,13 @@ class OntologyExtractor:
     """
 
     def __init__(self, embedding_provider: EmbeddingPort):
-        # We reuse the Gemini adapter because it already handles 
-        # auth and HTTP calls to Google's Generative AI API.
-        # Although it's a Port for Embeddings, its underlying client can be used 
-        # or we can use the same API Key for completion.
         self.embedding_provider = embedding_provider
-        self.api_key = getattr(embedding_provider, "_api_key", None)
-        self.model = "gemini-1.5-flash" # Use Flash for faster/cheaper extraction
+        # Prefer the key stored on the embedding adapter (Gemini), fall back to env var.
+        self.api_key = (
+            getattr(embedding_provider, "_api_key", None)
+            or os.getenv("GEMINI_API_KEY")
+        )
+        self.model = "gemini-2.5-flash"
 
     async def extract(
         self, 
@@ -39,7 +39,10 @@ class OntologyExtractor:
         Extract entities and relations from text based on ontology.
         """
         if not self.api_key:
-            logger.warning("No API key available for extraction. Skipping.")
+            logger.warning(
+                "No GEMINI_API_KEY found (embedding provider has no _api_key and "
+                "GEMINI_API_KEY env var is unset). Ontology extraction skipped."
+            )
             return ExtractionResult(entities=[], relations=[])
 
         # 1. Prepare ontology context for the prompt
