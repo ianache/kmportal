@@ -155,8 +155,8 @@ class Neo4jAdapter(GraphPort):
                 node = record["c"]
                 concepts.append({
                     "id": node["id"],
-                    "uri": node["uri"],
-                    "label": node["label"],
+                    "uri": node.get("uri") or "",
+                    "label": node.get("label") or "Unknown",
                     "comment": node.get("comment"),
                     "domain_id": domain_id
                 })
@@ -174,9 +174,9 @@ class Neo4jAdapter(GraphPort):
                 node = record["p"]
                 properties.append({
                     "id": node["id"],
-                    "uri": node["uri"],
-                    "label": node["label"],
-                    "property_type": node["property_type"],
+                    "uri": node.get("uri") or "",
+                    "label": node.get("label") or "Unknown",
+                    "property_type": node.get("property_type") or "ObjectProperty",
                     "source_class_id": record["source_id"],
                     "target_class_id": record["target_id"],
                     "comment": node.get("comment"),
