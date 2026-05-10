@@ -149,6 +149,7 @@ app.get('/auth/callback', async (req: Request, res: Response) => {
       roles: tokens.userInfo.roles,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+      expiresAt: tokens.expiresAt, // Unix epoch seconds — used for proactive refresh
     };
 
     logger.info('User authenticated successfully', {
@@ -208,24 +209,26 @@ app.get('/auth/session', (req: Request, res: Response) => {
     return;
   }
 
-  // Normal flow: validate session first
-  validateSession(req, res, () => {
-    const user = req.user;
-    
-    if (!user) {
-      res.status(401).json({ error: 'Not authenticated' });
-      return;
-    }
-    
-    // Return user info (without tokens - they stay server-side)
+  // If no session or no user, return 200 with authenticated: false
+  // This avoids 401 errors in the console during initial load
+  const user = (req.session as any)?.user;
+  
+  if (!user) {
     res.json({
-      authenticated: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        roles: user.roles,
-      },
+      authenticated: false,
+      user: null
     });
+    return;
+  }
+  
+  // Return user info (without tokens - they stay server-side)
+  res.json({
+    authenticated: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      roles: user.roles,
+    },
   });
 });
 
@@ -233,24 +236,29 @@ app.get('/auth/session', (req: Request, res: Response) => {
 app.use('/api', apiRouter);
 
 // Global error handler
-app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   const trace_id = (req as any).trace_id || 'unknown';
   
   logger.error('Unhandled error', {
     trace_id,
-    error: err.message,
+    message: err.message,
     stack: err.stack,
+    code: err.code,
+    type: err.name
   });
   
-  // Don't leak error details in production
-  const message = config.nodeEnv === 'production' 
-    ? 'Internal server error' 
-    : err.message;
+  // Expose error details in non-production environments
+  const isProd = config.nodeEnv === 'production';
   
   res.status(500).json({ 
-    error: message,
+    error: isProd ? 'Internal server error' : err.message,
     trace_id,
-    ...(config.nodeEnv !== 'production' && { stack: err.stack }),
+    message: err.message,
+    ...( !isProd && { 
+      stack: err.stack,
+      type: err.name || 'Error',
+      code: err.code
+    }),
   });
 });
 

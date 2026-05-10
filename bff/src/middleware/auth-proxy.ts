@@ -1,6 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { UserSession } from './session';
+import { refreshAccessToken } from '../auth/keycloak';
 import { logger, logSecurity } from '../utils/logger';
+
+// Refresh token when less than this many seconds remain
+const REFRESH_BEFORE_SECS = 60;
+
+// Per-session refresh lock: prevents multiple concurrent requests from each
+// calling Keycloak refresh simultaneously (thundering herd / token rotation race)
+const refreshLocks = new Map<string, Promise<void>>();
 
 // Mock user for dev bypass
 const DEV_USER: UserSession = {
@@ -44,56 +52,80 @@ export function attachAuthHeader(req: Request, res: Response, next: NextFunction
   next();
 }
 
-// Require valid session middleware
+// Require valid session middleware — with proactive token refresh
 export function requireValidSession(req: Request, res: Response, next: NextFunction): void {
   const trace_id = (req as any).trace_id || 'unknown';
 
   // Dev bypass: inject mock user and skip session checks
   if (isBypassAuth()) {
     (req as any).user = DEV_USER;
-    logger.debug('Session bypassed (dev mode)', {
-      trace_id,
-      user_id: DEV_USER.id,
-      path: req.path,
-    });
+    logger.debug('Session bypassed (dev mode)', { trace_id, user_id: DEV_USER.id, path: req.path });
     next();
     return;
   }
 
-  // First validate session exists
   if (!req.session) {
     logSecurity('No session found', { trace_id, path: req.path });
-
-    res.status(401).json({
-      error: 'Unauthorized',
-      message: 'No session found',
-    });
+    res.status(401).json({ error: 'Unauthorized', message: 'No session found' });
     return;
   }
 
-  // Check for user in session
   const user = (req.session as any).user as UserSession | undefined;
 
   if (!user) {
     logSecurity('No user in session', { trace_id, path: req.path });
-
-    res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Not authenticated',
-    });
+    res.status(401).json({ error: 'Unauthorized', message: 'Not authenticated' });
     return;
   }
 
-  // Attach user to request
-  (req as any).user = user;
+  // If no expiry info or token has plenty of time left, proceed immediately
+  const now = Math.floor(Date.now() / 1000);
+  const secsLeft = user.expiresAt ? user.expiresAt - now : Infinity;
 
-  logger.debug('Session validated', {
-    trace_id,
-    user_id: user.id,
-    path: req.path,
-  });
+  if (secsLeft >= REFRESH_BEFORE_SECS) {
+    (req as any).user = user;
+    logger.debug('Session validated', { trace_id, user_id: user.id, path: req.path });
+    next();
+    return;
+  }
 
-  next();
+  // Token expired or expiring soon — refresh with per-session lock to prevent
+  // concurrent requests from each calling Keycloak refresh simultaneously
+  const sessionId = req.sessionID;
+  logger.info('Token expiring, refreshing', { trace_id, user_id: user.id, secsLeft });
+
+  if (!refreshLocks.has(sessionId)) {
+    const promise = (async () => {
+      const fresh = await refreshAccessToken(user.refreshToken);
+      (req.session as any).user = {
+        ...user,
+        accessToken: fresh.accessToken,
+        refreshToken: fresh.refreshToken,
+        expiresAt: fresh.expiresAt,
+      };
+      await new Promise<void>((resolve, reject) =>
+        req.session.save(err => (err ? reject(err) : resolve()))
+      );
+      logger.info('Token refreshed', { trace_id, user_id: user.id, newExpiresAt: fresh.expiresAt });
+    })().finally(() => refreshLocks.delete(sessionId));
+
+    refreshLocks.set(sessionId, promise);
+  }
+
+  refreshLocks.get(sessionId)!
+    .then(() => {
+      if (req.session) {
+        (req as any).user = (req.session as any).user;
+        next();
+      } else {
+        res.status(401).json({ error: 'Unauthorized', message: 'Session lost during refresh' });
+      }
+    })
+    .catch((err) => {
+      logger.error('Token refresh failed, expiring session', { trace_id, user_id: user.id, error: (err as Error).message });
+      req.session.destroy(() => {});
+      res.status(401).json({ error: 'Unauthorized', message: 'Session expired. Please log in again.' });
+    });
 }
 
 // Middleware to check if user has required roles

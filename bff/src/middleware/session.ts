@@ -45,6 +45,7 @@ export interface UserSession {
   roles: string[];
   accessToken: string;
   refreshToken: string;
+  expiresAt?: number; // Unix timestamp in seconds (from Keycloak exp claim)
 }
 
 // Session validation middleware

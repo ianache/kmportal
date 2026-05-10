@@ -102,6 +102,20 @@ export function cacheMiddleware(options: CacheOptions = {}) {
       const original = ORIGINAL_METHODS.get(res);
       if (original) {
         res.json = original.json;
+      } else {
+        logger.error('Original res.json not found in cache middleware, possible recursion', {
+          trace_id,
+          path: req.path,
+        });
+        // If we can't find the original, we must at least prevent recursion
+        // This is a last-resort fallback
+        const backupJson = Object.getPrototypeOf(res).json;
+        if (backupJson && backupJson !== res.json) {
+          res.json = backupJson;
+        } else {
+          // If we really can't find it, we must fail gracefully
+          return res;
+        }
       }
 
       // Cache the response asynchronously (don't block)
@@ -113,7 +127,7 @@ export function cacheMiddleware(options: CacheOptions = {}) {
         cacheResponse(cacheKey, status, headers, body, req, options, userId);
       }
 
-      // Send response
+      // Send response using the restored (or fallback) method
       return res.json(body);
     };
 

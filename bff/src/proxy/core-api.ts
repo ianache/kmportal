@@ -178,19 +178,21 @@ export async function handleProxyResponse(
         // Refresh the token
         const newTokens = await refreshAccessToken(user.refreshToken);
         
-        // Update session with new tokens
+        // Update session with new tokens and persist to Redis
         (req.session as any).user = {
           ...user,
           accessToken: newTokens.accessToken,
           refreshToken: newTokens.refreshToken,
           expiresAt: newTokens.expiresAt,
         };
-        
-        logger.info('Token refreshed successfully', { trace_id, user_id: user.id });
-        
-        // Note: In a real implementation, you would retry the request
-        // For now, we let the 401 pass through and the client should retry
-        // A more complete implementation would use a response interceptor
+        req.session.save((saveErr) => {
+          if (saveErr) logger.error('Session save failed after reactive refresh', { trace_id, error: saveErr.message });
+        });
+
+        logger.info('Token refreshed successfully (reactive)', { trace_id, user_id: user.id });
+
+        // The 401 is passed through; the client will retry automatically on next request
+        // because the proactive refresh in requireValidSession will use the new token
         
       } catch (refreshError) {
         logger.error('Token refresh failed', {

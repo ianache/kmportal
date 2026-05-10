@@ -82,7 +82,8 @@ export async function exchangeCodeForTokens(code: string): Promise<TokenResponse
       accessToken,
       refreshToken: tokenSet.refresh_token || '',
       idToken: tokenSet.id_token,
-      expiresAt: tokenSet.expires_at || Date.now() + 300000,
+      // expires_at from openid-client is Unix epoch in SECONDS
+      expiresAt: tokenSet.expires_at ?? Math.floor(Date.now() / 1000) + 300,
       userInfo: {
         sub: idClaims.sub ?? '',
         email: (idClaims.email as string) ?? '',
@@ -95,17 +96,21 @@ export async function exchangeCodeForTokens(code: string): Promise<TokenResponse
   }
 }
 
-export async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> {
+export interface TokenRefreshResult {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number; // Unix epoch seconds
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<TokenRefreshResult> {
   const client = await initializeKeycloakClient();
-  
+
   try {
     const tokenSet = await client.refresh(refreshToken);
-
     return {
       accessToken: tokenSet.access_token || '',
       refreshToken: tokenSet.refresh_token || refreshToken,
-      idToken: tokenSet.id_token,
-      expiresAt: tokenSet.expires_at || Date.now() + 300000,
+      expiresAt: tokenSet.expires_at ?? Math.floor(Date.now() / 1000) + 300,
     };
   } catch (error) {
     console.error('Token refresh failed:', error);
