@@ -72,7 +72,10 @@ async def get_current_user_optional(
             id=user_id,
             keycloak_id=_DEV_KEYCLOAK_ID,
             email="dev@localhost",
+            full_name="Dev Bypass User",
             roles=["KM_ADMIN"],
+            scopes=["admin", "read", "write"],
+            allowed_domains=[] # Empty means all for admin
         )
 
     # Try API Key auth first (from X-API-Key header)
@@ -125,9 +128,17 @@ async def get_current_user_optional(
 
         if user:
             user_data.id = user.id
-            # Sync roles if changed
+            # Sync roles and name if changed
+            changed = False
             if set(user.roles) != set(user_data.roles):
                 user.roles = user_data.roles
+                changed = True
+            
+            if user_data.full_name and user.full_name != user_data.full_name:
+                user.full_name = user_data.full_name
+                changed = True
+                
+            if changed:
                 await db.commit()
         else:
             # First login — provision the user record
@@ -135,7 +146,7 @@ async def get_current_user_optional(
                 new_user = User(
                     keycloak_id=user_data.keycloak_id,
                     email=user_data.email,
-                    full_name=None,
+                    full_name=user_data.full_name,
                     roles=user_data.roles,
                     is_active=True,
                 )
@@ -155,7 +166,7 @@ async def get_current_user(
     """
     Get current user (required).
 
-    Raises 401 if no valid authentication provided.
+    Raises 401 if no valid authentication provided or user not found in DB.
     """
     if not user:
         raise HTTPException(
@@ -163,6 +174,13 @@ async def get_current_user(
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"}
         )
+    
+    if not user.id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User record not found in local database"
+        )
+        
     return user
 
 

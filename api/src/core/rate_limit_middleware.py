@@ -1,10 +1,11 @@
-"""Middleware for API key rate limiting using Redis."""
+"""API key rate limiting middleware — implemented as pure ASGI to avoid
+the BaseHTTPMiddleware exception-propagation bug present in Starlette >= 0.36."""
 
+import json
 import time
 
 import redis.asyncio as redis
-from fastapi import Request, Response, status
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from core.auth import hash_api_key
 from core.config import settings
@@ -12,62 +13,55 @@ from core.logging_config import get_logger
 
 logger = get_logger(__name__)
 
+_429_BODY = json.dumps({"detail": "Rate limit exceeded. Please try again later."}).encode()
 
-class RateLimitMiddleware(BaseHTTPMiddleware):
-    """
-    Middleware to enforce rate limits on API keys.
 
-    Uses Redis to track request counts in fixed hourly windows.
-    """
+class RateLimitMiddleware:
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+        self._redis: redis.Redis | None = None
+        self._redis_url = f"redis://{settings.redis_host}:{settings.redis_port}"
 
-    def __init__(self, app):
-        super().__init__(app)
-        self.redis_client = None
-        self.redis_url = f"redis://{settings.redis_host}:{settings.redis_port}"
-
-    async def _get_redis(self):
-        """Lazy initialization of Redis client."""
-        if self.redis_client is None:
-            self.redis_client = redis.from_url(
-                self.redis_url,
+    async def _get_redis(self) -> redis.Redis:
+        if self._redis is None:
+            self._redis = redis.from_url(
+                self._redis_url,
                 encoding="utf-8",
-                decode_responses=True
+                decode_responses=True,
             )
-        return self.redis_client
+        return self._redis
 
-    async def dispatch(self, request: Request, call_next):
-        """Process the request and enforce rate limits."""
-        api_key = request.headers.get("X-API-Key")
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-        # Only apply rate limiting to requests with API keys
+        api_key: str | None = None
+        for name, value in scope.get("headers", []):
+            if name.lower() == b"x-api-key":
+                api_key = value.decode()
+                break
+
         if not api_key:
-            return await call_next(request)
-
-        # Hash the key for privacy and consistent indexing
-        key_hash = hash_api_key(api_key)
-
-        # In a more advanced implementation, we would fetch the specific
-        # rate limit for this key from the database and cache it in Redis.
-        # For this version, we use the global setting.
-        limit = settings.api_key_rate_limit
-
-        # Fixed window: current hour
-        current_hour_timestamp = int(time.time() / 3600)
-        redis_key = f"rate_limit:{key_hash}:{current_hour_timestamp}"
+            await self.app(scope, receive, send)
+            return
 
         try:
             client = await self._get_redis()
+            key_hash = hash_api_key(api_key)
+            limit = settings.api_key_rate_limit
+            window = int(time.time() / 3600)
+            redis_key = f"rate_limit:{key_hash}:{window}"
 
-            # Increment and set expiration if it's a new key
             pipe = client.pipeline()
             pipe.incr(redis_key)
             pipe.ttl(redis_key)
             results = await pipe.execute()
 
-            count = results[0]
-            ttl = results[1]
+            count: int = results[0]
+            ttl: int = results[1]
 
-            if ttl == -1:  # No expiration set
+            if ttl == -1:
                 await client.expire(redis_key, 3600)
                 ttl = 3600
 
@@ -77,21 +71,22 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     key_hash=key_hash,
                     count=count,
                     limit=limit,
-                    path=request.url.path
+                    path=scope.get("path", ""),
                 )
+                retry_after = str(max(0, ttl)).encode()
+                await send({
+                    "type": "http.response.start",
+                    "status": 429,
+                    "headers": [
+                        (b"content-type", b"application/json"),
+                        (b"retry-after", retry_after),
+                    ],
+                })
+                await send({"type": "http.response.body", "body": _429_BODY})
+                return
 
-                # Return 429 Too Many Requests
-                retry_after = max(0, ttl)
-                return Response(
-                    content='{"detail": "Rate limit exceeded. Please try again later."}',
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    media_type="application/json",
-                    headers={"Retry-After": str(retry_after)}
-                )
+        except Exception as exc:
+            logger.error("rate_limit_middleware_error", error=str(exc))
+            # Fail open — let the request through
 
-        except Exception as e:
-            # Log error but allow request through (fail-open)
-            logger.error("rate_limit_middleware_error", error=str(e))
-            return await call_next(request)
-
-        return await call_next(request)
+        await self.app(scope, receive, send)

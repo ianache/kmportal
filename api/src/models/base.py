@@ -14,6 +14,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import relationship
@@ -88,6 +89,7 @@ class Domain(Base):
     visibility = Column(String(10), nullable=False, default='private', server_default='private')
     cover_image = Column(Text, nullable=True)
     created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    created_by_name = Column(String(255), nullable=True)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
@@ -141,8 +143,7 @@ class DomainAccess(Base):
     domain = relationship("Domain", back_populates="access_grants")
 
     __table_args__ = (
-        # Ensure a user can only have one access record per domain
-        {"sqlite_autoincrement": True},
+        UniqueConstraint('user_id', 'domain_id', name='uq_domain_access_user_domain'),
     )
 
     def __repr__(self) -> str:

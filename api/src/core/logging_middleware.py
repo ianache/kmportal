@@ -1,115 +1,103 @@
-"""Logging middleware for request/response logging.
+"""Request/response logging middleware — implemented as pure ASGI to avoid
+the BaseHTTPMiddleware exception-propagation bug present in Starlette >= 0.36.
 
-Provides middleware to automatically log all HTTP requests with structured data
-including timing, status codes, and request metadata.
+With BaseHTTPMiddleware, when ExceptionMiddleware catches a route exception and
+produces an error response, the original exception is sometimes also re-raised
+through call_next, reaching ServerErrorMiddleware and returning plain-text
+"Internal Server Error" instead of the structured JSON response.  Pure ASGI
+middleware does not have this issue.
 """
 
 import time
-from collections.abc import Callable
+import uuid
 
-from fastapi import Request, Response
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.types import ASGIApp
+import structlog
+from starlette.types import ASGIApp, Receive, Scope, Send
 
-from core.logging_config import bind_request_context, get_logger
+from core.logging_config import get_logger
 
 logger = get_logger(__name__)
 
+_DEFAULT_EXCLUDE = frozenset(["/health", "/metrics", "/docs", "/redoc", "/openapi.json"])
 
-class LoggingMiddleware(BaseHTTPMiddleware):
-    """
-    Middleware to log all HTTP requests with structured data.
 
-    Logs request method, path, status code, duration, and client information.
-    Also binds request context for correlation across log entries.
-    """
+class LoggingMiddleware:
+    def __init__(self, app: ASGIApp, exclude_paths: list[str] | None = None) -> None:
+        self.app = app
+        self.exclude_paths: frozenset[str] = frozenset(exclude_paths or _DEFAULT_EXCLUDE)
 
-    def __init__(
-        self,
-        app: ASGIApp,
-        exclude_paths: list[str] | None = None
-    ):
-        super().__init__(app)
-        self.exclude_paths = exclude_paths or ["/health", "/metrics", "/docs", "/redoc", "/openapi.json"]
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
 
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        """Process request and log details."""
-        # Skip logging for excluded paths
-        if any(request.url.path.startswith(path) for path in self.exclude_paths):
-            return await call_next(request)
+        path: str = scope.get("path", "")
 
-        # Generate request ID if not present
-        request_id = request.headers.get("X-Request-ID", self._generate_request_id())
+        if any(path.startswith(p) for p in self.exclude_paths):
+            await self.app(scope, receive, send)
+            return
 
-        # Extract user info if available
-        user_id = None
-        if hasattr(request.state, "user") and request.state.user:
-            user_id = str(getattr(request.state.user, "id", None))
+        headers: list[tuple[bytes, bytes]] = scope.get("headers", [])
+        request_id = self._extract_header(headers, b"x-request-id") or str(uuid.uuid4())[:8]
+        client_ip = self._client_ip(scope, headers)
+        method: str = scope.get("method", "")
 
-        # Bind request context for all logs in this request
-        bind_request_context(
+        # Bind request-scoped structured logging context for all log entries in
+        # this request, then clear it once the request completes.
+        structlog.contextvars.clear_contextvars()
+        structlog.contextvars.bind_contextvars(
             request_id=request_id,
-            user_id=user_id,
-            client_ip=self._get_client_ip(request),
-            method=request.method,
-            path=request.url.path,
+            client_ip=client_ip,
+            method=method,
+            path=path,
         )
 
-        # Record start time
-        start_time = time.time()
+        status_code = 500
+        start = time.perf_counter()
+
+        async def send_wrapper(message: dict) -> None:
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message.get("status", 500)
+                extra_headers = list(message.get("headers", []))
+                extra_headers.append((b"x-request-id", request_id.encode()))
+                message = {**message, "headers": extra_headers}
+            await send(message)
 
         try:
-            # Process request
-            response = await call_next(request)
-
-            # Calculate duration
-            duration_ms = (time.time() - start_time) * 1000
-
-            # Log successful request
-            logger.info(
-                "http_request",
-                status_code=response.status_code,
-                duration_ms=round(duration_ms, 2),
-                content_length=response.headers.get("content-length"),
-                user_agent=request.headers.get("user-agent"),
-            )
-
-            # Add request ID to response headers
-            response.headers["X-Request-ID"] = request_id
-
-            return response
-
-        except Exception as e:
-            # Calculate duration even for failed requests
-            duration_ms = (time.time() - start_time) * 1000
-
-            # Log error
+            await self.app(scope, receive, send_wrapper)
+        except Exception as exc:
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
             logger.error(
                 "http_request_error",
-                error_type=type(e).__name__,
-                error_message=str(e),
-                duration_ms=round(duration_ms, 2),
+                error_type=type(exc).__name__,
+                error_message=str(exc),
+                duration_ms=duration_ms,
             )
             raise
+        else:
+            duration_ms = round((time.perf_counter() - start) * 1000, 2)
+            logger.info(
+                "http_request",
+                status_code=status_code,
+                duration_ms=duration_ms,
+            )
+        finally:
+            structlog.contextvars.clear_contextvars()
 
-    def _generate_request_id(self) -> str:
-        """Generate a unique request ID."""
-        import uuid
-        return str(uuid.uuid4())[:8]
+    @staticmethod
+    def _extract_header(headers: list[tuple[bytes, bytes]], name: bytes) -> str | None:
+        for h_name, h_value in headers:
+            if h_name.lower() == name:
+                return h_value.decode()
+        return None
 
-    def _get_client_ip(self, request: Request) -> str:
-        """Extract client IP from request."""
-        # Check for forwarded headers (when behind proxy)
-        forwarded = request.headers.get("X-Forwarded-For")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-
-        real_ip = request.headers.get("X-Real-IP")
-        if real_ip:
-            return real_ip
-
-        # Fall back to direct connection
-        if request.client:
-            return request.client.host
-
-        return "unknown"
+    @staticmethod
+    def _client_ip(scope: Scope, headers: list[tuple[bytes, bytes]]) -> str:
+        for name, value in headers:
+            if name.lower() == b"x-forwarded-for":
+                return value.decode().split(",")[0].strip()
+            if name.lower() == b"x-real-ip":
+                return value.decode()
+        client = scope.get("client")
+        return client[0] if client else "unknown"

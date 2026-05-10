@@ -124,6 +124,7 @@ def extract_user_from_token(token_payload: dict[str, Any]) -> UserInToken:
     return UserInToken(
         keycloak_id=token_payload.get("sub", ""),
         email=token_payload.get("email", ""),
+        full_name=token_payload.get("name"),
         roles=list(set(roles))  # Remove duplicates
     )
 

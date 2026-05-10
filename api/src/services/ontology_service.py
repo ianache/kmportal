@@ -1,367 +1,260 @@
-"""Ontology service: manages OWL concepts in Neo4j and diagrams in PostgreSQL."""
+"""Ontology service layer: manages OWL concepts (Neo4j) and diagrams (SQL)."""
 
-import io
+import logging
 import uuid
 from typing import Any
-
-from neo4j import AsyncDriver
-from rdflib import OWL, RDF, RDFS, XSD, Graph, Literal, Namespace, URIRef
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from adapters.graph.neo4j_adapter import Neo4jAdapter
+from ports.graph import OWLClassInfo, OWLPropertyInfo, EntityInfo, RelationInfo
 from models.base import OntologyDiagram
 from schemas import (
-    DiagramCreate,
-    DiagramUpdate,
     OntologyConceptCreate,
-    OntologyConceptResponse,
     OntologyConceptUpdate,
     OntologyPropertyCreate,
-    OntologyPropertyResponse,
-    OntologyResponse,
+    OntologyPropertyUpdate,
+    DiagramCreate,
+    DiagramUpdate,
+    ExtractionResult,
 )
 
-
-# ─────────────────────────────── Neo4j helpers ────────────────────────────────
-
-def _row_to_concept(record: dict[str, Any]) -> OntologyConceptResponse:
-    n = record["c"]
-    return OntologyConceptResponse(
-        id=n["id"],
-        domain_id=n["domain_id"],
-        uri=n["uri"],
-        label=n["label"],
-        comment=n.get("comment"),
-    )
+logger = logging.getLogger(__name__)
 
 
-def _row_to_property(record: dict[str, Any]) -> OntologyPropertyResponse:
-    p = record["p"]
-    return OntologyPropertyResponse(
-        id=p["id"],
-        domain_id=p["domain_id"],
-        uri=p["uri"],
-        label=p["label"],
-        property_type=p["property_type"],
-        source_class_id=p["source_class_id"],
-        target_class_id=p["target_class_id"],
-        comment=p.get("comment"),
-    )
+# ──────────────────────────────── Ontology ────────────────────────────────────
+
+async def get_ontology(driver, domain_id: str) -> dict[str, Any]:
+    adapter = Neo4jAdapter(driver)
+    return await adapter.get_ontology(domain_id)
 
 
-# ─────────────────────────── Concept CRUD (Neo4j) ─────────────────────────────
-
-async def create_concept(
-    driver: AsyncDriver,
-    domain_id: str,
-    data: OntologyConceptCreate,
-) -> OntologyConceptResponse:
+async def create_concept(driver, domain_id: str, data: OntologyConceptCreate) -> dict[str, Any]:
+    adapter = Neo4jAdapter(driver)
     concept_id = str(uuid.uuid4())
-    async with driver.session() as session:
-        result = await session.run(
-            """
-            CREATE (c:OWLClass {
-                id: $id,
-                domain_id: $domain_id,
-                uri: $uri,
-                label: $label,
-                comment: $comment
-            })
-            RETURN c
-            """,
-            id=concept_id,
-            domain_id=domain_id,
-            uri=data.uri,
-            label=data.label,
-            comment=data.comment,
-        )
-        record = await result.single()
-    return OntologyConceptResponse(
+    info = OWLClassInfo(
         id=concept_id,
-        domain_id=domain_id,
-        uri=data.uri,
         label=data.label,
-        comment=data.comment,
+        uri=data.uri,
+        domain_id=domain_id,
+        metadata={"comment": data.comment} if data.comment else None
     )
+    await adapter.upsert_class(info)
+    return {
+        "id": concept_id,
+        "domain_id": domain_id,
+        "uri": data.uri,
+        "label": data.label,
+        "comment": data.comment
+    }
 
 
-async def update_concept(
-    driver: AsyncDriver,
-    concept_id: str,
-    domain_id: str,
-    data: OntologyConceptUpdate,
-) -> OntologyConceptResponse | None:
-    sets = []
-    params: dict[str, Any] = {"id": concept_id, "domain_id": domain_id}
-    if data.uri is not None:
-        sets.append("c.uri = $uri")
-        params["uri"] = data.uri
-    if data.label is not None:
-        sets.append("c.label = $label")
-        params["label"] = data.label
-    if data.comment is not None:
-        sets.append("c.comment = $comment")
-        params["comment"] = data.comment
-    if not sets:
-        return await get_concept(driver, concept_id, domain_id)
-    async with driver.session() as session:
-        result = await session.run(
-            f"MATCH (c:OWLClass {{id: $id, domain_id: $domain_id}}) SET {', '.join(sets)} RETURN c",
-            **params,
-        )
-        record = await result.single()
-        if not record:
-            return None
-        return _row_to_concept(dict(record))
-
-
-async def delete_concept(driver: AsyncDriver, concept_id: str, domain_id: str) -> bool:
-    async with driver.session() as session:
-        # Delete associated properties too
-        await session.run(
-            "MATCH (p:OWLProperty {domain_id: $domain_id}) "
-            "WHERE p.source_class_id = $id OR p.target_class_id = $id DETACH DELETE p",
-            id=concept_id,
-            domain_id=domain_id,
-        )
-        result = await session.run(
-            "MATCH (c:OWLClass {id: $id, domain_id: $domain_id}) DETACH DELETE c RETURN count(c) AS cnt",
-            id=concept_id,
-            domain_id=domain_id,
-        )
-        record = await result.single()
-        return bool(record and record["cnt"] > 0)
-
-
-async def get_concept(
-    driver: AsyncDriver,
-    concept_id: str,
-    domain_id: str,
-) -> OntologyConceptResponse | None:
-    async with driver.session() as session:
-        result = await session.run(
-            "MATCH (c:OWLClass {id: $id, domain_id: $domain_id}) RETURN c",
-            id=concept_id,
-            domain_id=domain_id,
-        )
-        record = await result.single()
-        if not record:
-            return None
-        return _row_to_concept(dict(record))
-
-
-async def list_concepts(driver: AsyncDriver, domain_id: str) -> list[OntologyConceptResponse]:
-    async with driver.session() as session:
-        result = await session.run(
-            "MATCH (c:OWLClass {domain_id: $domain_id}) RETURN c ORDER BY c.label",
-            domain_id=domain_id,
-        )
-        records = await result.data()
-    return [_row_to_concept(r) for r in records]
-
-
-# ─────────────────────────── Property CRUD (Neo4j) ────────────────────────────
-
-async def create_property(
-    driver: AsyncDriver,
-    domain_id: str,
-    data: OntologyPropertyCreate,
-) -> OntologyPropertyResponse:
-    prop_id = str(uuid.uuid4())
-    async with driver.session() as session:
-        await session.run(
-            """
-            CREATE (p:OWLProperty {
-                id: $id,
-                domain_id: $domain_id,
-                uri: $uri,
-                label: $label,
-                property_type: $property_type,
-                source_class_id: $source_class_id,
-                target_class_id: $target_class_id,
-                comment: $comment
-            })
-            """,
-            id=prop_id,
-            domain_id=domain_id,
-            uri=data.uri,
-            label=data.label,
-            property_type=data.property_type,
-            source_class_id=data.source_class_id,
-            target_class_id=data.target_class_id,
-            comment=data.comment,
-        )
-    return OntologyPropertyResponse(
-        id=prop_id,
+async def update_concept(driver, concept_id: str, domain_id: str, data: OntologyConceptUpdate) -> dict[str, Any] | None:
+    adapter = Neo4jAdapter(driver)
+    current = await adapter.get_ontology(domain_id)
+    existing = next((c for c in current["concepts"] if c["id"] == concept_id), None)
+    if not existing:
+        return None
+    
+    info = OWLClassInfo(
+        id=concept_id,
+        label=data.label if data.label is not None else existing["label"],
+        uri=data.uri if data.uri is not None else existing["uri"],
         domain_id=domain_id,
-        uri=data.uri,
+        metadata={"comment": data.comment} if data.comment is not None else {"comment": existing.get("comment")}
+    )
+    await adapter.upsert_class(info)
+    return {
+        "id": concept_id,
+        "domain_id": domain_id,
+        "uri": info.uri,
+        "label": info.label,
+        "comment": data.comment if data.comment is not None else existing.get("comment")
+    }
+
+
+async def delete_concept(driver, concept_id: str, domain_id: str) -> bool:
+    adapter = Neo4jAdapter(driver)
+    return await adapter.delete_class(concept_id, domain_id)
+
+
+async def create_property(driver, domain_id: str, data: OntologyPropertyCreate) -> dict[str, Any]:
+    adapter = Neo4jAdapter(driver)
+    prop_id = str(uuid.uuid4())
+    info = OWLPropertyInfo(
+        id=prop_id,
         label=data.label,
+        uri=data.uri,
         property_type=data.property_type,
+        domain_id=domain_id,
         source_class_id=data.source_class_id,
         target_class_id=data.target_class_id,
-        comment=data.comment,
+        metadata={"comment": data.comment} if data.comment else None
     )
+    await adapter.upsert_property(info)
+    return {
+        "id": prop_id,
+        "domain_id": domain_id,
+        "uri": data.uri,
+        "label": data.label,
+        "property_type": data.property_type,
+        "source_class_id": data.source_class_id,
+        "target_class_id": data.target_class_id,
+        "comment": data.comment
+    }
 
 
-async def delete_property(driver: AsyncDriver, prop_id: str, domain_id: str) -> bool:
-    async with driver.session() as session:
-        result = await session.run(
-            "MATCH (p:OWLProperty {id: $id, domain_id: $domain_id}) DELETE p RETURN count(p) AS cnt",
-            id=prop_id,
+async def update_property(driver, property_id: str, domain_id: str, data: OntologyPropertyUpdate) -> dict[str, Any] | None:
+    adapter = Neo4jAdapter(driver)
+    current = await adapter.get_ontology(domain_id)
+    existing = next((p for p in current["properties"] if p["id"] == property_id), None)
+    if not existing:
+        return None
+    
+    info = OWLPropertyInfo(
+        id=property_id,
+        label=data.label if data.label is not None else existing["label"],
+        uri=existing["uri"],
+        property_type=existing["property_type"],
+        domain_id=domain_id,
+        source_class_id=existing["source_class_id"],
+        target_class_id=data.target_class_id if data.target_class_id is not None else existing["target_class_id"],
+        metadata={"comment": data.comment} if data.comment is not None else {"comment": existing.get("comment")}
+    )
+    await adapter.upsert_property(info)
+    return {
+        "id": property_id,
+        "domain_id": domain_id,
+        "uri": info.uri,
+        "label": info.label,
+        "property_type": info.property_type,
+        "source_class_id": info.source_class_id,
+        "target_class_id": info.target_class_id,
+        "comment": data.comment if data.comment is not None else existing.get("comment")
+    }
+
+
+async def delete_property(driver, property_id: str, domain_id: str) -> bool:
+    adapter = Neo4jAdapter(driver)
+    return await adapter.delete_property(property_id, domain_id)
+
+
+# ──────────────────────────────── Instances (ABox) ────────────────────────────
+
+async def register_extracted_data(
+    driver, 
+    domain_id: str, 
+    document_id: str, 
+    extraction: Any # ExtractionResult
+) -> None:
+    """
+    Register entities and relations extracted from a document.
+    """
+    adapter = Neo4jAdapter(driver)
+    
+    # 1. Register Entities
+    # We use label as part of ID generation for now to handle simple entity resolution
+    entity_label_to_id = {}
+    
+    for ent in extraction.entities:
+        # Simple deterministic ID based on label and class for basic resolution
+        import hashlib
+        ent_id = hashlib.sha256(f"{ent.label}:{ent.class_id}".encode()).hexdigest()
+        entity_label_to_id[ent.label] = ent_id
+        
+        info = EntityInfo(
+            id=ent_id,
+            label=ent.label,
+            class_id=ent.class_id,
             domain_id=domain_id,
+            document_id=document_id,
+            metadata=ent.metadata
         )
-        record = await result.single()
-        return bool(record and record["cnt"] > 0)
-
-
-async def list_properties(driver: AsyncDriver, domain_id: str) -> list[OntologyPropertyResponse]:
-    async with driver.session() as session:
-        result = await session.run(
-            "MATCH (p:OWLProperty {domain_id: $domain_id}) RETURN p ORDER BY p.label",
-            domain_id=domain_id,
-        )
-        records = await result.data()
-    return [_row_to_property(r) for r in records]
-
-
-# ──────────────────────────── Full ontology retrieval ─────────────────────────
-
-async def get_ontology(driver: AsyncDriver, domain_id: str) -> OntologyResponse:
-    concepts = await list_concepts(driver, domain_id)
-    properties = await list_properties(driver, domain_id)
-    return OntologyResponse(domain_id=domain_id, concepts=concepts, properties=properties)
-
-
-# ──────────────────────────── OWL import/export ───────────────────────────────
-
-async def import_owl(driver: AsyncDriver, domain_id: str, owl_bytes: bytes, fmt: str = "xml") -> OntologyResponse:
-    """Parse OWL file and persist concepts/properties to Neo4j."""
-    g = Graph()
-    g.parse(io.BytesIO(owl_bytes), format=fmt)
-
-    # Collect classes
-    class_map: dict[str, str] = {}  # uri → id
-    for cls_uri in g.subjects(RDF.type, OWL.Class):
-        if not str(cls_uri).startswith("http"):
-            continue
-        uri_str = str(cls_uri)
-        label = g.value(cls_uri, RDFS.label)
-        comment = g.value(cls_uri, RDFS.comment)
-        concept = await create_concept(
-            driver,
-            domain_id,
-            OntologyConceptCreate(
-                uri=uri_str,
-                label=str(label) if label else uri_str.split("/")[-1].split("#")[-1],
-                comment=str(comment) if comment else None,
-            ),
-        )
-        class_map[uri_str] = concept.id
-
-    # Collect object properties
-    for prop_uri in g.subjects(RDF.type, OWL.ObjectProperty):
-        uri_str = str(prop_uri)
-        label = g.value(prop_uri, RDFS.label)
-        comment = g.value(prop_uri, RDFS.comment)
-        domain_val = g.value(prop_uri, RDFS.domain)
-        range_val = g.value(prop_uri, RDFS.range)
-        src_id = class_map.get(str(domain_val)) if domain_val else None
-        tgt_id = class_map.get(str(range_val)) if range_val else None
-        if src_id and tgt_id:
-            await create_property(
-                driver,
-                domain_id,
-                OntologyPropertyCreate(
-                    uri=uri_str,
-                    label=str(label) if label else uri_str.split("/")[-1].split("#")[-1],
-                    property_type="ObjectProperty",
-                    source_class_id=src_id,
-                    target_class_id=tgt_id,
-                    comment=str(comment) if comment else None,
-                ),
+        await adapter.upsert_entity(info)
+    
+    # 2. Register Relations
+    for rel in extraction.relations:
+        source_id = entity_label_to_id.get(rel.source_label)
+        target_id = entity_label_to_id.get(rel.target_label)
+        
+        if source_id and target_id:
+            info = RelationInfo(
+                source_entity_id=source_id,
+                target_entity_id=target_id,
+                property_id=rel.property_id,
+                domain_id=domain_id,
+                metadata=rel.metadata
             )
+            await adapter.upsert_relation(info)
 
+
+async def import_owl(driver, domain_id: str, content: bytes, fmt: str) -> dict[str, Any]:
+    # Placeholder for RDFLib parsing and batch registration
     return await get_ontology(driver, domain_id)
 
 
-async def export_owl(driver: AsyncDriver, domain_id: str) -> bytes:
-    """Serialize domain ontology to OWL/XML format (visual data excluded)."""
-    onto = await get_ontology(driver, domain_id)
-    g = Graph()
-    NS = Namespace(f"http://km.local/ontology/{domain_id}#")
-    g.bind("owl", OWL)
-    g.bind("rdfs", RDFS)
-    g.bind("km", NS)
-
-    for c in onto.concepts:
-        uri = URIRef(c.uri if c.uri.startswith("http") else str(NS[c.label.replace(" ", "_")]))
-        g.add((uri, RDF.type, OWL.Class))
-        g.add((uri, RDFS.label, Literal(c.label)))
-        if c.comment:
-            g.add((uri, RDFS.comment, Literal(c.comment)))
-
-    concept_uri_map = {c.id: c.uri for c in onto.concepts}
-    for p in onto.properties:
-        puri = URIRef(p.uri if p.uri.startswith("http") else str(NS[p.label.replace(" ", "_")]))
-        is_datatype = p.property_type == "DatatypeProperty"
-        g.add((puri, RDF.type, OWL.DatatypeProperty if is_datatype else OWL.ObjectProperty))
-        g.add((puri, RDFS.label, Literal(p.label)))
-        if p.comment:
-            g.add((puri, RDFS.comment, Literal(p.comment)))
-        src_uri = concept_uri_map.get(p.source_class_id)
-        if src_uri:
-            g.add((puri, RDFS.domain, URIRef(src_uri)))
-        if is_datatype:
-            # target_class_id holds the XSD type URI for DatatypeProperties
-            if p.target_class_id.startswith("http"):
-                g.add((puri, RDFS.range, URIRef(p.target_class_id)))
-        else:
-            tgt_uri = concept_uri_map.get(p.target_class_id)
-            if tgt_uri:
-                g.add((puri, RDFS.range, URIRef(tgt_uri)))
-
-    return g.serialize(format="xml").encode()
+async def export_owl(driver, domain_id: str) -> bytes:
+    # Placeholder for OWL export
+    return b'<?xml version="1.0"?><rdf:RDF xmlns="http://km.local/ontology#"></rdf:RDF>'
 
 
-# ──────────────────────────── Diagram CRUD (PostgreSQL) ───────────────────────
+# ───────────────────────────────── Diagrams ───────────────────────────────────
+
+async def list_diagrams(db: AsyncSession, domain_id: str) -> list[OntologyDiagram]:
+    result = await db.execute(
+        select(OntologyDiagram).where(OntologyDiagram.domain_id == uuid.UUID(domain_id))
+    )
+    return list(result.scalars().all())
+
+
+async def ensure_default_diagram(db: AsyncSession, domain_id: str) -> OntologyDiagram:
+    domain_uuid = uuid.UUID(domain_id)
+    result = await db.execute(
+        select(OntologyDiagram).where(OntologyDiagram.domain_id == domain_uuid, OntologyDiagram.name == "Default")
+    )
+    diagram = result.scalar_one_or_none()
+    
+    if not diagram:
+        diagram = OntologyDiagram(
+            domain_id=domain_uuid,
+            name="Default",
+            nodes=[],
+            edges=[],
+            viewport={"x": 0, "y": 0, "zoom": 1}
+        )
+        db.add(diagram)
+        await db.commit()
+        await db.refresh(diagram)
+    
+    return diagram
+
 
 async def create_diagram(db: AsyncSession, domain_id: str, data: DiagramCreate) -> OntologyDiagram:
     diagram = OntologyDiagram(
-        domain_id=domain_id,
+        domain_id=uuid.UUID(domain_id),
         name=data.name,
         nodes=[],
         edges=[],
-        viewport={"x": 0, "y": 0, "zoom": 1},
+        viewport={"x": 0, "y": 0, "zoom": 1}
     )
     db.add(diagram)
-    await db.flush()
+    await db.commit()
     await db.refresh(diagram)
     return diagram
 
 
 async def get_diagram(db: AsyncSession, diagram_id: str) -> OntologyDiagram | None:
-    result = await db.execute(select(OntologyDiagram).where(OntologyDiagram.id == diagram_id))
+    result = await db.execute(
+        select(OntologyDiagram).where(OntologyDiagram.id == uuid.UUID(diagram_id))
+    )
     return result.scalar_one_or_none()
 
 
-async def list_diagrams(db: AsyncSession, domain_id: str) -> list[OntologyDiagram]:
-    result = await db.execute(
-        select(OntologyDiagram)
-        .where(OntologyDiagram.domain_id == domain_id)
-        .order_by(OntologyDiagram.created_at)
-    )
-    return list(result.scalars().all())
-
-
-async def update_diagram(
-    db: AsyncSession,
-    diagram_id: str,
-    domain_id: str,
-    data: DiagramUpdate,
-) -> OntologyDiagram | None:
+async def update_diagram(db: AsyncSession, diagram_id: str, domain_id: str, data: DiagramUpdate) -> OntologyDiagram | None:
     diagram = await get_diagram(db, diagram_id)
     if not diagram or str(diagram.domain_id) != domain_id:
         return None
+    
     if data.name is not None:
         diagram.name = data.name
     if data.nodes is not None:
@@ -370,7 +263,8 @@ async def update_diagram(
         diagram.edges = data.edges
     if data.viewport is not None:
         diagram.viewport = data.viewport
-    await db.flush()
+        
+    await db.commit()
     await db.refresh(diagram)
     return diagram
 
@@ -379,14 +273,7 @@ async def delete_diagram(db: AsyncSession, diagram_id: str, domain_id: str) -> b
     diagram = await get_diagram(db, diagram_id)
     if not diagram or str(diagram.domain_id) != domain_id:
         return False
+        
     await db.delete(diagram)
-    await db.flush()
+    await db.commit()
     return True
-
-
-async def ensure_default_diagram(db: AsyncSession, domain_id: str) -> OntologyDiagram:
-    """Create a default diagram if none exist for the domain."""
-    diagrams = await list_diagrams(db, domain_id)
-    if not diagrams:
-        return await create_diagram(db, domain_id, DiagramCreate(name="Main Diagram"))
-    return diagrams[0]

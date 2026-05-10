@@ -127,6 +127,9 @@ async def search_documents(
         return response
 
     except Exception as e:
+        from core.logging_config import get_logger
+        logger = get_logger(__name__)
+        logger.error(f"Search failed for query '{q}' in domains {domains}: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Search failed: {str(e)}"

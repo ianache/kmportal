@@ -22,23 +22,31 @@ if _env_file.exists():
 
 import os
 import time
+import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 
-from api import api_keys_router, domains_router, health_router, ingestion_router, ontology_router, search_router
+from api import (
+    api_keys_router,
+    domains_router,
+    health_router,
+    ingestion_router,
+    ontology_router,
+    search_router,
+)
 from core.logging_config import configure_logging, get_logger
 from core.logging_middleware import LoggingMiddleware
 from core.rate_limit_middleware import RateLimitMiddleware
 from db.database import close_db, init_db
 from db.neo4j_client import close_neo4j
-from mcp_server import MCPAuthMiddleware, get_mcp_app
-
-# Initialize logger
-logger = get_logger(__name__)
+from mcp_server import get_mcp_app
+from mcp_server.auth import MCPAuthMiddleware
 
 # Track application start time
 _start_time = time.time()
@@ -63,6 +71,9 @@ configure_logging(
     log_level=Config.LOG_LEVEL,
     json_format=Config.JSON_LOGS or Config.is_production()
 )
+
+# Initialize logger
+logger = get_logger(__name__)
 
 
 # Lifecycle management
@@ -163,6 +174,43 @@ app.add_middleware(LoggingMiddleware)
 
 # 4. API Key Rate Limiting
 app.add_middleware(RateLimitMiddleware)
+
+
+# Exception Handlers
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    trace_id = getattr(request.state, "trace_id", "unknown")
+    logger.error(
+        f"Unhandled exception: {str(exc)}\n{traceback.format_exc()}",
+        extra={"trace_id": trace_id}
+    )
+    
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": f"Internal server error: {str(exc)}",
+            "type": type(exc).__name__,
+            "trace_id": trace_id,
+            "path": request.url.path
+        }
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    trace_id = getattr(request.state, "trace_id", "unknown")
+    logger.error(
+        f"Validation error: {exc.errors()}",
+        extra={"trace_id": trace_id}
+    )
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation error",
+            "errors": exc.errors(),
+            "trace_id": trace_id
+        }
+    )
+
 
 # Include routers
 app.include_router(domains_router, prefix="/v1")

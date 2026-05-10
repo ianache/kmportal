@@ -125,9 +125,6 @@ class SearchService:
         Returns:
             List of search results
         """
-        # Convert domain_ids to strings for SQL
-        domain_strs = [str(d) for d in domain_ids]
-
         # PostgreSQL full-text search query
         # Note: This requires documents to have content stored in metadata
         # For now, search on title only (content is in MongoDB)
@@ -156,16 +153,21 @@ class SearchService:
             sql,
             {
                 "query": query,
-                "domain_ids": domain_strs,
+                "domain_ids": domain_ids,
                 "limit": limit
             }
         )
 
         results = []
         for row in result:
+            # Clamp rank to a 0-1 range for the score (approximate normalization)
+            # PostgreSQL rank can be > 1.0, we want it to be informative but within range if possible
+            score = float(row.rank) / 10.0
+            clamped_score = min(1.0, max(0.0, score))
+
             results.append(SearchResult(
-                chunk_id=f"{row.id}_title",  # Synthetic chunk for title
-                score=float(row.rank) / 10.0,  # Normalize to ~0-1 range
+                chunk_id=f"title_{row.id}",  # Changed prefix for better synthetic ID
+                score=clamped_score,
                 text=row.title,
                 document_id=row.id,
                 document_title=row.title,

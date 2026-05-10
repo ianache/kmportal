@@ -49,7 +49,7 @@ async def create_domain(
 ):
     """Create a new domain."""
     service = DomainService(db)
-    domain = await service.create_domain(domain_data, user.id)
+    domain = await service.create_domain(domain_data, user.id, user.full_name)
     return to_domain_response(domain)
 
 
@@ -68,22 +68,32 @@ async def list_domains(
     service = DomainService(db)
     is_admin = "KM_ADMIN" in user.roles
 
-    domains, total = await service.list_domains(
-        user_id=user.id,
-        is_admin=is_admin,
-        page=pagination.page,
-        page_size=pagination.page_size
-    )
+    try:
+        domains, total = await service.list_domains(
+            user_id=user.id,
+            is_admin=is_admin,
+            page=pagination.page,
+            page_size=pagination.page_size
+        )
 
-    pages = (total + pagination.page_size - 1) // pagination.page_size
+        page_size = max(1, pagination.page_size)
+        pages = (total + page_size - 1) // page_size if total > 0 else 1
 
-    return DomainListResponse(
-        items=[to_domain_response(d) for d in domains],
-        total=total,
-        page=pagination.page,
-        page_size=pagination.page_size,
-        pages=pages
-    )
+        return DomainListResponse(
+            items=[to_domain_response(d) for d in domains],
+            total=total,
+            page=pagination.page,
+            page_size=page_size,
+            pages=pages
+        )
+    except Exception as e:
+        from core.logging_config import get_logger
+        logger = get_logger(__name__)
+        logger.error(f"Failed to list domains: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list domains: {str(e)}"
+        )
 
 
 @router.get(

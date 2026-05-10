@@ -48,7 +48,19 @@ async def ingest_document(
 
     Returns a job ID for tracking processing status.
     """
-    service = IngestionService(db)
+    from adapters import get_embedding_adapter, get_vector_store_adapter
+    from db.neo4j_client import get_neo4j
+    
+    embedding_provider = await get_embedding_adapter()
+    vector_store = await get_vector_store_adapter()
+    neo4j_driver = await get_neo4j()
+    
+    service = IngestionService(
+        db, 
+        vector_store=vector_store, 
+        embedding_provider=embedding_provider,
+        graph_db=neo4j_driver
+    )
 
     safe_filename = file.filename or "upload"
     document_title = title or safe_filename
@@ -121,7 +133,19 @@ async def ingest_text(
 
     For large documents, use the file upload endpoint instead.
     """
-    service = IngestionService(db)
+    from adapters import get_embedding_adapter, get_vector_store_adapter
+    from db.neo4j_client import get_neo4j
+    
+    embedding_provider = await get_embedding_adapter()
+    vector_store = await get_vector_store_adapter()
+    neo4j_driver = await get_neo4j()
+    
+    service = IngestionService(
+        db, 
+        vector_store=vector_store, 
+        embedding_provider=embedding_provider,
+        graph_db=neo4j_driver
+    )
 
     try:
         # Create document and job

@@ -27,7 +27,8 @@ class DomainService:
     async def create_domain(
         self,
         domain_data: DomainCreate,
-        created_by: UUID
+        created_by: UUID,
+        created_by_name: str | None = None
     ) -> Domain:
         """Create a new domain."""
         domain = Domain(
@@ -40,7 +41,8 @@ class DomainService:
             tags=domain_data.tags or [],
             visibility=domain_data.visibility,
             cover_image=domain_data.cover_image,
-            created_by=created_by
+            created_by=created_by,
+            created_by_name=created_by_name
         )
 
         self.db.add(domain)
@@ -97,7 +99,7 @@ class DomainService:
 
         # Get total count
         count_result = await self.db.execute(count_query)
-        total = count_result.scalar()
+        total = count_result.scalar() or 0
 
         # Get paginated results
         offset = (page - 1) * page_size
@@ -256,21 +258,28 @@ class DomainService:
 
 def to_domain_response(domain: Domain) -> DomainResponse:
     """Convert Domain model to DomainResponse schema."""
+    # Handle possible lazy loading issues or detached objects
+    try:
+        doc_count = len(domain.documents)
+    except Exception:
+        doc_count = 0
+        
     return DomainResponse(
         id=domain.id,
-        name=domain.name,
+        name=domain.name or "Untitled",
         description=domain.description,
         name_en=domain.name_en,
         description_en=domain.description_en,
-        embedding_model=domain.embedding_model,
-        embedding_dimension=domain.embedding_dimension,
-        tags=domain.tags or [],
+        embedding_model=domain.embedding_model or "text-embedding-004",
+        embedding_dimension=domain.embedding_dimension or 768,
+        tags=list(domain.tags) if domain.tags is not None else [],
         visibility=domain.visibility or 'private',
         cover_image=domain.cover_image,
         created_by=domain.created_by,
+        created_by_name=domain.created_by_name,
         created_at=domain.created_at,
         updated_at=domain.updated_at,
-        document_count=len(domain.documents) if domain.documents else 0
+        document_count=doc_count
     )
 
 

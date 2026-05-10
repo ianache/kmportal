@@ -63,6 +63,7 @@ class UserInToken(BaseModel):
     id: UUID | None = None
     keycloak_id: str
     email: str
+    full_name: str | None = None
     roles: list[str] = []
     scopes: list[str] = []
     allowed_domains: list[UUID] = []
@@ -112,6 +113,7 @@ class DomainResponse(DomainBase):
     visibility: str = "private"
     cover_image: str | None = None
     created_by: UUID
+    created_by_name: str | None = None
     created_at: datetime
     updated_at: datetime
     document_count: int = Field(0, description="Number of documents in domain")
@@ -144,7 +146,7 @@ class DomainAccessResponse(BaseModel):
     domain_id: UUID
     role: str
     granted_at: datetime
-    user: UserResponse
+    user: UserResponse | None = None
 
 
 # ==================== Document ====================
@@ -232,11 +234,11 @@ class SearchRequest(BaseModel):
 class SearchResult(BaseModel):
     """Search result item."""
     chunk_id: str = Field(..., description="Chunk ID")
-    score: float = Field(..., ge=0, le=1, description="Relevance score")
+    score: float = Field(..., ge=0, description="Relevance score")
     text: str = Field(..., description="Chunk text content")
-    document_id: UUID = Field(..., description="Document ID")
+    document_id: UUID | str = Field(..., description="Document ID")
     document_title: str = Field(..., description="Document title")
-    domain_id: UUID = Field(..., description="Domain ID")
+    domain_id: UUID | str = Field(..., description="Domain ID")
     metadata: dict[str, Any] = Field(default={}, description="Chunk metadata")
 
 
@@ -330,7 +332,14 @@ class OntologyPropertyCreate(BaseModel):
     label: str = Field(..., min_length=1, max_length=255, description="Property label")
     property_type: str = Field("ObjectProperty", pattern="^(ObjectProperty|DatatypeProperty)$")
     source_class_id: str = Field(..., description="Domain OWL class ID")
-    target_class_id: str = Field(..., description="Range OWL class ID")
+    target_class_id: str = Field(..., description="Range OWL class ID or XSD type URI")
+    comment: str | None = Field(None, max_length=2000)
+
+
+class OntologyPropertyUpdate(BaseModel):
+    """Update an OWL property label, range, or comment."""
+    label: str | None = Field(None, min_length=1, max_length=255)
+    target_class_id: str | None = Field(None, description="Updated range (class ID or XSD type URI)")
     comment: str | None = Field(None, max_length=2000)
 
 
@@ -351,6 +360,29 @@ class OntologyResponse(BaseModel):
     domain_id: str
     concepts: list[OntologyConceptResponse]
     properties: list[OntologyPropertyResponse]
+
+
+# ==================== Extraction ====================
+
+class ExtractedEntity(BaseModel):
+    """An entity instance extracted from text."""
+    label: str
+    class_id: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ExtractedRelation(BaseModel):
+    """A relationship extracted between two entities."""
+    source_label: str
+    target_label: str
+    property_id: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ExtractionResult(BaseModel):
+    """Full extraction result from a document."""
+    entities: list[ExtractedEntity]
+    relations: list[ExtractedRelation]
 
 
 # ==================== Diagrams ====================

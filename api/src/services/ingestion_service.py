@@ -24,11 +24,13 @@ class IngestionService:
         self,
         db: AsyncSession,
         vector_store=None,
-        embedding_provider=None
+        embedding_provider=None,
+        graph_db=None
     ):
         self.db = db
         self.vector_store = vector_store
         self.embedding_provider = embedding_provider
+        self.graph_db = graph_db
 
     async def create_ingestion_job(
         self,
@@ -206,9 +208,41 @@ class IngestionService:
                     )
 
                     # Update progress
-                    progress = 50 + int((i + len(batch)) / total_chunks * 40)
-                    job.progress = min(progress, 90)
+                    progress = 25 + int((i + len(batch)) / total_chunks * 35)
+                    job.progress = min(progress, 60)
                     await self.db.commit()
+
+            # --- BRANCH B: ONTOLOGY-DRIVEN EXTRACTION ---
+            if self.graph_db and self.embedding_provider:
+                from services.ontology_service import get_ontology, register_extracted_data
+                from services.extraction_service import OntologyExtractor
+                
+                # 1. Fetch domain ontology (TBox)
+                ontology = await get_ontology(self.graph_db, str(domain.id))
+                
+                if ontology.get("concepts"):
+                    # 2. Extract structured data (ABox) using LLM
+                    extractor = OntologyExtractor(self.embedding_provider)
+                    # We send a reasonable chunk of text for extraction to avoid context limits
+                    extraction_text = text[:15000] 
+                    
+                    extraction_result = await extractor.extract(
+                        text=extraction_text,
+                        ontology=ontology,
+                        domain_id=domain.id
+                    )
+                    
+                    job.progress = 85
+                    await self.db.commit()
+
+                    # 3. Register instances in Neo4j
+                    if extraction_result.entities:
+                        await register_extracted_data(
+                            driver=self.graph_db,
+                            domain_id=str(domain.id),
+                            document_id=str(document.id),
+                            extraction=extraction_result
+                        )
 
             # Step 5: Update document
             document.status = DocumentStatus.DONE

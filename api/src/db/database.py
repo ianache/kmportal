@@ -15,7 +15,7 @@ engine = create_async_engine(
     echo=settings.sql_echo,
     pool_size=20,
     max_overflow=0,
-    pool_pre_ping=True,
+    pool_pre_ping=False,
 )
 
 # Create session factory
@@ -37,11 +37,13 @@ async def get_db() -> AsyncGenerator[AsyncSession]:
         try:
             yield session
             await session.commit()
-        except Exception:
-            await session.rollback()
+        except BaseException:
+            import asyncio
+            await asyncio.shield(session.rollback())
             raise
         finally:
-            await session.close()
+            import asyncio
+            await asyncio.shield(session.close())
 
 
 async def init_db() -> None:

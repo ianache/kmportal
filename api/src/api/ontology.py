@@ -19,6 +19,7 @@ from schemas import (
     OntologyConceptUpdate,
     OntologyPropertyCreate,
     OntologyPropertyResponse,
+    OntologyPropertyUpdate,
     OntologyResponse,
     UserInToken,
 )
@@ -104,6 +105,24 @@ async def create_property(
     driver=Depends(get_neo4j),
 ):
     return await svc.create_property(driver, str(domain_id), data)
+
+
+@router.put(
+    "/{domain_id}/ontology/properties/{property_id}",
+    response_model=OntologyPropertyResponse,
+    summary="Update OWL property label, range or comment",
+)
+async def update_property(
+    domain_id: UUID,
+    property_id: str,
+    data: OntologyPropertyUpdate,
+    user: UserInToken = Depends(require_domain_access),
+    driver=Depends(get_neo4j),
+):
+    result = await svc.update_property(driver, property_id, str(domain_id), data)
+    if not result:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return result
 
 
 @router.delete(
