@@ -41,3 +41,4 @@ type: project
 ## Active Blockers / Pre-conditions
 
 - None. Phase 9 implemented and secured.
+- [Fix] Public access enabled for /auth/session and status endpoints to support unauthenticated landing page.

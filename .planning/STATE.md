@@ -5,30 +5,27 @@
 See: .planning/PROJECT.md (updated 2026-05-02)
 
 **Core value:** Any authenticated user can find relevant knowledge within authorized domains in seconds, using semantic or hybrid search over indexed documents
-**Current focus:** Phase 8 — Admin and API keys
+**Current focus:** Phase 9 — MCP integration
 
 ## Current Position
 
-Phase: Phase 8
-Plan: 08-01
-Status: Starting Phase 8
-Last activity: 2026-05-04 — Phase 7 (Core micro UIs) COMPLETED
+Phase: Phase 9
+Plan: TBD
+Status: Ready to start
+Last activity: 2026-05-09 — Phase 8 (Admin and API keys) COMPLETED
 
-### Phase 7 Progress
+### Phase 8 Progress
 
 | Plan | Status | Notes |
 |------|--------|-------|
-| Plan 07-01: Search Micro UI | ✅ Complete | Real API integration, highlighting, filters |
-| Plan 07-02: Domain Explorer Micro UI | ✅ Complete | Domain list, document browsing, metadata |
-| Plan 07-03: Ingestion Status Micro UI | ✅ Complete | WebSocket-powered real-time job updates |
-| Plan 07-04: Shell Notifications | ✅ Complete | Global toast and bell notifications via WS |
+| Plan 08-01: Admin UI + API Key Management | ✅ Complete | Frontend admin-ui MF remote (port 5104), API key CRUD with SHA-256, rate limiting (per-key + Redis middleware), domain access management |
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -38,9 +35,10 @@ Progress: [██████████] 100%
 |-------|-------|-------|----------|
 | 06 | 3 | 3 | - |
 | 07 | 4 | 4 | - |
+| 08 | 1 | 1 | - |
 
 **Recent Trend:**
-- Last 5 plans: 07-04, 07-03, 07-02, 07-01, 06-03
+- Last 5 plans: 08-01, 07-04, 07-03, 07-02, 07-01
 - Trend: Stable
 
 *Updated after each plan completion*
@@ -58,31 +56,28 @@ Recent decisions affecting current work:
 - Init: Vue, Pinia, Vue Router declared singleton:true across all Module Federation apps
 - Phase 7: bffClient and UI components exposed from shell to all micro-UIs via Module Federation
 - Phase 7: Shared WebSocket singleton in shell for all notifications and real-time updates
+- Phase 8: API keys stored as SHA-256 hash (never plaintext); plain key returned only once on create
+- Phase 8: Two-layer rate limiting: per-key in-memory sliding window (dependencies.py) + global Redis fixed-window middleware
+- Phase 8: DomainAccess has UniqueConstraint(user_id, domain_id); grant_access upserts role on duplicate
+- Phase 8: MCP server stub mounted at /mcp as ASGI sub-app — ready for Phase 9 implementation
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
-- [Pre-Phase 2] Keycloak `kmplatform` client readiness: confirm confidential client is configured in realm=Apps with km-admin/km-reader roles and correct redirect URIs
-- [Pre-Phase 2] Deployment hostnames needed (bff.kmp.local, shell.kmp.local) before CORS and Keycloak redirect URI config
-- [Pre-Phase 3] Verify Gemini text-embedding-004 batch size limits and rate limits before implementing ingestion batching
-- [Pre-Phase 3] Verify ChromaDB 0.5 collection API for breaking changes from 0.4
-- [Pre-Phase 6] Evaluate @originjs/vite-plugin-federation vs @module-federation/vite current maturity; pin exact version before scaffolding
 - [Pre-Phase 9] Pin FastMCP exact version; verify ASGI mount API and SSE vs Streamable HTTP transport against current docs
+- [Pre-Phase 9] MCP server stub exists (api/src/mcp_server/); needs full tool implementation (search_knowledge, list_domains)
 
 ## Session Continuity
 
-Last session: 2026-05-04
-Stopped at: Phase 7 COMPLETE - Search, Domain Explorer, Ingestion Status, Notifications
-Resume file: .planning/phases/07-micro-uis/07-04-SUMMARY.md
+Last session: 2026-05-09
+Stopped at: Phase 8 COMPLETE — Admin UI, API keys, domain access management, FEAT4 login page
+Resume file: .planning/phases/08-admin-api-keys/08-01-PLAN.md
 
-### Phase 7 Plans
+### Phase 8 Plans
 
 | Plan | Description | Status |
 |------|-------------|--------|
-| 07-01 | Search Micro UI | ✅ COMPLETE |
-| 07-02 | Domain Explorer Micro UI | ✅ COMPLETE |
-| 07-03 | Ingestion Status Micro UI | ✅ COMPLETE |
-| 07-04 | Shell Notifications | ✅ COMPLETE |
+| 08-01 | Admin UI + API Key Management | ✅ COMPLETE |

@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: BFF layer** - Node.js BFF with OAuth2 proxy, REST API, WebSocket, and Redis cache
 - [x] **Phase 6: Frontend shell** - Vue 3 Module Federation host with auth state, global layout, and design system
 - [x] **Phase 7: Core micro UIs** - Search, domain explorer, ingestion status, and real-time notifications micro UIs
-- [ ] **Phase 8: Admin and API keys** - Admin micro UIs for domain/user management and API key lifecycle
+- [x] **Phase 8: Admin and API keys** - Admin micro UIs for domain/user management and API key lifecycle
 - [ ] **Phase 9: MCP integration** - FastMCP server exposing search and domain tools to AI agents via API Keys
 - [ ] **Phase 10: Production hardening** - Structured logging, observability, Docker Compose finalization, and deployment validation
 
@@ -135,7 +135,11 @@ Plans:
   2. A request using a valid API Key against `GET /v1/search` succeeds; the same request after the key is revoked returns 401
   3. After exceeding the configured rate limit, subsequent API Key requests return 429 with a `Retry-After` header
   4. Admin assigns a user or role to a domain via the Admin UI and confirms the assignment is reflected in domain-scoped access control immediately
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [x] 08-01-PLAN.md — Admin UI with API Key Management (types, service, store, UI)
+
 **UI hint**: yes
 
 ### Phase 9: MCP integration
@@ -174,6 +178,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. BFF layer | ✅ | Complete | 2026-05-03 |
 | 6. Frontend shell | ✅ | Complete | 2026-05-03 |
 | 7. Core micro UIs | 0/TBD | Not started | - |
-| 8. Admin and API keys | 0/TBD | Not started | - |
+| 8. Admin and API keys | 1/1 | Complete | 2026-05-09 |
 | 9. MCP integration | 0/TBD | Not started | - |
 | 10. Production hardening | 0/TBD | Not started | - |
