@@ -7,7 +7,6 @@
       :edge-types="edgeTypes"
       :snap-to-grid="store.snapToGrid"
       :snap-grid="[20, 20]"
-      :default-viewport="activeDiagram?.viewport ?? { x: 0, y: 0, zoom: 1 }"
       fit-view-on-init
       class="flow"
       @nodes-change="onNodesChange"
@@ -61,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import {
   VueFlow,
   MarkerType,
@@ -309,6 +308,18 @@ function onShiftDelete(e: KeyboardEvent) {
 
 onMounted(() => document.addEventListener('keydown', onShiftDelete))
 onBeforeUnmount(() => document.removeEventListener('keydown', onShiftDelete))
+
+// ── Fit-to-window on diagram open / tab switch ────────────────────────────────
+// When activeDiagramId changes (including initial load), fit the view so all
+// nodes are visible. A 200 ms delay lets VueFlow finish placing the nodes.
+watch(
+  () => store.activeDiagramId,
+  (id) => {
+    if (!id) return
+    nextTick(() => setTimeout(() => fitView({ padding: 0.15 }), 200))
+  },
+  { immediate: true }
+)
 
 // ── Node connection by dragging handles ──────────────────────────────────────
 

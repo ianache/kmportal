@@ -86,6 +86,18 @@
           </span>
         </div>
         <p v-else class="empty-hint">No equivalence rules defined</p>
+
+        <!-- Known Subclasses (read-only, edit mode only) -->
+        <template v-if="store.panelMode === 'edit' && knownSubclasses.length">
+          <div class="sub-label-row" style="margin-top:8px">
+            <label class="field-label">Subclasses (Is Parent Of)</label>
+          </div>
+          <div class="chip-list">
+            <span v-for="c in knownSubclasses" :key="c.id" class="chip chip--child">
+              {{ c.label }}
+            </span>
+          </div>
+        </template>
       </section>
 
       <!-- ── Section 3: Property Restrictions ───────────────────────────── -->
@@ -193,6 +205,12 @@ const editingId = computed(() =>
 const otherConcepts = computed(() =>
   concepts.value.filter(c => c.id !== editingId.value)
 )
+
+// Classes that declare the current class as their parent (read-only, edit mode)
+const knownSubclasses = computed(() => {
+  if (!editingId.value) return []
+  return concepts.value.filter(c => c.subclass_of?.includes(editingId.value!))
+})
 
 const filteredForSubclass = computed(() =>
   otherConcepts.value
@@ -508,6 +526,11 @@ function cancel() {
 .chip--equiv {
   background: var(--tertiary-fixed, #ffdbcc);
   color: var(--on-tertiary-fixed, #351000);
+}
+.chip--child {
+  background: var(--surface-container-high, #e6e8f3);
+  color: var(--on-surface-variant, #414755);
+  font-weight: 500;
 }
 .chip-remove {
   background: none;
