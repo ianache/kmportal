@@ -189,6 +189,11 @@ class Neo4jAdapter(GraphPort):
             )
             properties = []
             async for record in p_res:
+                target_id = record["target_id"]
+                if not target_id:
+                    # Skip dangling properties with no resolvable range (no HAS_RANGE and no range_xsd).
+                    # This preserves the previous behaviour of the required MATCH.
+                    continue
                 node = record["p"]
                 properties.append({
                     "id": node["id"],
@@ -196,7 +201,7 @@ class Neo4jAdapter(GraphPort):
                     "label": node.get("label") or "Unknown",
                     "property_type": node.get("property_type") or "ObjectProperty",
                     "source_class_id": record["source_id"],
-                    "target_class_id": record["target_id"],
+                    "target_class_id": target_id,
                     "comment": node.get("comment"),
                     "domain_id": domain_id
                 })
