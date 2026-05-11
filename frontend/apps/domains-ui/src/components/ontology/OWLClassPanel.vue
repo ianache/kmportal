@@ -259,14 +259,16 @@ function resetForm() {
   lastAutoUri.value = ''
 }
 
+// Watch BOTH panelMode AND selectedConcept: switching between two classes keeps
+// panelMode='edit' without changing it, so watching only panelMode misses the switch.
 watch(
-  () => store.panelMode,
-  (mode) => {
+  [() => store.panelMode, selectedConcept],
+  ([mode, concept]) => {
     if (mode === 'create') {
       resetForm()
       nextTick(() => labelInputRef.value?.focus())
-    } else if (mode === 'edit' && selectedConcept.value) {
-      const c = selectedConcept.value
+    } else if (mode === 'edit' && concept) {
+      const c = concept
       form.label = c.label
       form.uri = c.uri
       form.comment = c.comment ?? ''

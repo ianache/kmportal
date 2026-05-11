@@ -517,9 +517,15 @@ export const useOntologyStore = defineStore('ontology', () => {
       const result = await ontologyApi.saveOntologyBatch(activeDomainId.value, payload)
 
       if (result.success) {
+        const domainId = activeDomainId.value!
         clearPendingChanges()
-        // Reload to ensure consistency
-        await loadForDomain(activeDomainId.value)
+        // Force a full reload: clear cached data so loadForDomain doesn't return early.
+        // This ensures temp IDs are replaced with real Neo4j UUIDs and prevents
+        // stale property/concept state from causing duplicate graph writes on next save.
+        concepts.value = []
+        properties.value = []
+        activeDomainId.value = null
+        await loadForDomain(domainId)
         return true
       } else {
         error.value = result.errors.join(', ')

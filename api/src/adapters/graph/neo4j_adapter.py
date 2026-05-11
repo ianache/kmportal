@@ -96,38 +96,57 @@ class Neo4jAdapter(GraphPort):
         # Reification: (Source:OWLClass)-[:HAS_DOMAIN]->(Prop:OWLProperty)-[:HAS_RANGE]->(Target:OWLClass)
         # DatatypeProperty ranges are XSD URIs, NOT OWL classes — store them as a property on
         # the OWLProperty node (range_xsd) to avoid creating phantom :OWLClass nodes.
-        if info.property_type == "DatatypeProperty":
-            query = """
-            MERGE (s:OWLClass {id: $source_id, domain_id: $domain_id})
-            MERGE (p:OWLProperty {id: $id, domain_id: $domain_id})
-            SET p.label = $label,
-                p.uri = $uri,
-                p.property_type = $property_type,
-                p.range_xsd = $target_id,
-                p.updated_at = datetime()
-            MERGE (s)-[:HAS_DOMAIN]->(p)
-            """
-        else:
-            query = """
-            MERGE (s:OWLClass {id: $source_id, domain_id: $domain_id})
-            MERGE (t:OWLClass {id: $target_id, domain_id: $domain_id})
-            MERGE (p:OWLProperty {id: $id, domain_id: $domain_id})
-            SET p.label = $label,
-                p.uri = $uri,
-                p.property_type = $property_type,
-                p.updated_at = datetime()
-            MERGE (s)-[:HAS_DOMAIN]->(p)
-            MERGE (p)-[:HAS_RANGE]->(t)
-            """
         async with self._driver.session() as session:
+            # Upsert the property node
             await session.run(
-                query,
+                """
+                MERGE (p:OWLProperty {id: $id, domain_id: $domain_id})
+                SET p.label = $label, p.uri = $uri,
+                    p.property_type = $property_type, p.updated_at = datetime()
+                """,
                 id=info.id, domain_id=info.domain_id,
-                label=info.label, uri=info.uri,
-                property_type=info.property_type,
-                source_id=info.source_class_id,
-                target_id=info.target_class_id
+                label=info.label, uri=info.uri, property_type=info.property_type,
             )
+            # Remove stale HAS_DOMAIN (prevents duplicate edges on re-save)
+            await session.run(
+                """
+                MATCH (p:OWLProperty {id: $id, domain_id: $domain_id})
+                OPTIONAL MATCH ()-[r:HAS_DOMAIN]->(p) DELETE r
+                """,
+                id=info.id, domain_id=info.domain_id,
+            )
+            # Re-create HAS_DOMAIN from the correct source class
+            await session.run(
+                """
+                MATCH (s:OWLClass {id: $source_id, domain_id: $domain_id})
+                MATCH (p:OWLProperty {id: $id, domain_id: $domain_id})
+                MERGE (s)-[:HAS_DOMAIN]->(p)
+                """,
+                id=info.id, domain_id=info.domain_id, source_id=info.source_class_id,
+            )
+            if info.property_type == "DatatypeProperty":
+                await session.run(
+                    "MATCH (p:OWLProperty {id: $id, domain_id: $domain_id}) SET p.range_xsd = $target_id",
+                    id=info.id, domain_id=info.domain_id, target_id=info.target_class_id,
+                )
+            else:
+                # Remove stale HAS_RANGE then re-create
+                await session.run(
+                    """
+                    MATCH (p:OWLProperty {id: $id, domain_id: $domain_id})
+                    OPTIONAL MATCH (p)-[r:HAS_RANGE]->() DELETE r
+                    """,
+                    id=info.id, domain_id=info.domain_id,
+                )
+                await session.run(
+                    """
+                    MERGE (t:OWLClass {id: $target_id, domain_id: $domain_id})
+                    WITH t
+                    MATCH (p:OWLProperty {id: $id, domain_id: $domain_id})
+                    MERGE (p)-[:HAS_RANGE]->(t)
+                    """,
+                    id=info.id, domain_id=info.domain_id, target_id=info.target_class_id,
+                )
 
     async def upsert_entity(self, info: "EntityInfo") -> None:
         query = """
