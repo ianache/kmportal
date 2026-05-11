@@ -7,90 +7,8 @@
     <div v-if="isOpen" class="panel-content">
       <h4 class="panel-title">Properties</h4>
 
-      <!-- ── Class editor ───────────────────────────────────────────────── -->
-      <template v-if="selectedConcept">
-        <label class="field-label">Label</label>
-        <input class="field-input" v-model="editLabel" @blur="save" />
-        <label class="field-label">URI</label>
-        <input class="field-input" v-model="editUri" @blur="save" />
-        <label class="field-label">Comment</label>
-        <textarea class="field-input" rows="3" v-model="editComment" @blur="save" />
-
-        <!-- ── Data Attributes ──────────────────────────────────────────── -->
-        <div class="section-header">
-          <span class="section-title">Data Attributes</span>
-          <button class="btn-add-attr" @click="openAddForm" title="Add attribute">+</button>
-        </div>
-
-        <!-- Existing attributes list -->
-        <div v-if="selectedConceptAttributes.length" class="attr-list">
-          <template v-for="attr in selectedConceptAttributes" :key="attr.id">
-            <!-- Edit form (inline, replaces the row) -->
-            <div v-if="editingAttrId === attr.id" class="attr-form">
-              <label class="field-label">Name</label>
-              <input
-                class="field-input"
-                v-model="editForm.label"
-                @keydown.enter="submitEditForm"
-                @keydown.esc="closeEditForm"
-              />
-              <label class="field-label">XSD Type</label>
-              <select class="field-input" v-model="editForm.xsdUri">
-                <option v-for="t in XSD_TYPES" :key="t.uri" :value="t.uri">xsd:{{ t.label }}</option>
-              </select>
-              <label class="field-label">Comment</label>
-              <input class="field-input" v-model="editForm.comment" placeholder="(optional)" />
-              <div class="attr-form-actions">
-                <button class="btn-secondary" @click="closeEditForm">Cancel</button>
-                <button class="btn-primary" :disabled="!editForm.label" @click="submitEditForm">Save</button>
-              </div>
-            </div>
-            <!-- Read-only row -->
-            <div v-else class="attr-row">
-              <div class="attr-info">
-                <span class="attr-name">{{ attr.label }}</span>
-                <span class="attr-type">{{ xsdLabel(attr.target_class_id) }}</span>
-                <span v-if="attr.comment" class="attr-comment">{{ attr.comment }}</span>
-              </div>
-              <div class="attr-actions">
-                <button class="btn-edit-attr" @click="openEditForm(attr)" title="Edit attribute">✎</button>
-                <button class="btn-del-attr" @click="confirmDeleteAttr(attr)" title="Delete attribute">×</button>
-              </div>
-            </div>
-          </template>
-        </div>
-        <p v-else class="attr-empty">No data attributes yet.</p>
-
-        <!-- Add attribute form -->
-        <div v-if="attrForm.visible" class="attr-form">
-          <label class="field-label">Name</label>
-          <input
-            ref="attrLabelRef"
-            class="field-input"
-            v-model="attrForm.label"
-            placeholder="e.g. hasLicensePlate"
-            @keydown.enter="submitAttrForm"
-            @keydown.esc="closeAddForm"
-          />
-          <label class="field-label">XSD Type</label>
-          <select class="field-input" v-model="attrForm.xsdUri">
-            <option v-for="t in XSD_TYPES" :key="t.uri" :value="t.uri">xsd:{{ t.label }}</option>
-          </select>
-          <label class="field-label">Comment</label>
-          <input class="field-input" v-model="attrForm.comment" placeholder="(optional)" />
-          <div class="attr-form-actions">
-            <button class="btn-secondary" @click="closeAddForm">Cancel</button>
-            <button class="btn-primary" :disabled="!attrForm.label" @click="submitAttrForm">Add</button>
-          </div>
-        </div>
-
-        <div class="danger-zone">
-          <button class="btn-danger" @click="confirmDeleteClass">Delete Class</button>
-        </div>
-      </template>
-
       <!-- ── Object-property (edge) viewer ─────────────────────────────── -->
-      <template v-else-if="selectedProperty">
+      <template v-if="selectedProperty">
         <label class="field-label">Label</label>
         <p class="field-value">{{ selectedProperty!.label }}</p>
         <label class="field-label">Type</label>
@@ -102,128 +20,24 @@
         </div>
       </template>
 
-      <p v-else class="empty-msg">Select a class or relation on the canvas.</p>
+      <p v-else class="empty-msg">Select a relation on the canvas,<br>or click a class to edit it.</p>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { nextTick, reactive, ref, watch } from 'vue'
+import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useOntologyStore } from '../../stores/ontology'
-import { XSD_TYPES, xsdLabel, type XsdTypeUri } from '../../types/ontology'
-import type { OntologyProperty } from '../../types/ontology'
 
 const store = useOntologyStore()
-const { selectedConcept, selectedProperty, selectedConceptAttributes } = storeToRefs(store)
+const { selectedProperty } = storeToRefs(store)
 const isOpen = ref(true)
-
-// ── Class metadata edit ──────────────────────────────────────────────────────
-const editLabel = ref('')
-const editUri = ref('')
-const editComment = ref('')
-
-// All reactive state that the immediate watch touches must be declared before the watch call
-const attrForm = reactive({
-  visible: false,
-  label: '',
-  xsdUri: XSD_TYPES[0].uri as string,
-  comment: '',
-})
-
-const editingAttrId = ref<string | null>(null)
-const editForm = reactive({ label: '', xsdUri: XSD_TYPES[0].uri as string, comment: '' })
-
-watch(
-  selectedConcept,
-  (c) => {
-    editLabel.value = c?.label ?? ''
-    editUri.value = c?.uri ?? ''
-    editComment.value = c?.comment ?? ''
-    attrForm.visible = false
-    editingAttrId.value = null
-  },
-  { immediate: true }
-)
-
-async function save() {
-  if (!selectedConcept.value) return
-  const current = selectedConcept.value
-  if (
-    editLabel.value === current.label &&
-    editUri.value === current.uri &&
-    editComment.value === (current.comment ?? '')
-  ) return
-  await store.updateSelectedConcept({
-    label: editLabel.value,
-    uri: editUri.value,
-    comment: editComment.value || undefined,
-  })
-}
-
-function confirmDeleteClass() {
-  if (!selectedConcept.value) return
-  if (!confirm(`Delete class "${selectedConcept.value.label}"?\n\nThis will permanently remove it from the ontology and from all diagrams.`)) return
-  store.deleteSelectedConcept()
-}
 
 function confirmDeleteProperty() {
   if (!selectedProperty.value) return
   if (!confirm(`Delete property "${selectedProperty.value.label}"?\n\nThis will permanently remove it from the ontology and from all diagrams.`)) return
   store.deleteSelectedProperty()
-}
-
-// ── Data attributes ──────────────────────────────────────────────────────────
-const attrLabelRef = ref<HTMLInputElement | null>(null)
-
-function openEditForm(attr: OntologyProperty) {
-  attrForm.visible = false
-  editingAttrId.value = attr.id
-  editForm.label = attr.label
-  editForm.xsdUri = attr.target_class_id
-  editForm.comment = attr.comment ?? ''
-}
-
-function closeEditForm() {
-  editingAttrId.value = null
-}
-
-async function submitEditForm() {
-  if (!editForm.label.trim() || !editingAttrId.value) return
-  await store.updateDatatypeAttribute(
-    editingAttrId.value,
-    editForm.label.trim(),
-    editForm.xsdUri,
-    editForm.comment.trim() || undefined,
-  )
-  closeEditForm()
-}
-
-function openAddForm() {
-  attrForm.label = ''
-  attrForm.xsdUri = XSD_TYPES[0].uri
-  attrForm.comment = ''
-  attrForm.visible = true
-  nextTick(() => attrLabelRef.value?.focus())
-}
-
-function closeAddForm() {
-  attrForm.visible = false
-}
-
-async function submitAttrForm() {
-  if (!attrForm.label.trim()) return
-  await store.createDatatypeAttribute(
-    attrForm.label.trim(),
-    attrForm.xsdUri,
-    attrForm.comment.trim() || undefined,
-  )
-  closeAddForm()
-}
-
-async function confirmDeleteAttr(attr: OntologyProperty) {
-  if (!confirm(`Delete attribute "${attr.label}"?`)) return
-  await store.deleteDatatypeAttribute(attr.id)
 }
 </script>
 

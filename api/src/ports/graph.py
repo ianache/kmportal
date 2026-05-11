@@ -3,7 +3,7 @@ Graph Port - Abstract interface for graph database operations.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -14,6 +14,10 @@ class OWLClassInfo:
     uri: str
     domain_id: str
     metadata: dict[str, Any] | None = None
+    subclass_of: list[str] = field(default_factory=list)
+    equivalent_to: list[str] = field(default_factory=list)
+    restrictions: list[dict] = field(default_factory=list)
+    annotations: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass

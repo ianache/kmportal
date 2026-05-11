@@ -34,6 +34,8 @@ export const useOntologyStore = defineStore('ontology', () => {
   const error = ref<string | null>(null)
   const selectedElementId = ref<string | null>(null)
   const snapToGrid = ref(false)
+  const panelMode = ref<'create' | 'edit' | null>(null)
+  const pendingClassPosition = ref<{ x: number; y: number } | null>(null)
 
   // ── Pending changes state (batch operations) ────────────────────────────────
   const hasUnsavedChanges = ref(false)
@@ -436,6 +438,24 @@ export const useOntologyStore = defineStore('ontology', () => {
 
   function selectElement(id: string | null) {
     selectedElementId.value = id
+    if (!id) {
+      panelMode.value = null
+    } else if (conceptMap.value[id]) {
+      panelMode.value = 'edit'
+    } else {
+      panelMode.value = null
+    }
+  }
+
+  function openCreatePanel(position: { x: number; y: number }) {
+    pendingClassPosition.value = position
+    selectedElementId.value = null
+    panelMode.value = 'create'
+  }
+
+  function closePanel() {
+    panelMode.value = null
+    pendingClassPosition.value = null
   }
 
   function toggleSnapToGrid() {
@@ -497,9 +517,15 @@ export const useOntologyStore = defineStore('ontology', () => {
       const result = await ontologyApi.saveOntologyBatch(activeDomainId.value, payload)
 
       if (result.success) {
+        const domainId = activeDomainId.value!
         clearPendingChanges()
-        // Reload to ensure consistency
-        await loadForDomain(activeDomainId.value)
+        // Force a full reload: clear cached data so loadForDomain doesn't return early.
+        // This ensures temp IDs are replaced with real Neo4j UUIDs and prevents
+        // stale property/concept state from causing duplicate graph writes on next save.
+        concepts.value = []
+        properties.value = []
+        activeDomainId.value = null
+        await loadForDomain(domainId)
         return true
       } else {
         error.value = result.errors.join(', ')
@@ -568,6 +594,10 @@ export const useOntologyStore = defineStore('ontology', () => {
     removeEdgesFromCanvas,
     createProperty,
     selectElement,
+    openCreatePanel,
+    closePanel,
+    panelMode,
+    pendingClassPosition,
     toggleSnapToGrid,
     saveAllChanges,
     clearPendingChanges,

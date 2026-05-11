@@ -42,7 +42,11 @@ async def create_concept(driver, domain_id: str, data: OntologyConceptCreate) ->
         label=data.label,
         uri=data.uri,
         domain_id=domain_id,
-        metadata={"comment": data.comment} if data.comment else None
+        metadata={"comment": data.comment} if data.comment else None,
+        subclass_of=data.subclass_of or [],
+        equivalent_to=data.equivalent_to or [],
+        restrictions=data.restrictions or [],
+        annotations=data.annotations or {},
     )
     await adapter.upsert_class(info)
     return {
@@ -50,7 +54,11 @@ async def create_concept(driver, domain_id: str, data: OntologyConceptCreate) ->
         "domain_id": domain_id,
         "uri": data.uri,
         "label": data.label,
-        "comment": data.comment
+        "comment": data.comment,
+        "subclass_of": info.subclass_of,
+        "equivalent_to": info.equivalent_to,
+        "restrictions": info.restrictions,
+        "annotations": info.annotations,
     }
 
 
@@ -60,13 +68,17 @@ async def update_concept(driver, concept_id: str, domain_id: str, data: Ontology
     existing = next((c for c in current["concepts"] if c["id"] == concept_id), None)
     if not existing:
         return None
-    
+
     info = OWLClassInfo(
         id=concept_id,
         label=data.label if data.label is not None else existing["label"],
         uri=data.uri if data.uri is not None else existing["uri"],
         domain_id=domain_id,
-        metadata={"comment": data.comment} if data.comment is not None else {"comment": existing.get("comment")}
+        metadata={"comment": data.comment} if data.comment is not None else {"comment": existing.get("comment")},
+        subclass_of=data.subclass_of if data.subclass_of is not None else existing.get("subclass_of", []),
+        equivalent_to=data.equivalent_to if data.equivalent_to is not None else existing.get("equivalent_to", []),
+        restrictions=data.restrictions if data.restrictions is not None else existing.get("restrictions", []),
+        annotations=data.annotations if data.annotations is not None else existing.get("annotations", {}),
     )
     await adapter.upsert_class(info)
     return {
@@ -74,7 +86,11 @@ async def update_concept(driver, concept_id: str, domain_id: str, data: Ontology
         "domain_id": domain_id,
         "uri": info.uri,
         "label": info.label,
-        "comment": data.comment if data.comment is not None else existing.get("comment")
+        "comment": data.comment if data.comment is not None else existing.get("comment"),
+        "subclass_of": info.subclass_of,
+        "equivalent_to": info.equivalent_to,
+        "restrictions": info.restrictions,
+        "annotations": info.annotations,
     }
 
 
@@ -199,8 +215,103 @@ async def import_owl(driver, domain_id: str, content: bytes, fmt: str) -> dict[s
 
 
 async def export_owl(driver, domain_id: str) -> bytes:
-    # Placeholder for OWL export
-    return b'<?xml version="1.0"?><rdf:RDF xmlns="http://km.local/ontology#"></rdf:RDF>'
+    import re
+    from rdflib import Graph, URIRef, Literal, Namespace, BNode, RDF, RDFS, OWL, XSD
+
+    data = await get_ontology(driver, domain_id)
+    concepts = data["concepts"]
+    properties = data["properties"]
+
+    g = Graph()
+    KM = Namespace("http://km.local/ontology#")
+    g.bind("owl", OWL)
+    g.bind("rdfs", RDFS)
+    g.bind("rdf", RDF)
+    g.bind("xsd", XSD)
+    g.bind("km", KM)
+
+    ontology_uri = URIRef(f"http://km.local/ontology/{domain_id}")
+    g.add((ontology_uri, RDF.type, OWL.Ontology))
+
+    # Build id → URI maps for reference resolution
+    concept_uri_map: dict[str, str] = {}
+    for concept in concepts:
+        uri = concept["uri"] or f"http://km.local/ontology#{concept['label'].replace(' ', '_')}"
+        concept_uri_map[concept["id"]] = uri
+
+    property_uri_map: dict[str, str] = {}
+    for prop in properties:
+        p_uri = prop["uri"] or f"http://km.local/ontology#{prop['label'].replace(' ', '_')}"
+        property_uri_map[prop["id"]] = p_uri
+
+    _RESTRICTION_QUANTIFIER = {
+        "some": OWL.someValuesFrom,
+        "all": OWL.allValuesFrom,
+    }
+
+    # OWL Classes
+    for concept in concepts:
+        class_ref = URIRef(concept_uri_map[concept["id"]])
+        g.add((class_ref, RDF.type, OWL.Class))
+        g.add((class_ref, RDFS.label, Literal(concept["label"])))
+        if concept.get("comment"):
+            g.add((class_ref, RDFS.comment, Literal(concept["comment"])))
+        for parent_id in concept.get("subclass_of", []):
+            if parent_id in concept_uri_map:
+                g.add((class_ref, RDFS.subClassOf, URIRef(concept_uri_map[parent_id])))
+        for equiv_id in concept.get("equivalent_to", []):
+            if equiv_id in concept_uri_map:
+                g.add((class_ref, OWL.equivalentClass, URIRef(concept_uri_map[equiv_id])))
+
+        # Property restrictions → anonymous owl:Restriction blank nodes
+        for r in concept.get("restrictions") or []:
+            prop_id = r.get("property_id", "")
+            r_type = r.get("restriction_type", "some")
+            if not prop_id or prop_id not in property_uri_map:
+                continue
+            restr = BNode()
+            g.add((restr, RDF.type, OWL.Restriction))
+            g.add((restr, OWL.onProperty, URIRef(property_uri_map[prop_id])))
+            if r_type == "cardinality":
+                g.add((restr, OWL.minCardinality, Literal(1, datatype=XSD.nonNegativeInteger)))
+            else:
+                quantifier = _RESTRICTION_QUANTIFIER.get(r_type, OWL.someValuesFrom)
+                g.add((restr, quantifier, OWL.Thing))
+            g.add((class_ref, RDFS.subClassOf, restr))
+
+        # Custom annotations and owl:hasKey flag
+        annotations = concept.get("annotations") or {}
+        for ann_key, ann_val in annotations.items():
+            if ann_key == "owl:hasKey":
+                # Emit as a dedicated KM annotation property
+                has_key_prop = KM.hasKey
+                g.add((has_key_prop, RDF.type, OWL.AnnotationProperty))
+                g.add((class_ref, has_key_prop, Literal("true")))
+            else:
+                key_slug = re.sub(r"[^\w.-]", "_", ann_key)
+                ann_prop = URIRef(f"http://km.local/ontology#{key_slug}")
+                g.add((ann_prop, RDF.type, OWL.AnnotationProperty))
+                g.add((class_ref, ann_prop, Literal(ann_val)))
+
+    # OWL Properties
+    for prop in properties:
+        prop_ref = URIRef(property_uri_map[prop["id"]])
+        owl_type = OWL.DatatypeProperty if prop["property_type"] == "DatatypeProperty" else OWL.ObjectProperty
+        g.add((prop_ref, RDF.type, owl_type))
+        g.add((prop_ref, RDFS.label, Literal(prop["label"])))
+        if prop.get("comment"):
+            g.add((prop_ref, RDFS.comment, Literal(prop["comment"])))
+        source_id = prop.get("source_class_id")
+        if source_id and source_id in concept_uri_map:
+            g.add((prop_ref, RDFS.domain, URIRef(concept_uri_map[source_id])))
+        target_id = prop.get("target_class_id")
+        if target_id:
+            if target_id.startswith("http://") or target_id.startswith("https://"):
+                g.add((prop_ref, RDFS.range, URIRef(target_id)))
+            elif target_id in concept_uri_map:
+                g.add((prop_ref, RDFS.range, URIRef(concept_uri_map[target_id])))
+
+    return g.serialize(format="xml").encode("utf-8")
 
 
 # ───────────────────────────────── Diagrams ───────────────────────────────────
@@ -314,11 +425,15 @@ async def save_ontology_batch(
                     label=op.data.label,
                     uri=op.data.uri,
                     domain_id=domain_id,
-                    metadata={"comment": op.data.comment} if op.data.comment else None
+                    metadata={"comment": op.data.comment} if op.data.comment else None,
+                    subclass_of=op.data.subclass_of or [],
+                    equivalent_to=op.data.equivalent_to or [],
+                    restrictions=op.data.restrictions or [],
+                    annotations=op.data.annotations or {},
                 )
                 await adapter.upsert_class(info)
                 response.concepts_created.append(concept_id)
-                
+
             elif op.operation == 'update' and op.id and op.data:
                 current = await adapter.get_ontology(domain_id)
                 existing = next((c for c in current["concepts"] if c["id"] == op.id), None)
@@ -328,7 +443,11 @@ async def save_ontology_batch(
                         label=op.data.label if op.data.label else existing["label"],
                         uri=op.data.uri if op.data.uri else existing["uri"],
                         domain_id=domain_id,
-                        metadata={"comment": op.data.comment} if op.data.comment is not None else {"comment": existing.get("comment")}
+                        metadata={"comment": op.data.comment} if op.data.comment is not None else {"comment": existing.get("comment")},
+                        subclass_of=op.data.subclass_of if op.data.subclass_of is not None else existing.get("subclass_of", []),
+                        equivalent_to=op.data.equivalent_to if op.data.equivalent_to is not None else existing.get("equivalent_to", []),
+                        restrictions=op.data.restrictions if op.data.restrictions is not None else existing.get("restrictions", []),
+                        annotations=op.data.annotations if op.data.annotations is not None else existing.get("annotations", {}),
                     )
                     await adapter.upsert_class(info)
                     response.concepts_updated.append(op.id)

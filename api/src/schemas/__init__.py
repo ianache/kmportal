@@ -308,6 +308,10 @@ class OntologyConceptCreate(BaseModel):
     uri: str = Field(..., min_length=1, max_length=500, description="OWL class URI")
     label: str = Field(..., min_length=1, max_length=255, description="Human-readable label")
     comment: str | None = Field(None, max_length=2000, description="Description or comment")
+    subclass_of: List[str] = Field(default_factory=list, description="Parent class IDs")
+    equivalent_to: List[str] = Field(default_factory=list, description="Equivalent class IDs")
+    restrictions: List[Dict[str, Any]] = Field(default_factory=list, description="OWL property restrictions")
+    annotations: Dict[str, str] = Field(default_factory=dict, description="Custom annotation key-value pairs")
 
 
 class OntologyConceptUpdate(BaseModel):
@@ -315,6 +319,10 @@ class OntologyConceptUpdate(BaseModel):
     uri: str | None = Field(None, min_length=1, max_length=500)
     label: str | None = Field(None, min_length=1, max_length=255)
     comment: str | None = Field(None, max_length=2000)
+    subclass_of: List[str] | None = Field(None, description="Parent class IDs (replaces existing)")
+    equivalent_to: List[str] | None = Field(None, description="Equivalent class IDs (replaces existing)")
+    restrictions: List[Dict[str, Any]] | None = Field(None, description="OWL property restrictions (replaces existing)")
+    annotations: Dict[str, str] | None = Field(None, description="Custom annotations (replaces existing)")
 
 
 class OntologyConceptResponse(BaseModel):
@@ -324,6 +332,10 @@ class OntologyConceptResponse(BaseModel):
     uri: str
     label: str
     comment: str | None = None
+    subclass_of: List[str] = Field(default_factory=list)
+    equivalent_to: List[str] = Field(default_factory=list)
+    restrictions: List[Dict[str, Any]] = Field(default_factory=list)
+    annotations: Dict[str, str] = Field(default_factory=dict)
 
 
 class OntologyPropertyCreate(BaseModel):
@@ -558,6 +570,11 @@ class VectorIngestRequest(BaseModel):
 
 class VectorIngestResponse(BaseModel):
     success: bool
+    message: str
+
+
+class OntologyCleanupResponse(BaseModel):
+    deleted: int
     message: str
 
 

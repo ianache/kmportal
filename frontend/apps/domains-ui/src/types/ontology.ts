@@ -1,9 +1,18 @@
+export interface OWLRestriction {
+  property_id: string
+  restriction_type: 'some' | 'all' | 'cardinality'
+}
+
 export interface OntologyConcept {
   id: string
   domain_id: string
   uri: string
   label: string
   comment?: string
+  subclass_of: string[]
+  equivalent_to: string[]
+  restrictions: OWLRestriction[]
+  annotations: Record<string, string>
 }
 
 export interface OntologyProperty {
@@ -87,6 +96,10 @@ export interface ConceptCreatePayload {
   uri: string
   label: string
   comment?: string
+  subclass_of?: string[]
+  equivalent_to?: string[]
+  restrictions?: OWLRestriction[]
+  annotations?: Record<string, string>
 }
 
 export interface PropertyCreatePayload {

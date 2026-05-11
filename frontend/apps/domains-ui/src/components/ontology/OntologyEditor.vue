@@ -52,8 +52,9 @@
         />
       </div>
 
-      <!-- Right properties panel -->
-      <OntologyProperties />
+      <!-- Right panel: OWL Class Definition (create/edit) or Properties (edge view) -->
+      <OWLClassPanel v-if="store.panelMode !== null" />
+      <OntologyProperties v-else />
     </div>
 
     <!-- Loading overlay -->
@@ -78,6 +79,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, onBeforeUnmount } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useOntologyStore } from '../../stores/ontology'
 import { ontologyApi } from '../../services/ontologyApi'
 import type { OntologyConcept } from '../../types/ontology'
@@ -85,6 +87,7 @@ import DiagramTabs from './DiagramTabs.vue'
 import OntologyCanvas from './OntologyCanvas.vue'
 import OntologyPalette from './OntologyPalette.vue'
 import OntologyProperties from './OntologyProperties.vue'
+import OWLClassPanel from './OWLClassPanel.vue'
 import OntologyToolbox from './OntologyToolbox.vue'
 import UnsavedChangesModal from './UnsavedChangesModal.vue'
 
@@ -92,6 +95,7 @@ const props = defineProps<{ domainId: string; domainName: string }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
 
 const store = useOntologyStore()
+const { panelMode } = storeToRefs(store)
 const canvasRef = ref<InstanceType<typeof OntologyCanvas> | null>(null)
 const showUnsavedModal = ref(false)
 const pendingClose = ref(false)

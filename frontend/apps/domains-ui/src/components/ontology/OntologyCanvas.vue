@@ -4,9 +4,9 @@
       :id="FLOW_ID"
       :nodes="flowNodes"
       :edges="flowEdges"
+      :edge-types="edgeTypes"
       :snap-to-grid="store.snapToGrid"
       :snap-grid="[20, 20]"
-      :default-viewport="activeDiagram?.viewport ?? { x: 0, y: 0, zoom: 1 }"
       fit-view-on-init
       class="flow"
       @nodes-change="onNodesChange"
@@ -60,9 +60,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import {
   VueFlow,
+  MarkerType,
   useVueFlow,
   type Connection,
   type Edge,
@@ -73,7 +74,12 @@ import {
   type NodeMouseEvent,
 } from '@vue-flow/core'
 import { useOntologyStore } from '../../stores/ontology'
-import type { DiagramNode, DiagramViewport } from '../../types/ontology'
+import type { DiagramNode, DiagramEdge, DiagramViewport } from '../../types/ontology'
+import InheritanceEdge from './InheritanceEdge.vue'
+import type { Component } from 'vue'
+
+// Cast needed: VueFlow EdgeComponent expects specific props that SFC custom edges satisfy at runtime
+const edgeTypes: Record<string, Component> = { inheritance: markRaw(InheritanceEdge) as Component }
 
 const FLOW_ID = 'km-ontology-flow'
 
@@ -120,12 +126,15 @@ const flowNodes = computed<Node[]>(() => {
 // ── Map store edges → Vue Flow edges ─────────────────────────────────────────
 const flowEdges = computed<Edge[]>(() => {
   if (!activeDiagram.value) return []
+
   const validNodeIds = new Set(
     activeDiagram.value.nodes
       .filter(n => !!store.conceptMap[n.concept_id])
       .map(n => n.id)
   )
-  return activeDiagram.value.edges
+
+  // Regular ObjectProperty edges (blue, labelled)
+  const propertyEdges: Edge[] = activeDiagram.value.edges
     .filter(e => validNodeIds.has(e.source) && validNodeIds.has(e.target))
     .map(e => ({
       id: e.id,
@@ -133,10 +142,30 @@ const flowEdges = computed<Edge[]>(() => {
       target: e.target,
       label: e.label || '',
       type: 'default',
-      markerEnd: { type: 'arrowclosed' },
+      markerEnd: { type: MarkerType.ArrowClosed },
       style: { stroke: e.id === store.selectedElementId ? '#8e44ad' : '#0058bc', strokeWidth: 2 },
       labelStyle: { fill: '#414755', fontSize: '11px' },
     }))
+
+  // Auto-derived SUBCLASS_OF edges (black, hollow arrow, no label)
+  const subclassEdges: Edge[] = []
+  for (const childNode of activeDiagram.value.nodes) {
+    const childConcept = store.conceptMap[childNode.concept_id]
+    if (!childConcept?.subclass_of?.length) continue
+    for (const parentConceptId of childConcept.subclass_of) {
+      const parentNode = activeDiagram.value.nodes.find(n => n.concept_id === parentConceptId)
+      if (!parentNode || !store.conceptMap[parentNode.concept_id]) continue
+      subclassEdges.push({
+        id: `subclass-${childNode.id}-${parentNode.id}`,
+        source: childNode.id,
+        target: parentNode.id,
+        type: 'inheritance',
+        label: '',
+      })
+    }
+  }
+
+  return [...propertyEdges, ...subclassEdges]
 })
 
 // ── Click handlers ────────────────────────────────────────────────────────────
@@ -280,6 +309,18 @@ function onShiftDelete(e: KeyboardEvent) {
 onMounted(() => document.addEventListener('keydown', onShiftDelete))
 onBeforeUnmount(() => document.removeEventListener('keydown', onShiftDelete))
 
+// ── Fit-to-window on diagram open / tab switch ────────────────────────────────
+// When activeDiagramId changes (including initial load), fit the view so all
+// nodes are visible. A 200 ms delay lets VueFlow finish placing the nodes.
+watch(
+  () => store.activeDiagramId,
+  (id) => {
+    if (!id) return
+    nextTick(() => setTimeout(() => fitView({ padding: 0.15 }), 200))
+  },
+  { immediate: true }
+)
+
 // ── Node connection by dragging handles ──────────────────────────────────────
 
 function onConnect(connection: Connection) {
@@ -329,13 +370,7 @@ async function onDrop(event: DragEvent) {
   }
 
   if (type === 'class') {
-    const label = window.prompt('Class label:')
-    if (!label) return
-    const uri =
-      window.prompt('URI (leave blank for auto):') ||
-      `http://km.local/ontology#${label.replace(/\s+/g, '_')}`
-    const concept = await store.createConcept({ label, uri })
-    if (concept) await store.addClassToCanvas(concept, canvasPos)
+    store.openCreatePanel(canvasPos)
     return
   }
 
