@@ -573,6 +573,11 @@ class VectorIngestResponse(BaseModel):
     message: str
 
 
+class OntologyCleanupResponse(BaseModel):
+    deleted: int
+    message: str
+
+
 # ==================== Error ====================
 
 class ErrorResponse(BaseModel):

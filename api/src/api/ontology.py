@@ -14,6 +14,7 @@ from schemas import (
     DiagramListResponse,
     DiagramResponse,
     DiagramUpdate,
+    OntologyCleanupResponse,
     OntologyConceptCreate,
     OntologyConceptResponse,
     OntologyConceptUpdate,
@@ -43,6 +44,37 @@ async def get_ontology(
     driver=Depends(get_neo4j),
 ):
     return await svc.get_ontology(driver, str(domain_id))
+
+
+@router.post(
+    "/{domain_id}/ontology/cleanup-duplicates",
+    response_model=OntologyCleanupResponse,
+    summary="Remove duplicate OWLProperty nodes",
+    description="Finds OWLProperty nodes sharing the same source class and label, keeps one, deletes the rest.",
+)
+async def cleanup_duplicate_properties(
+    domain_id: UUID,
+    user: UserInToken = Depends(require_domain_access),
+    driver=Depends(get_neo4j),
+) -> OntologyCleanupResponse:
+    async with driver.session() as session:
+        result = await session.run(
+            """
+            MATCH (s:OWLClass {domain_id: $domain_id})-[:HAS_DOMAIN]->(p:OWLProperty {domain_id: $domain_id})
+            WITH s, p.label AS lbl, collect(p) AS dupes
+            WHERE size(dupes) > 1
+            UNWIND tail(dupes) AS del
+            DETACH DELETE del
+            RETURN count(del) AS deleted
+            """,
+            domain_id=str(domain_id),
+        )
+        record = await result.single()
+        deleted = record["deleted"] if record else 0
+    return OntologyCleanupResponse(
+        deleted=deleted,
+        message=f"Removed {deleted} duplicate OWLProperty node(s)." if deleted else "No duplicates found.",
+    )
 
 
 @router.post(

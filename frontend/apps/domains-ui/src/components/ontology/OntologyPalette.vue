@@ -44,11 +44,17 @@
       <input type="file" accept=".owl,.rdf,.ttl" hidden @change="onImport" />
     </label>
     <button class="palette-btn export-btn" @click="$emit('export-owl')">Export OWL</button>
+    <button class="palette-btn cleanup-btn" :disabled="cleaning" @click="runCleanup">
+      {{ cleaning ? 'Limpiando…' : 'Fix Duplicates' }}
+    </button>
+    <p v-if="cleanupMsg" class="cleanup-msg">{{ cleanupMsg }}</p>
   </aside>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import { useOntologyStore } from '../../stores/ontology'
+import { createLazyApiClient } from 'shell/microFrontendApi'
 import type { OntologyConcept } from '../../types/ontology'
 
 const store = useOntologyStore()
@@ -58,6 +64,35 @@ const emit = defineEmits<{
   (e: 'export-owl'): void
   (e: 'import-owl', file: File): void
 }>()
+
+const cleaning = ref(false)
+const cleanupMsg = ref('')
+const apiClient = createLazyApiClient()
+
+async function runCleanup() {
+  if (!store.activeDomainId) return
+  cleaning.value = true
+  cleanupMsg.value = ''
+  try {
+    const res = await apiClient.post<{ deleted: number; message: string }>(
+      `/v1/domains/${store.activeDomainId}/ontology/cleanup-duplicates`,
+      {}
+    )
+    cleanupMsg.value = res.data?.message ?? 'Done.'
+    if ((res.data?.deleted ?? 0) > 0) {
+      // Reload ontology so UI reflects cleaned data
+      const domainId = store.activeDomainId
+      store.concepts = []
+      store.properties = []
+      store.activeDomainId = null as any
+      await store.loadForDomain(domainId)
+    }
+  } catch {
+    cleanupMsg.value = 'Error al limpiar.'
+  } finally {
+    cleaning.value = false
+  }
+}
 
 function onDragStart(event: DragEvent, type: 'class' | 'property') {
   event.dataTransfer?.setData('application/km-palette-type', type)
@@ -186,4 +221,8 @@ function onImport(event: Event) {
 }
 
 .import-btn { cursor: pointer; }
+.cleanup-btn { background: #fff3cd; color: #856404; border-color: #ffc107; }
+.cleanup-btn:hover:not(:disabled) { background: #ffe69c; }
+.cleanup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.cleanup-msg { font-size: 10px; color: var(--on-surface-variant, #86868b); margin: 2px 0 0; text-align: center; }
 </style>
