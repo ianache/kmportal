@@ -249,8 +249,12 @@ async def create_diagram(db: AsyncSession, domain_id: str, data: DiagramCreate) 
 
 
 async def get_diagram(db: AsyncSession, diagram_id: str) -> OntologyDiagram | None:
+    try:
+        diagram_uuid = uuid.UUID(diagram_id)
+    except ValueError:
+        return None
     result = await db.execute(
-        select(OntologyDiagram).where(OntologyDiagram.id == uuid.UUID(diagram_id))
+        select(OntologyDiagram).where(OntologyDiagram.id == diagram_uuid)
     )
     return result.scalar_one_or_none()
 
