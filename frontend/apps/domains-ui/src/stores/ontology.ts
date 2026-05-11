@@ -34,6 +34,8 @@ export const useOntologyStore = defineStore('ontology', () => {
   const error = ref<string | null>(null)
   const selectedElementId = ref<string | null>(null)
   const snapToGrid = ref(false)
+  const panelMode = ref<'create' | 'edit' | null>(null)
+  const pendingClassPosition = ref<{ x: number; y: number } | null>(null)
 
   // ── Pending changes state (batch operations) ────────────────────────────────
   const hasUnsavedChanges = ref(false)
@@ -436,6 +438,24 @@ export const useOntologyStore = defineStore('ontology', () => {
 
   function selectElement(id: string | null) {
     selectedElementId.value = id
+    if (!id) {
+      panelMode.value = null
+    } else if (conceptMap.value[id]) {
+      panelMode.value = 'edit'
+    } else {
+      panelMode.value = null
+    }
+  }
+
+  function openCreatePanel(position: { x: number; y: number }) {
+    pendingClassPosition.value = position
+    selectedElementId.value = null
+    panelMode.value = 'create'
+  }
+
+  function closePanel() {
+    panelMode.value = null
+    pendingClassPosition.value = null
   }
 
   function toggleSnapToGrid() {
@@ -568,6 +588,10 @@ export const useOntologyStore = defineStore('ontology', () => {
     removeEdgesFromCanvas,
     createProperty,
     selectElement,
+    openCreatePanel,
+    closePanel,
+    panelMode,
+    pendingClassPosition,
     toggleSnapToGrid,
     saveAllChanges,
     clearPendingChanges,

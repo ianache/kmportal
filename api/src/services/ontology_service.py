@@ -42,7 +42,11 @@ async def create_concept(driver, domain_id: str, data: OntologyConceptCreate) ->
         label=data.label,
         uri=data.uri,
         domain_id=domain_id,
-        metadata={"comment": data.comment} if data.comment else None
+        metadata={"comment": data.comment} if data.comment else None,
+        subclass_of=data.subclass_of or [],
+        equivalent_to=data.equivalent_to or [],
+        restrictions=data.restrictions or [],
+        annotations=data.annotations or {},
     )
     await adapter.upsert_class(info)
     return {
@@ -50,7 +54,11 @@ async def create_concept(driver, domain_id: str, data: OntologyConceptCreate) ->
         "domain_id": domain_id,
         "uri": data.uri,
         "label": data.label,
-        "comment": data.comment
+        "comment": data.comment,
+        "subclass_of": info.subclass_of,
+        "equivalent_to": info.equivalent_to,
+        "restrictions": info.restrictions,
+        "annotations": info.annotations,
     }
 
 
@@ -60,13 +68,17 @@ async def update_concept(driver, concept_id: str, domain_id: str, data: Ontology
     existing = next((c for c in current["concepts"] if c["id"] == concept_id), None)
     if not existing:
         return None
-    
+
     info = OWLClassInfo(
         id=concept_id,
         label=data.label if data.label is not None else existing["label"],
         uri=data.uri if data.uri is not None else existing["uri"],
         domain_id=domain_id,
-        metadata={"comment": data.comment} if data.comment is not None else {"comment": existing.get("comment")}
+        metadata={"comment": data.comment} if data.comment is not None else {"comment": existing.get("comment")},
+        subclass_of=data.subclass_of if data.subclass_of is not None else existing.get("subclass_of", []),
+        equivalent_to=data.equivalent_to if data.equivalent_to is not None else existing.get("equivalent_to", []),
+        restrictions=data.restrictions if data.restrictions is not None else existing.get("restrictions", []),
+        annotations=data.annotations if data.annotations is not None else existing.get("annotations", {}),
     )
     await adapter.upsert_class(info)
     return {
@@ -74,7 +86,11 @@ async def update_concept(driver, concept_id: str, domain_id: str, data: Ontology
         "domain_id": domain_id,
         "uri": info.uri,
         "label": info.label,
-        "comment": data.comment if data.comment is not None else existing.get("comment")
+        "comment": data.comment if data.comment is not None else existing.get("comment"),
+        "subclass_of": info.subclass_of,
+        "equivalent_to": info.equivalent_to,
+        "restrictions": info.restrictions,
+        "annotations": info.annotations,
     }
 
 
@@ -314,11 +330,15 @@ async def save_ontology_batch(
                     label=op.data.label,
                     uri=op.data.uri,
                     domain_id=domain_id,
-                    metadata={"comment": op.data.comment} if op.data.comment else None
+                    metadata={"comment": op.data.comment} if op.data.comment else None,
+                    subclass_of=op.data.subclass_of or [],
+                    equivalent_to=op.data.equivalent_to or [],
+                    restrictions=op.data.restrictions or [],
+                    annotations=op.data.annotations or {},
                 )
                 await adapter.upsert_class(info)
                 response.concepts_created.append(concept_id)
-                
+
             elif op.operation == 'update' and op.id and op.data:
                 current = await adapter.get_ontology(domain_id)
                 existing = next((c for c in current["concepts"] if c["id"] == op.id), None)
@@ -328,7 +348,11 @@ async def save_ontology_batch(
                         label=op.data.label if op.data.label else existing["label"],
                         uri=op.data.uri if op.data.uri else existing["uri"],
                         domain_id=domain_id,
-                        metadata={"comment": op.data.comment} if op.data.comment is not None else {"comment": existing.get("comment")}
+                        metadata={"comment": op.data.comment} if op.data.comment is not None else {"comment": existing.get("comment")},
+                        subclass_of=op.data.subclass_of if op.data.subclass_of is not None else existing.get("subclass_of", []),
+                        equivalent_to=op.data.equivalent_to if op.data.equivalent_to is not None else existing.get("equivalent_to", []),
+                        restrictions=op.data.restrictions if op.data.restrictions is not None else existing.get("restrictions", []),
+                        annotations=op.data.annotations if op.data.annotations is not None else existing.get("annotations", {}),
                     )
                     await adapter.upsert_class(info)
                     response.concepts_updated.append(op.id)
