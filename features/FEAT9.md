@@ -224,3 +224,48 @@ Cuando `panelMode !== null`, la columna derecha muestra `OWLClassPanel.vue` en l
 7. **AC-7 Cancel**: El botón Cancel cierra el panel sin persistir cambios; si fue drag & drop, el nodo no se añade al canvas.
 8. **AC-8 Distinción visual**: Las flechas de herencia son visualmente distintas de las de propiedad (color, punta).
 9. **AC-9 Consistencia**: Al editar una clase y eliminar un `subClassOf`, la flecha correspondiente desaparece del canvas en tiempo real.
+
+## 8. Improvements
+### 8.1 Iteracion 1 (fit to window)
+#### Requirements
+- Se debe mostrar centrado al abrir el diagrama (como si se seleccionara fit to window manualmente)
+#### Acceptance Criteria
+- Al abrir el diagrama debe mostrar centrado todo (fit to Window: default)
+
+### 8.2 Iteracion 2 (Visualize Subclass Of in form Edit OWL Class)
+#### Requirements
+- Se debe mostrar las clases que son "Subclass Of" de la clase seleccionada
+#### Acceptance Criteria
+- Al editar una clase se debe mostrar una lista de clases que son "Subclass Of" de la clase seleccionada
+
+### 8.3 Iteracion 3 (bugfixing in Edit OWL Class panel)
+#### Bug 
+- BUG: cuando se ha seleccionado una OWL Class previa y luego se selecciona otra OWL Class diferente, las propiedades que se muestran corresponden a la primera OWL Class seleccionada y no a la actual. 
+
+#### Acceptance Criteria
+- Se debe asegurar que las propiedades a editar se correspondan con la OWL Class seleccionada.
+
+### 8.4 Iteracion 4 (bugfixing when saving changes)
+#### Bug 
+- BUG: cuando se guardan cambios se van repitiendo las relaciones con OWL Property en Neo4J (@features/fixing/wrong_save_multiple_HAS_DOMAIN.png)
+
+#### Acceptance Criteria
+- No se deben repetir la misma relación de una OWL Class con un OWL Property en Neo4J cuando se guardan cambios.
+
+### 8.5 Iteracion 5 (bugfixing when saving Export OWL)
+#### Bug 
+- BUG: cuando se exporta el OWL solo se está generando la linea siguiente y  no toda la especificacion de la ontologia del dominio (para todos los diagramas que tenga el dominio)
+
+```
+<?xml version="1.0"?><rdf:RDF xmlns="http://km.local/ontology#"></rdf:RDF>
+```
+
+#### Acceptance Criteria
+- Debe generarse la especificacion de toda la ontologia del dominio (todas las clases OWL Class con su detalle y propiedades OWL Property con su detalle de los diagramas del dominio)
+
+### 8.6 Iteracion 6 (bugfixing OWL Class properties restrictions and annotations not exported)
+#### Bug 
+- BUG: cuando se exporta el OWL no se está generando la especificacion de las propiedades OWL Class restrictions, annotations y has key (OWL:HAS_KEY)
+
+#### Acceptance Criteria
+- Debe generarse la especificacion de las propiedades OWL Class restrictions, annotations y has key (OWL:HAS_KEY) cuando se exporta el OWL
