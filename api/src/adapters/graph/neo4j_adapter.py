@@ -42,27 +42,35 @@ class Neo4jAdapter(GraphPort):
             return record["deleted"] > 0 if record else False
 
     async def upsert_property(self, info: OWLPropertyInfo) -> None:
-        # Option B: Reification
-        # (Source:OWLClass)-[:HAS_DOMAIN]->(Prop:OWLProperty)-[:HAS_RANGE]->(Target:OWLClass)
-        query = """
-        // Ensure classes exist
-        MERGE (s:OWLClass {id: $source_id, domain_id: $domain_id})
-        MERGE (t:OWLClass {id: $target_id, domain_id: $domain_id})
-        
-        // Upsert Property node
-        MERGE (p:OWLProperty {id: $id, domain_id: $domain_id})
-        SET p.label = $label,
-            p.uri = $uri,
-            p.property_type = $property_type,
-            p.updated_at = datetime()
-        
-        // Ensure reified relationships
-        MERGE (s)-[:HAS_DOMAIN]->(p)
-        MERGE (p)-[:HAS_RANGE]->(t)
-        """
+        # Reification: (Source:OWLClass)-[:HAS_DOMAIN]->(Prop:OWLProperty)-[:HAS_RANGE]->(Target:OWLClass)
+        # DatatypeProperty ranges are XSD URIs, NOT OWL classes — store them as a property on
+        # the OWLProperty node (range_xsd) to avoid creating phantom :OWLClass nodes.
+        if info.property_type == "DatatypeProperty":
+            query = """
+            MERGE (s:OWLClass {id: $source_id, domain_id: $domain_id})
+            MERGE (p:OWLProperty {id: $id, domain_id: $domain_id})
+            SET p.label = $label,
+                p.uri = $uri,
+                p.property_type = $property_type,
+                p.range_xsd = $target_id,
+                p.updated_at = datetime()
+            MERGE (s)-[:HAS_DOMAIN]->(p)
+            """
+        else:
+            query = """
+            MERGE (s:OWLClass {id: $source_id, domain_id: $domain_id})
+            MERGE (t:OWLClass {id: $target_id, domain_id: $domain_id})
+            MERGE (p:OWLProperty {id: $id, domain_id: $domain_id})
+            SET p.label = $label,
+                p.uri = $uri,
+                p.property_type = $property_type,
+                p.updated_at = datetime()
+            MERGE (s)-[:HAS_DOMAIN]->(p)
+            MERGE (p)-[:HAS_RANGE]->(t)
+            """
         async with self._driver.session() as session:
             await session.run(
-                query, 
+                query,
                 id=info.id, domain_id=info.domain_id,
                 label=info.label, uri=info.uri,
                 property_type=info.property_type,
@@ -145,9 +153,16 @@ class Neo4jAdapter(GraphPort):
 
     async def get_ontology(self, domain_id: str) -> dict[str, Any]:
         async with self._driver.session() as session:
-            # Get concepts
+            # Exclude phantom XSD nodes — real domain classes use UUID4 as id,
+            # XSD phantom nodes have URIs (e.g. http://www.w3.org/2001/XMLSchema#string)
             c_res = await session.run(
-                "MATCH (c:OWLClass {domain_id: $domain_id}) RETURN c", 
+                """
+                MATCH (c:OWLClass {domain_id: $domain_id})
+                WHERE NOT c.id STARTS WITH 'http://'
+                  AND NOT c.id STARTS WITH 'https://'
+                  AND c.label IS NOT NULL
+                RETURN c
+                """,
                 domain_id=domain_id
             )
             concepts = []
@@ -160,12 +175,15 @@ class Neo4jAdapter(GraphPort):
                     "comment": node.get("comment"),
                     "domain_id": domain_id
                 })
-            
-            # Get properties (using reification pattern to find them)
+
+            # OPTIONAL MATCH covers both ObjectProperties (HAS_RANGE → OWLClass)
+            # and DatatypeProperties (range stored as p.range_xsd, no HAS_RANGE edge)
             p_res = await session.run(
                 """
-                MATCH (s:OWLClass)-[:HAS_DOMAIN]->(p:OWLProperty {domain_id: $domain_id})-[:HAS_RANGE]->(t:OWLClass)
-                RETURN p, s.id as source_id, t.id as target_id
+                MATCH (s:OWLClass)-[:HAS_DOMAIN]->(p:OWLProperty {domain_id: $domain_id})
+                OPTIONAL MATCH (p)-[:HAS_RANGE]->(t:OWLClass)
+                RETURN p, s.id as source_id,
+                       coalesce(t.id, p.range_xsd) as target_id
                 """,
                 domain_id=domain_id
             )

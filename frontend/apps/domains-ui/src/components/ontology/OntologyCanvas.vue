@@ -89,45 +89,54 @@ const activeDiagram = computed(() => store.activeDiagram)
 // ── Map store nodes → Vue Flow nodes ─────────────────────────────────────────
 const flowNodes = computed<Node[]>(() => {
   if (!activeDiagram.value) return []
-  return activeDiagram.value.nodes.map(n => {
-    const concept = store.conceptMap[n.concept_id]
-    const isSelected = n.concept_id === store.selectedElementId
-    return {
-      id: n.id,
-      type: 'default',
-      position: n.position,
-      data: {
-        label: concept?.label ?? n.concept_id,
-        conceptId: n.concept_id,
-      },
-      style: {
-        background: '#fff',
-        border: isSelected ? '2px solid #0058bc' : '1px solid #c6c6c8',
-        borderRadius: '8px',
-        padding: '10px 16px',
-        fontSize: '13px',
-        fontWeight: '600',
-        color: '#1d1d1f',
-        minWidth: '120px',
-        boxShadow: isSelected ? '0 0 0 3px rgba(0,88,188,0.15)' : 'none',
-      },
-    }
-  })
+  return activeDiagram.value.nodes
+    .filter(n => !!store.conceptMap[n.concept_id]) // drop orphaned / phantom XSD nodes
+    .map(n => {
+      const concept = store.conceptMap[n.concept_id]
+      const isSelected = n.concept_id === store.selectedElementId
+      return {
+        id: n.id,
+        type: 'default',
+        position: n.position,
+        data: {
+          label: concept.label,
+          conceptId: n.concept_id,
+        },
+        style: {
+          background: '#fff',
+          border: isSelected ? '2px solid #0058bc' : '1px solid #c6c6c8',
+          borderRadius: '8px',
+          padding: '10px 16px',
+          fontSize: '13px',
+          fontWeight: '600',
+          color: '#1d1d1f',
+          minWidth: '120px',
+          boxShadow: isSelected ? '0 0 0 3px rgba(0,88,188,0.15)' : 'none',
+        },
+      }
+    })
 })
 
 // ── Map store edges → Vue Flow edges ─────────────────────────────────────────
 const flowEdges = computed<Edge[]>(() => {
   if (!activeDiagram.value) return []
-  return activeDiagram.value.edges.map(e => ({
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    label: e.label || '',
-    type: 'default',
-    markerEnd: { type: 'arrowclosed' },
-    style: { stroke: e.id === store.selectedElementId ? '#8e44ad' : '#0058bc', strokeWidth: 2 },
-    labelStyle: { fill: '#414755', fontSize: '11px' },
-  }))
+  const validNodeIds = new Set(
+    activeDiagram.value.nodes
+      .filter(n => !!store.conceptMap[n.concept_id])
+      .map(n => n.id)
+  )
+  return activeDiagram.value.edges
+    .filter(e => validNodeIds.has(e.source) && validNodeIds.has(e.target))
+    .map(e => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      label: e.label || '',
+      type: 'default',
+      markerEnd: { type: 'arrowclosed' },
+      style: { stroke: e.id === store.selectedElementId ? '#8e44ad' : '#0058bc', strokeWidth: 2 },
+      labelStyle: { fill: '#414755', fontSize: '11px' },
+    }))
 })
 
 // ── Click handlers ────────────────────────────────────────────────────────────
