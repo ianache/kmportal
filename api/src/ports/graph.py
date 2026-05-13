@@ -71,6 +71,12 @@ class GraphPort(ABC):
         pass
 
     @abstractmethod
+    async def delete_all_ontology(self, domain_id: str) -> tuple[int, int]:
+        """Delete all OWLClass and OWLProperty nodes for a domain.
+        Returns (classes_deleted, properties_deleted)."""
+        pass
+
+    @abstractmethod
     async def upsert_entity(self, entity_info: EntityInfo) -> None:
         """Create or update an instance node and link it to its Class."""
         pass

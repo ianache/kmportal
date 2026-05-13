@@ -221,6 +221,35 @@ class Neo4jAdapter(GraphPort):
             record = await result.single()
             return record["deleted"] > 0 if record else False
 
+    async def delete_all_ontology(self, domain_id: str) -> tuple[int, int]:
+        """Delete all OWLClass and OWLProperty nodes for a domain in one pass."""
+        async with self._driver.session() as session:
+            c_result = await session.run(
+                """
+                MATCH (c:OWLClass {domain_id: $domain_id})
+                WITH collect(c) AS nodes, count(c) AS n
+                FOREACH (c IN nodes | DETACH DELETE c)
+                RETURN n
+                """,
+                domain_id=domain_id,
+            )
+            c_record = await c_result.single()
+            classes_deleted = c_record["n"] if c_record else 0
+
+            p_result = await session.run(
+                """
+                MATCH (p:OWLProperty {domain_id: $domain_id})
+                WITH collect(p) AS nodes, count(p) AS n
+                FOREACH (p IN nodes | DETACH DELETE p)
+                RETURN n
+                """,
+                domain_id=domain_id,
+            )
+            p_record = await p_result.single()
+            props_deleted = p_record["n"] if p_record else 0
+
+        return classes_deleted, props_deleted
+
     async def get_ontology(self, domain_id: str) -> dict[str, Any]:
         async with self._driver.session() as session:
             import json as _json

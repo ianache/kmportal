@@ -209,7 +209,7 @@ async def register_extracted_data(
             await adapter.upsert_relation(info)
 
 
-async def import_owl(driver, domain_id: str, content: bytes, fmt: str) -> dict[str, Any]:
+async def import_owl(driver, domain_id: str, content: bytes, fmt: str, mode: str = "merge") -> dict[str, Any]:
     """
     Merge-import an OWL/XML or Turtle file into an existing domain ontology.
 
@@ -234,9 +234,17 @@ async def import_owl(driver, domain_id: str, content: bytes, fmt: str) -> dict[s
         raise ValueError(f"Cannot parse file as {fmt}: {exc}") from exc
 
     # ── 2. Load existing ontology to build URI→id maps ────────────────────────
-    existing = await get_ontology(driver, domain_id)
-    uri_to_concept_id: dict[str, str] = {c["uri"]: c["id"] for c in existing["concepts"] if c.get("uri")}
-    uri_to_prop_id: dict[str, str]    = {p["uri"]: p["id"] for p in existing["properties"] if p.get("uri")}
+    # For replace mode: parse must succeed (step 1) BEFORE we delete anything.
+    # This guarantees atomicity: an invalid file never wipes the ontology.
+    if mode == "replace":
+        adapter_del = Neo4jAdapter(driver)
+        await adapter_del.delete_all_ontology(domain_id)
+        uri_to_concept_id: dict[str, str] = {}
+        uri_to_prop_id: dict[str, str]    = {}
+    else:
+        existing = await get_ontology(driver, domain_id)
+        uri_to_concept_id = {c["uri"]: c["id"] for c in existing["concepts"] if c.get("uri")}
+        uri_to_prop_id    = {p["uri"]: p["id"] for p in existing["properties"] if p.get("uri")}
 
     adapter = Neo4jAdapter(driver)
     concepts_created = 0

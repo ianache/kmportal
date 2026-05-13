@@ -282,15 +282,23 @@ async def test_import_malformed_file_returns_422(client):
     assert resp.status_code == 422
 
 
-# ── mode=replace → 501 ───────────────────────────────────────────────────────
+# ── mode=replace → 200 (implementado en FEAT10-03) ───────────────────────────
 
 @pytest.mark.asyncio
-async def test_import_replace_mode_returns_501(client):
-    """mode=replace devuelve 501 hasta que Iteración 3 lo implemente."""
+async def test_import_replace_mode_accepted(client):
+    """FEAT10-03: mode=replace ahora devuelve 200 (no más 501)."""
     owl_bytes = _make_owl_bytes([{"uri": CLASS_URI, "label": "Animal"}])
-    resp = await client.post(
-        f"/v1/domains/{DOMAIN_ID}/ontology/import",
-        files={"file": ("onto.owl", BytesIO(owl_bytes), "application/rdf+xml")},
-        data={"mode": "replace"},
-    )
-    assert resp.status_code == 501
+    with patch("services.ontology_service.get_ontology",
+               return_value=_empty_ontology()), \
+         patch("services.ontology_service.Neo4jAdapter") as MockAdapter:
+        mock_adapter = MockAdapter.return_value
+        mock_adapter.delete_all_ontology = AsyncMock(return_value=(0, 0))
+        mock_adapter.upsert_class        = AsyncMock()
+        mock_adapter.upsert_property     = AsyncMock()
+
+        resp = await client.post(
+            f"/v1/domains/{DOMAIN_ID}/ontology/import",
+            files={"file": ("onto.owl", BytesIO(owl_bytes), "application/rdf+xml")},
+            data={"mode": "replace"},
+        )
+    assert resp.status_code == 200

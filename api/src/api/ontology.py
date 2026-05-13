@@ -204,16 +204,11 @@ async def import_owl(
     user: UserInToken = Depends(require_domain_access),
     driver=Depends(get_neo4j),
 ):
-    if mode == "replace":
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail="Replace mode is not yet implemented. Use mode=merge.",
-        )
     content = await file.read()
     filename = file.filename or ""
     fmt = "ttl" if filename.endswith(".ttl") else "xml"
     try:
-        result = await svc.import_owl(driver, str(domain_id), content, fmt)
+        result = await svc.import_owl(driver, str(domain_id), content, fmt, mode=mode)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     return result
