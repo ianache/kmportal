@@ -37,15 +37,10 @@
 
     <div class="divider" />
 
-    <!-- Import / Export -->
-    <h4 class="palette-title">OWL</h4>
-    <label class="palette-btn import-btn">
-      Import OWL
-      <input type="file" accept=".owl,.rdf,.ttl" hidden @change="onImport" />
-    </label>
-    <button class="palette-btn export-btn" @click="$emit('export-owl')">Export OWL</button>
+    <!-- Maintenance -->
+    <h4 class="palette-title">Tools</h4>
     <button class="palette-btn cleanup-btn" :disabled="cleaning" @click="runCleanup">
-      {{ cleaning ? 'Limpiando…' : 'Fix Duplicates' }}
+      {{ cleaning ? 'Cleaning…' : 'Fix Duplicates' }}
     </button>
     <p v-if="cleanupMsg" class="cleanup-msg">{{ cleanupMsg }}</p>
   </aside>
@@ -61,8 +56,6 @@ const store = useOntologyStore()
 const emit = defineEmits<{
   (e: 'drag-start', type: 'class' | 'property'): void
   (e: 'add-concept', concept: OntologyConcept): void
-  (e: 'export-owl'): void
-  (e: 'import-owl', file: File): void
 }>()
 
 const cleaning = ref(false)
@@ -99,11 +92,6 @@ function onDragStart(event: DragEvent, type: 'class' | 'property') {
   emit('drag-start', type)
 }
 
-function onImport(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (file) emit('import-owl', file)
-  ;(event.target as HTMLInputElement).value = ''
-}
 </script>
 
 <style scoped>

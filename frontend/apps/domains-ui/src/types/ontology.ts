@@ -32,6 +32,15 @@ export interface OntologyData {
   properties: OntologyProperty[]
 }
 
+export interface OntologyImportResult {
+  concepts_created: number
+  concepts_updated: number
+  properties_created: number
+  properties_updated: number
+  errors: string[]
+  ontology: OntologyData
+}
+
 export interface DiagramNodePosition {
   x: number
   y: number

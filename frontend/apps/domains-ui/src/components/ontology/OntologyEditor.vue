@@ -10,20 +10,59 @@
       </button>
       <h2 class="editor-title">Ontology Editor</h2>
       
-      <!-- Save button with disk icon -->
-      <button 
-        class="save-btn" 
-        :class="{ 'has-changes': store.hasUnsavedChanges }"
-        :disabled="!store.hasUnsavedChanges || store.isSaving"
-        @click="handleSave"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-          <polyline points="17 21 17 13 7 13 7 21"/>
-          <polyline points="7 3 7 8 15 8"/>
-        </svg>
-        <span>{{ store.isSaving ? 'Saving...' : 'Save' }}</span>
-      </button>
+      <!-- Header actions: Export / Import / Save -->
+      <div class="header-actions">
+        <!-- Export OWL -->
+        <button class="io-btn" :disabled="isExportDisabled" title="Exportar como OWL/XML" @click="handleExportOWL">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 3v10M6 9l4 4 4-4M3 16h14"/>
+          </svg>
+          <span class="io-badge">OWL</span>
+        </button>
+        <!-- Export TTL -->
+        <button class="io-btn" :disabled="isExportDisabled" title="Exportar como Turtle (.ttl)" @click="handleExportTTL">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 3v10M6 9l4 4 4-4M3 16h14"/>
+          </svg>
+          <span class="io-badge">TTL</span>
+        </button>
+
+        <!-- Import OWL -->
+        <button class="io-btn io-btn--import" :disabled="isImportDisabled" :title="importDisabledTitle" @click="importOwlRef?.click()">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 17V7M6 11l4-4 4 4M3 4h14"/>
+          </svg>
+          <span class="io-badge">OWL</span>
+        </button>
+        <!-- Import TTL -->
+        <button class="io-btn io-btn--import" :disabled="isImportDisabled" :title="importDisabledTitle" @click="importTtlRef?.click()">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 17V7M6 11l4-4 4 4M3 4h14"/>
+          </svg>
+          <span class="io-badge">TTL</span>
+        </button>
+
+        <!-- Hidden file pickers -->
+        <input ref="importOwlRef" type="file" accept=".owl,.rdf" hidden @change="onImportFileChange($event, 'owl')" />
+        <input ref="importTtlRef" type="file" accept=".ttl" hidden @change="onImportFileChange($event, 'ttl')" />
+
+        <div class="header-sep" />
+
+        <!-- Save -->
+        <button
+          class="save-btn"
+          :class="{ 'has-changes': store.hasUnsavedChanges }"
+          :disabled="!store.hasUnsavedChanges || store.isSaving"
+          @click="handleSave"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+          <span>{{ store.isSaving ? 'Saving...' : 'Save' }}</span>
+        </button>
+      </div>
     </header>
 
     <!-- Tab bar -->
@@ -32,11 +71,7 @@
     <!-- Main layout -->
     <div class="editor-body">
       <!-- Left palette -->
-      <OntologyPalette
-        @add-concept="addConceptToCanvas"
-        @export-owl="exportOWL"
-        @import-owl="importOWL"
-      />
+      <OntologyPalette @add-concept="addConceptToCanvas" />
 
       <!-- Canvas (relative, toolbox floats inside) -->
       <div class="canvas-area">
@@ -78,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, onBeforeUnmount } from 'vue'
+import { onMounted, ref, computed, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useOntologyStore } from '../../stores/ontology'
 import { ontologyApi } from '../../services/ontologyApi'
@@ -99,39 +134,43 @@ const { panelMode } = storeToRefs(store)
 const canvasRef = ref<InstanceType<typeof OntologyCanvas> | null>(null)
 const showUnsavedModal = ref(false)
 const pendingClose = ref(false)
+const importOwlRef = ref<HTMLInputElement | null>(null)
+const importTtlRef = ref<HTMLInputElement | null>(null)
+const isImporting = ref(false)
+
+const isExportDisabled = computed(() => store.concepts.length === 0)
+const isImportDisabled = computed(() => store.hasUnsavedChanges || isImporting.value)
+const importDisabledTitle = computed(() =>
+  store.hasUnsavedChanges ? 'Guarda los cambios antes de importar' : 'Importar ontología'
+)
 
 onMounted(() => store.loadForDomain(props.domainId))
 
 onBeforeUnmount(() => {
-  // Clean up any pending state
-  if (store.hasUnsavedChanges) {
-    store.clearPendingChanges()
-  }
+  if (store.hasUnsavedChanges) store.clearPendingChanges()
 })
 
 async function addConceptToCanvas(concept: OntologyConcept) {
   await store.addClassToCanvas(concept, { x: 100 + Math.random() * 300, y: 100 + Math.random() * 200 })
 }
 
-function exportOWL() {
-  ontologyApi.exportOntology(props.domainId)
-}
+function handleExportOWL() { ontologyApi.exportOntology(props.domainId, 'owl') }
+function handleExportTTL() { ontologyApi.exportOntology(props.domainId, 'ttl') }
 
-async function importOWL(file: File) {
-  const formData = new FormData()
-  formData.append('file', file)
-  // Call BFF proxy directly since apiClient doesn't support FormData
-  const res = await fetch(`/api/v1/domains/${props.domainId}/ontology/import`, {
-    method: 'POST',
-    body: formData,
-    credentials: 'include',
-  })
-  if (!res.ok) {
-    alert('Import failed: ' + (await res.text()))
-    return
+async function onImportFileChange(event: Event, fmt: 'owl' | 'ttl') {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  isImporting.value = true
+  try {
+    await ontologyApi.importOntology(props.domainId, file, 'merge')
+    await store.loadForDomain(props.domainId)
+  } catch (err) {
+    alert('Import failed: ' + (err instanceof Error ? err.message : String(err)))
+  } finally {
+    isImporting.value = false
   }
-  // Reload ontology state
-  await store.loadForDomain(props.domainId)
 }
 
 // Handle save button click
@@ -227,6 +266,61 @@ function onModalCancel() {
   color: var(--on-surface-variant, #86868b);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.header-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--outline-variant, #e5e5e7);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+.io-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--outline-variant, #e5e5e7);
+  background: transparent;
+  color: var(--on-surface-variant, #86868b);
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+
+.io-btn:hover:not(:disabled) {
+  background: var(--surface-container, #ecedf9);
+  color: var(--on-surface, #1d1d1f);
+  border-color: var(--primary, #0058bc);
+}
+
+.io-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.io-btn--import svg { transform: scaleY(-1) rotate(180deg); }
+
+.io-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 900px) {
+  .io-badge { display: none; }
+  .io-btn { padding: 6px 7px; }
+}
+
 .save-btn {
   display: flex;
   align-items: center;
@@ -240,7 +334,6 @@ function onModalCancel() {
   border: 1px solid var(--outline-variant, #e5e5e7);
   background: transparent;
   color: var(--on-surface-variant, #86868b);
-  margin-left: auto;
 }
 
 .save-btn:hover:not(:disabled) {

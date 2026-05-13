@@ -7,6 +7,7 @@ import type {
   DiagramUpdatePayload,
   OntologyConcept,
   OntologyData,
+  OntologyImportResult,
   OntologyProperty,
   PropertyCreatePayload,
   PropertyUpdatePayload,
@@ -57,13 +58,31 @@ class OntologyApiClient {
     if (r.error) throw new Error(r.error.message)
   }
 
-  async exportOntology(domainId: string): Promise<void> {
-    // Trigger file download via direct link
-    const url = `/api/v1/domains/${domainId}/ontology/export`
+  exportOntology(domainId: string, format: 'owl' | 'ttl' = 'owl'): void {
+    const ext = format === 'ttl' ? 'ttl' : 'owl'
+    const url = `/api/v1/domains/${domainId}/ontology/export?format=${format}`
     const a = document.createElement('a')
     a.href = url
-    a.download = `ontology_${domainId}.owl`
+    a.download = `ontology_${domainId}.${ext}`
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
+  }
+
+  async importOntology(domainId: string, file: File, mode: 'merge' | 'replace' = 'merge'): Promise<OntologyImportResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('mode', mode)
+    const res = await fetch(`/api/v1/domains/${domainId}/ontology/import`, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    })
+    if (!res.ok) {
+      const detail = await res.text().catch(() => res.statusText)
+      throw new Error(detail)
+    }
+    return res.json() as Promise<OntologyImportResult>
   }
 
   async listDiagrams(domainId: string): Promise<DiagramListResponse> {
