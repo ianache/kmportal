@@ -98,6 +98,34 @@
       <p>Loading ontology…</p>
     </div>
 
+    <!-- Import flow modals -->
+    <ImportOptionsModal
+      :is-open="showImportOptions"
+      :file-name="pendingImportFile?.name ?? ''"
+      @cancel="cancelImport"
+      @execute="onImportModeChosen"
+    />
+    <ImportReplaceConfirmModal
+      :is-open="showReplaceConfirm"
+      :class-count="store.concepts.length"
+      :prop-count="store.properties.length"
+      @cancel="cancelImport"
+      @confirm="onReplaceConfirmed"
+    />
+
+    <!-- Toast notification -->
+    <Transition name="toast">
+      <div v-if="toastState" class="toast" :class="`toast--${toastState.type}`">
+        <svg v-if="toastState.type === 'success'" width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="4 10 8 14 16 6"/>
+        </svg>
+        <svg v-else width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="10" cy="10" r="8"/><line x1="10" y1="7" x2="10" y2="10"/><line x1="10" y1="13" x2="10.01" y2="13"/>
+        </svg>
+        {{ toastState.message }}
+      </div>
+    </Transition>
+
     <!-- Unsaved changes modal -->
     <UnsavedChangesModal
       :is-open="showUnsavedModal"
@@ -125,6 +153,8 @@ import OntologyProperties from './OntologyProperties.vue'
 import OWLClassPanel from './OWLClassPanel.vue'
 import OntologyToolbox from './OntologyToolbox.vue'
 import UnsavedChangesModal from './UnsavedChangesModal.vue'
+import ImportOptionsModal from './ImportOptionsModal.vue'
+import ImportReplaceConfirmModal from './ImportReplaceConfirmModal.vue'
 
 const props = defineProps<{ domainId: string; domainName: string }>()
 const emit = defineEmits<{ (e: 'close'): void }>()
@@ -137,6 +167,11 @@ const pendingClose = ref(false)
 const importOwlRef = ref<HTMLInputElement | null>(null)
 const importTtlRef = ref<HTMLInputElement | null>(null)
 const isImporting = ref(false)
+const pendingImportFile = ref<File | null>(null)
+const showImportOptions = ref(false)
+const showReplaceConfirm = ref(false)
+const toastState = ref<{ message: string; type: 'success' | 'error' } | null>(null)
+let toastTimer: ReturnType<typeof setTimeout> | null = null
 
 const isExportDisabled = computed(() => store.concepts.length === 0)
 const isImportDisabled = computed(() => store.hasUnsavedChanges || isImporting.value)
@@ -157,17 +192,56 @@ async function addConceptToCanvas(concept: OntologyConcept) {
 function handleExportOWL() { ontologyApi.exportOntology(props.domainId, 'owl') }
 function handleExportTTL() { ontologyApi.exportOntology(props.domainId, 'ttl') }
 
-async function onImportFileChange(event: Event, fmt: 'owl' | 'ttl') {
+function showToast(message: string, type: 'success' | 'error') {
+  if (toastTimer) clearTimeout(toastTimer)
+  toastState.value = { message, type }
+  toastTimer = setTimeout(() => { toastState.value = null }, 4000)
+}
+
+function onImportFileChange(event: Event, _fmt: 'owl' | 'ttl') {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
   if (!file) return
+  pendingImportFile.value = file
+  showImportOptions.value = true
+}
+
+function cancelImport() {
+  showImportOptions.value = false
+  showReplaceConfirm.value = false
+  pendingImportFile.value = null
+}
+
+function onImportModeChosen(mode: 'merge' | 'replace') {
+  if (mode === 'replace') {
+    showImportOptions.value = false
+    showReplaceConfirm.value = true
+  } else {
+    showImportOptions.value = false
+    executeImport('merge')
+  }
+}
+
+function onReplaceConfirmed() {
+  showReplaceConfirm.value = false
+  executeImport('replace')
+}
+
+async function executeImport(mode: 'merge' | 'replace') {
+  const file = pendingImportFile.value
+  pendingImportFile.value = null
+  if (!file) return
   isImporting.value = true
   try {
-    await ontologyApi.importOntology(props.domainId, file, 'merge')
+    const result = await ontologyApi.importOntology(props.domainId, file, mode)
     await store.loadForDomain(props.domainId)
+    const msg = mode === 'replace'
+      ? `Ontología reemplazada: ${result.concepts_created} clases importadas`
+      : `Importación completada: ${result.concepts_created} creadas, ${result.concepts_updated} actualizadas`
+    showToast(msg, 'success')
   } catch (err) {
-    alert('Import failed: ' + (err instanceof Error ? err.message : String(err)))
+    showToast('Error al importar: ' + (err instanceof Error ? err.message : String(err)), 'error')
   } finally {
     isImporting.value = false
   }
@@ -389,4 +463,29 @@ function onModalCancel() {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  z-index: 2000;
+  max-width: 480px;
+  white-space: nowrap;
+}
+
+.toast--success { background: #1a7a3c; color: #fff; }
+.toast--error   { background: var(--error, #ba1a1a); color: #fff; }
+
+.toast-enter-active, .toast-leave-active { transition: opacity 0.25s, transform 0.25s; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(12px); }
 </style>
