@@ -1,8 +1,9 @@
 """Ontology API endpoints: OWL concepts (Neo4j) + diagram layouts (PostgreSQL)."""
 
+from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -208,16 +209,23 @@ async def import_owl(
 
 @router.get(
     "/{domain_id}/ontology/export",
-    summary="Export ontology as OWL/XML",
+    summary="Export ontology as OWL/XML or Turtle",
 )
 async def export_owl(
     domain_id: UUID,
+    fmt: Literal["owl", "ttl"] = Query("owl", alias="format", description="Output format: owl (OWL/XML) or ttl (Turtle)"),
     user: UserInToken = Depends(require_domain_access),
     driver=Depends(get_neo4j),
 ):
-    owl_bytes = await svc.export_owl(driver, str(domain_id))
+    content = await svc.export_owl(driver, str(domain_id), fmt=fmt)
+    if fmt == "ttl":
+        return Response(
+            content=content,
+            media_type="text/turtle",
+            headers={"Content-Disposition": f'attachment; filename="domain_{domain_id}.ttl"'},
+        )
     return Response(
-        content=owl_bytes,
+        content=content,
         media_type="application/rdf+xml",
         headers={"Content-Disposition": f'attachment; filename="domain_{domain_id}.owl"'},
     )

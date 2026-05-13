@@ -214,7 +214,7 @@ async def import_owl(driver, domain_id: str, content: bytes, fmt: str) -> dict[s
     return await get_ontology(driver, domain_id)
 
 
-async def export_owl(driver, domain_id: str) -> bytes:
+async def export_owl(driver, domain_id: str, fmt: str = "owl") -> bytes:
     import re
     from rdflib import Graph, URIRef, Literal, Namespace, BNode, RDF, RDFS, OWL, XSD
 
@@ -311,6 +311,9 @@ async def export_owl(driver, domain_id: str) -> bytes:
             elif target_id in concept_uri_map:
                 g.add((prop_ref, RDFS.range, URIRef(concept_uri_map[target_id])))
 
+    if fmt == "ttl":
+        result = g.serialize(format="turtle")
+        return result.encode("utf-8") if isinstance(result, str) else result
     return g.serialize(format="xml").encode("utf-8")
 
 
