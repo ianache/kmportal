@@ -210,8 +210,212 @@ async def register_extracted_data(
 
 
 async def import_owl(driver, domain_id: str, content: bytes, fmt: str) -> dict[str, Any]:
-    # Placeholder for RDFLib parsing and batch registration
-    return await get_ontology(driver, domain_id)
+    """
+    Merge-import an OWL/XML or Turtle file into an existing domain ontology.
+
+    Strategy: merge by URI.
+    - Classes/properties with a URI already in the domain → update (same internal id).
+    - Classes/properties with a new URI → create (new uuid4 id).
+    - Classes/properties NOT in the file → untouched.
+    """
+    import re
+    import uuid as _uuid
+    from rdflib import Graph, URIRef, BNode
+    from rdflib.namespace import OWL, RDFS, RDF, Namespace
+
+    KM = Namespace("http://km.local/ontology#")
+
+    # ── 1. Parse ──────────────────────────────────────────────────────────────
+    rdflib_fmt = "turtle" if fmt == "ttl" else "xml"
+    g = Graph()
+    try:
+        g.parse(data=content, format=rdflib_fmt)
+    except Exception as exc:
+        raise ValueError(f"Cannot parse file as {fmt}: {exc}") from exc
+
+    # ── 2. Load existing ontology to build URI→id maps ────────────────────────
+    existing = await get_ontology(driver, domain_id)
+    uri_to_concept_id: dict[str, str] = {c["uri"]: c["id"] for c in existing["concepts"] if c.get("uri")}
+    uri_to_prop_id: dict[str, str]    = {p["uri"]: p["id"] for p in existing["properties"] if p.get("uri")}
+
+    adapter = Neo4jAdapter(driver)
+    concepts_created = 0
+    concepts_updated = 0
+    properties_created = 0
+    properties_updated = 0
+    errors: list[str] = []
+
+    # ── 3. First pass: assign IDs to all classes in the file ─────────────────
+    # Build uri→id for classes IN the file (may be new or existing).
+    file_class_ids: dict[str, str] = {}
+    for class_uri in g.subjects(RDF.type, OWL.Class):
+        if not isinstance(class_uri, URIRef):
+            continue
+        uri_str = str(class_uri)
+        file_class_ids[uri_str] = uri_to_concept_id.get(uri_str) or str(_uuid.uuid4())
+
+    # Merge maps so cross-references from file can resolve to existing IDs too
+    all_class_ids = {**uri_to_concept_id, **file_class_ids}
+
+    # ── 4. Upsert classes ─────────────────────────────────────────────────────
+    for class_uri in g.subjects(RDF.type, OWL.Class):
+        if not isinstance(class_uri, URIRef):
+            continue
+        uri_str = str(class_uri)
+        concept_id = file_class_ids[uri_str]
+        is_new = uri_str not in uri_to_concept_id
+
+        # Label: rdfs:label preferred, fallback to local name
+        label_node = g.value(class_uri, RDFS.label)
+        label = str(label_node) if label_node else (uri_str.split("#")[-1].split("/")[-1] or uri_str)
+
+        # Comment
+        comment_node = g.value(class_uri, RDFS.comment)
+        comment = str(comment_node) if comment_node else None
+
+        # subclass_of: only URIRef parents (skip blank node restrictions)
+        subclass_ids: list[str] = []
+        for parent in g.objects(class_uri, RDFS.subClassOf):
+            if isinstance(parent, URIRef):
+                pid = all_class_ids.get(str(parent))
+                if pid:
+                    subclass_ids.append(pid)
+
+        # equivalent_to
+        equiv_ids: list[str] = []
+        for equiv in g.objects(class_uri, OWL.equivalentClass):
+            if isinstance(equiv, URIRef):
+                eid = all_class_ids.get(str(equiv))
+                if eid:
+                    equiv_ids.append(eid)
+
+        # Restrictions (blank node pattern)
+        restrictions: list[dict] = []
+        for obj in g.objects(class_uri, RDFS.subClassOf):
+            if not isinstance(obj, BNode):
+                continue
+            if (obj, RDF.type, OWL.Restriction) not in g:
+                continue
+            on_prop = g.value(obj, OWL.onProperty)
+            if not on_prop:
+                continue
+            prop_uri_str = str(on_prop)
+            # Resolve property URI to internal id (existing or file)
+            prop_id = uri_to_prop_id.get(prop_uri_str)
+            if not prop_id:
+                continue  # property not yet imported; skip restriction silently
+            if g.value(obj, OWL.someValuesFrom) is not None:
+                r_type = "some"
+            elif g.value(obj, OWL.allValuesFrom) is not None:
+                r_type = "all"
+            elif g.value(obj, OWL.minCardinality) is not None:
+                r_type = "cardinality"
+            else:
+                continue
+            restrictions.append({"property_id": prop_id, "restriction_type": r_type})
+
+        # Annotations (owl:AnnotationProperty triples on this class)
+        annotations: dict[str, str] = {}
+        for pred, obj in g.predicate_objects(class_uri):
+            if not isinstance(pred, URIRef):
+                continue
+            if (pred, RDF.type, OWL.AnnotationProperty) not in g:
+                continue
+            key = str(pred).split("#")[-1].split("/")[-1]
+            # Normalize km:hasKey back to the canonical annotation key
+            if str(pred) == str(KM.hasKey):
+                annotations["owl:hasKey"] = str(obj)
+            else:
+                annotations[key] = str(obj)
+
+        try:
+            await adapter.upsert_class(OWLClassInfo(
+                id=concept_id,
+                label=label,
+                uri=uri_str,
+                domain_id=domain_id,
+                metadata={"comment": comment},
+                subclass_of=subclass_ids,
+                equivalent_to=equiv_ids,
+                restrictions=restrictions,
+                annotations=annotations,
+            ))
+            if is_new:
+                concepts_created += 1
+                uri_to_concept_id[uri_str] = concept_id  # make available for properties pass
+            else:
+                concepts_updated += 1
+        except Exception as exc:
+            errors.append(f"Class {uri_str}: {exc}")
+
+    # Rebuild merged map after class upserts
+    all_class_ids = {**uri_to_concept_id, **file_class_ids}
+
+    # ── 5. First pass for properties: assign IDs ──────────────────────────────
+    file_prop_ids: dict[str, str] = {}
+    for prop_type in (OWL.ObjectProperty, OWL.DatatypeProperty):
+        for prop_uri in g.subjects(RDF.type, prop_type):
+            if not isinstance(prop_uri, URIRef):
+                continue
+            uri_str = str(prop_uri)
+            file_prop_ids[uri_str] = uri_to_prop_id.get(uri_str) or str(_uuid.uuid4())
+
+    # ── 6. Upsert properties ──────────────────────────────────────────────────
+    for prop_type in (OWL.ObjectProperty, OWL.DatatypeProperty):
+        for prop_uri in g.subjects(RDF.type, prop_type):
+            if not isinstance(prop_uri, URIRef):
+                continue
+            uri_str = str(prop_uri)
+            prop_id = file_prop_ids[uri_str]
+            is_new = uri_str not in uri_to_prop_id
+            p_type = "DatatypeProperty" if prop_type == OWL.DatatypeProperty else "ObjectProperty"
+
+            label_node = g.value(prop_uri, RDFS.label)
+            label = str(label_node) if label_node else (uri_str.split("#")[-1].split("/")[-1] or uri_str)
+
+            comment_node = g.value(prop_uri, RDFS.comment)
+            comment = str(comment_node) if comment_node else None
+
+            domain_uri = g.value(prop_uri, RDFS.domain)
+            source_id = all_class_ids.get(str(domain_uri)) if domain_uri else None
+
+            range_uri = g.value(prop_uri, RDFS.range)
+            target_id: str | None = None
+            if range_uri:
+                target_id = all_class_ids.get(str(range_uri)) or str(range_uri)
+
+            if not source_id:
+                errors.append(f"Property {uri_str}: source class not found, skipped")
+                continue
+
+            try:
+                await adapter.upsert_property(OWLPropertyInfo(
+                    id=prop_id,
+                    label=label,
+                    uri=uri_str,
+                    property_type=p_type,
+                    domain_id=domain_id,
+                    source_class_id=source_id,
+                    target_class_id=target_id or "",
+                    metadata={"comment": comment},
+                ))
+                if is_new:
+                    properties_created += 1
+                else:
+                    properties_updated += 1
+            except Exception as exc:
+                errors.append(f"Property {uri_str}: {exc}")
+
+    # ── 7. Return result ──────────────────────────────────────────────────────
+    updated_ontology = await get_ontology(driver, domain_id)
+    return {
+        "concepts_created": concepts_created,
+        "concepts_updated": concepts_updated,
+        "properties_created": properties_created,
+        "properties_updated": properties_updated,
+        "errors": errors,
+        "ontology": updated_ontology,
+    }
 
 
 async def export_owl(driver, domain_id: str, fmt: str = "owl") -> bytes:

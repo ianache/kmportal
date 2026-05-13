@@ -374,6 +374,16 @@ class OntologyResponse(BaseModel):
     properties: list[OntologyPropertyResponse]
 
 
+class OntologyImportResult(BaseModel):
+    """Response from import OWL/TTL merge operations."""
+    concepts_created: int = 0
+    concepts_updated: int = 0
+    properties_created: int = 0
+    properties_updated: int = 0
+    errors: list[str] = Field(default_factory=list)
+    ontology: OntologyResponse
+
+
 # ==================== Extraction ====================
 
 class ExtractedEntity(BaseModel):

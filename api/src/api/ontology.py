@@ -3,7 +3,7 @@
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +22,7 @@ from schemas import (
     OntologyPropertyCreate,
     OntologyPropertyResponse,
     OntologyPropertyUpdate,
+    OntologyImportResult,
     OntologyResponse,
     UserInToken,
     OntologyBatchPayload,
@@ -193,18 +194,29 @@ async def delete_property(
 
 @router.post(
     "/{domain_id}/ontology/import",
-    response_model=OntologyResponse,
-    summary="Import OWL/RDF file",
+    response_model=OntologyImportResult,
+    summary="Import OWL/RDF or Turtle file (merge by URI)",
 )
 async def import_owl(
     domain_id: UUID,
     file: UploadFile = File(...),
+    mode: Literal["merge", "replace"] = Form("merge"),
     user: UserInToken = Depends(require_domain_access),
     driver=Depends(get_neo4j),
 ):
+    if mode == "replace":
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Replace mode is not yet implemented. Use mode=merge.",
+        )
     content = await file.read()
-    fmt = "turtle" if (file.filename or "").endswith(".ttl") else "xml"
-    return await svc.import_owl(driver, str(domain_id), content, fmt)
+    filename = file.filename or ""
+    fmt = "ttl" if filename.endswith(".ttl") else "xml"
+    try:
+        result = await svc.import_owl(driver, str(domain_id), content, fmt)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    return result
 
 
 @router.get(
